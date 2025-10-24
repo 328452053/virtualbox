@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id: tdUnitTest1.py 111488 2025-10-24 11:18:33Z alexander.eichner@oracle.com $
+# $Id: tdUnitTest1.py 111489 2025-10-24 11:36:36Z alexander.eichner@oracle.com $
 
 """
 VirtualBox Validation Kit - Unit Tests.
@@ -37,7 +37,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111488 $"
+__version__ = "$Revision: 111489 $"
 
 
 # Standard Python imports.
@@ -115,7 +115,7 @@ class tdUnitTest1(vbox.TestDriver):
                                                         # supported on Solaris (VMCREATE_F_DRIVERLESS/SUPR3INIT_F_DRIVERLESS).
         },
         'solaris.amd64': {
-            'testcase/tstLdr-4': '',                    # failed: Failed to get bits for '/home/vbox/test/tmp/bin/testcase/tstLdrObjR0.r0'/0,
+            'testcase/tstLdr-4': '',        # failed: Failed to get bits for '/home/vbox/test/tmp/bin/testcase/tstLdrObjR0.r0'/0,
                                                         # rc=VERR_SYMBOL_VALUE_TOO_BIG. aborting test
             'tstVMMUnitTests-1': '',                    # Requires driverless mode not present on Solaris.
         },
