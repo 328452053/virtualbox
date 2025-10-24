@@ -1,4 +1,4 @@
-/* $Id: VBoxLnxModInline.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxLnxModInline.h 111490 2025-10-24 12:40:53Z vadim.galitsyn@oracle.com $ */
 /** @file
  * A common code for VirtualBox Linux kernel modules.
  */
@@ -37,10 +37,24 @@
 # include <linux/module.h>
 # include <linux/types.h>
 
+# if RTLNX_VER_MIN(2,5,52)
+
 /** Disable automatic module loading. */
+#  define VBOX_MOD_DISABLED     g_fDisabled
+#  define VBOX_MOD_NAME         module_name(THIS_MODULE)
 static int g_fDisabled = -1;
-MODULE_PARM_DESC(disabled, "Disable automatic module loading");
 module_param_named(disabled, g_fDisabled, int, 0400);
+
+# else /* < 2.5.52 */
+
+#  define VBOX_MOD_DISABLED     disabled
+#  define VBOX_MOD_NAME         THIS_MODULE->name
+static int disabled = -1;
+MODULE_PARM(disabled, "i");
+
+# endif
+
+MODULE_PARM_DESC(disabled, "Disable automatic module loading");
 
 /**
  * Check if module loading was explicitly disabled.
@@ -52,12 +66,11 @@ module_param_named(disabled, g_fDisabled, int, 0400);
  */
 static inline bool vbox_mod_should_load(void)
 {
-    bool fShouldLoad = (g_fDisabled != 1);
+    bool fShouldLoad = (VBOX_MOD_DISABLED != 1);
 
     /* Print message into dmesg log if module loading was disabled. */
     if (!fShouldLoad)
-        printk(KERN_WARNING "%s: automatic module loading disabled in kernel command line\n",
-               module_name(THIS_MODULE));
+        printk(KERN_WARNING "%s: automatic module loading disabled in kernel command line\n", VBOX_MOD_NAME);
 
     return fShouldLoad;
 }
