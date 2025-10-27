@@ -1,4 +1,4 @@
-/* $Id: UnattendedImpl.cpp 111433 2025-10-16 13:21:23Z serkan.bayraktar@oracle.com $ */
+/* $Id: UnattendedImpl.cpp 111493 2025-10-27 12:26:11Z alexander.eichner@oracle.com $ */
 /** @file
  * Unattended class implementation
  */
@@ -4420,6 +4420,12 @@ bool Unattended::i_getAvoidUpdatesOverNetwork() const
 {
     Assert(isReadLockedOnCurrentThread());
     return mfAvoidUpdatesOverNetwork;
+}
+
+VBOXOSTYPE Unattended::i_getGuestOsArch() const
+{
+    Assert(isReadLockedOnCurrentThread());
+    return (VBOXOSTYPE)(mEnmOsType & VBOXOSTYPE_ArchitectureMask);
 }
 
 HRESULT Unattended::i_attachImage(UnattendedInstallationDisk const *pImage, ComPtr<IMachine> const &rPtrSessionMachine,

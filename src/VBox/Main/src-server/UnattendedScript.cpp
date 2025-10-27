@@ -1,4 +1,4 @@
-/* $Id: UnattendedScript.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: UnattendedScript.cpp 111493 2025-10-27 12:26:11Z alexander.eichner@oracle.com $ */
 /** @file
  * Classes for reading/parsing/saving scripts for unattended installation.
  */
@@ -669,6 +669,19 @@ int UnattendedScriptTemplate::queryVariable(const char *pchName, size_t cchName,
 
     const char *pszValue = NULL;
 
+    VBOXOSTYPE enmOsArch = mpUnattended->i_getGuestOsArch();
+    static struct
+    {
+        const char *apszArch[5];
+    } s_aArches[] =
+    {
+        /* VBOXOSTYPE_x86   */ { "x86",     "x86",    "i386",   "i486",   "i686" },
+        /* VBOXOSTYPE_x64   */ { "amd64", "x86_64", "x86_64", "x86_64", "x86_64" },
+        /* VBOXOSTYPE_arm32 */ { "arm32",  "arm32",  "arm32",  "arm32",  "arm32" },
+        /* VBOXOSTYPE_arm64 */ { "arm64",  "arm64",  "arm64",  "arm64",  "arm64" },
+    };
+    uint8_t const idxArch = (uint8_t)(enmOsArch >> 8); /** @todo r=aeichner This is a bit ugly, maybe there is some better way? */
+
     /*
      * Variables
      */
@@ -693,15 +706,15 @@ int UnattendedScriptTemplate::queryVariable(const char *pchName, size_t cchName,
     else if (IS_MATCH("IMAGE_INDEX"))
         pszValue = rstrTmp.printf("%u", mpUnattended->i_getImageIndex()).c_str();
     else if (IS_MATCH("OS_ARCH"))
-        pszValue = mpUnattended->i_isGuestOs64Bit() ? "amd64" : "x86";
+        pszValue = s_aArches[idxArch].apszArch[0];
     else if (IS_MATCH("OS_ARCH2"))
-        pszValue = mpUnattended->i_isGuestOs64Bit() ? "x86_64" : "x86";
+        pszValue = s_aArches[idxArch].apszArch[1];
     else if (IS_MATCH("OS_ARCH3"))
-        pszValue = mpUnattended->i_isGuestOs64Bit() ? "x86_64" : "i386";
+        pszValue = s_aArches[idxArch].apszArch[2];
     else if (IS_MATCH("OS_ARCH4"))
-        pszValue = mpUnattended->i_isGuestOs64Bit() ? "x86_64" : "i486";
+        pszValue = s_aArches[idxArch].apszArch[3];
     else if (IS_MATCH("OS_ARCH6"))
-        pszValue = mpUnattended->i_isGuestOs64Bit() ? "x86_64" : "i686";
+        pszValue = s_aArches[idxArch].apszArch[4];
     else if (IS_MATCH("GUEST_OS_VERSION"))
         pszValue = mpUnattended->i_getDetectedOSVersion().c_str();
     else if (IS_MATCH("GUEST_OS_MAJOR_VERSION"))

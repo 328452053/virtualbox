@@ -1,4 +1,4 @@
-/* $Id: tstUnattendedScript.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: tstUnattendedScript.cpp 111493 2025-10-27 12:26:11Z alexander.eichner@oracle.com $ */
 /** @file
  * tstUnattendedScript - testcases for UnattendedScript.
  */
@@ -66,7 +66,7 @@ Unattended::Unattended()
     , mfIsDefaultAuxiliaryBasePath(true)
     , midxImage(0)
     , mfDoneDetectIsoOS(false)
-    , mEnmOsType(VBOXOSTYPE_Unknown)
+    , mEnmOsType(VBOXOSTYPE_x86)
     , mfAvoidUpdatesOverNetwork(false)
     , mfDoneSupportedGuestOSList(false)
 {
@@ -728,6 +728,10 @@ bool Unattended::i_getAvoidUpdatesOverNetwork() const
     return mfAvoidUpdatesOverNetwork;
 }
 
+VBOXOSTYPE Unattended::i_getGuestOsArch() const
+{
+    return (VBOXOSTYPE)(mEnmOsType & VBOXOSTYPE_ArchitectureMask);
+}
 
 /*********************************************************************************************************************************
 *   The Testcase                                                                                                                 *

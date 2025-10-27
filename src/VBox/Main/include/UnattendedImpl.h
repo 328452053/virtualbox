@@ -1,4 +1,4 @@
-/* $Id: UnattendedImpl.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: UnattendedImpl.h 111493 2025-10-27 12:26:11Z alexander.eichner@oracle.com $ */
 /** @file
  * Unattended class header
  */
@@ -113,6 +113,7 @@ public:
     bool           i_isFirmwareEFI() const;
     Utf8Str const &i_getDetectedOSVersion();
     bool           i_getAvoidUpdatesOverNetwork() const;
+    VBOXOSTYPE     i_getGuestOsArch() const;
 
 private:
     ComPtr<VirtualBox> const mParent;       /**< Strong reference to the parent object (VirtualBox/IMachine). */
