@@ -31191,7 +31191,7 @@ utilizando o diálogo de Configurações da MV.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&amp;Include ISO image files</source>
-        <translation>&amp;Incluir arquovs de imagem ISO</translation>
+        <translation>&amp;Incluir arquivos de imagem ISO</translation>
     </message>
     <message>
         <source>&amp;Account:</source>
