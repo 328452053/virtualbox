@@ -1,4 +1,4 @@
-/* $Id: QITreeView.cpp 111507 2025-10-28 13:08:39Z sergey.dubov@oracle.com $ */
+/* $Id: QITreeView.cpp 111509 2025-10-28 13:16:40Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: QITreeView class implementation.
  */
@@ -362,13 +362,28 @@ public:
     }
 
     /** Returns a text for the passed @a enmTextRole. */
-    virtual QString text(QAccessible::Text) const RT_OVERRIDE RT_FINAL
+    virtual QString text(QAccessible::Text enmTextRole) const RT_OVERRIDE RT_FINAL
     {
-        /* Sanity check: */
-        AssertPtrReturn(tree(), QString());
+        /* Text for known roles: */
+        switch (enmTextRole)
+        {
+            case QAccessible::Name:
+            {
+                /* Sanity check: */
+                AssertPtrReturn(tree(), QString());
 
-        /* Return tree whats-this: */
-        return tree()->whatsThis();
+                /* Gather suitable text: */
+                QString strText = tree()->toolTip();
+                if (strText.isEmpty())
+                    strText = tree()->whatsThis();
+                return strText;
+            }
+            default:
+                break;
+        }
+
+        /* Null string by default: */
+        return QString();
     }
 
 private:
