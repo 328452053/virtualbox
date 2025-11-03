@@ -84,14 +84,17 @@ DECLINLINE(void) VbglHGCMParmPtrSet(HGCMFunctionParameter *pParm, void *pv, uint
 }
 
 
-#ifdef IPRT_INCLUDED_string_h
-
-# ifdef VBOX_VBGLR3_XFREE86
+#ifdef VBOX_VBGLR3_XFREE86
 /* Rather than try to resolve all the header file conflicts, I will just
-   prototype what we need here. */
+   prototype what we need here.
+   Note! Other places needs the typedef, so always define it. */
+RT_C_DECLS_BEGIN
 typedef unsigned long xf86size_t;
-extern "C" xf86size_t xf86strlen(const char *);
-# endif /* VBOX_VBGLR3_XFREE86 */
+xf86size_t xf86strlen(const char *);
+RT_C_DECLS_END
+#endif /* VBOX_VBGLR3_XFREE86 */
+
+#ifdef IPRT_INCLUDED_string_h
 
 DECLINLINE(void) VbglHGCMParmPtrSetString(HGCMFunctionParameter *pParm, const char *psz)
 {
