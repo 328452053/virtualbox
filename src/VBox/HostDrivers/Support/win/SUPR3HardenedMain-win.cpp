@@ -1,4 +1,4 @@
-/* $Id: SUPR3HardenedMain-win.cpp 111536 2025-11-03 23:20:15Z knut.osmundsen@oracle.com $ */
+/* $Id: SUPR3HardenedMain-win.cpp 111538 2025-11-04 00:48:44Z knut.osmundsen@oracle.com $ */
 /** @file
  * VirtualBox Support Library - Hardened main(), windows bits.
  */
@@ -6999,7 +6999,7 @@ static uint32_t supR3HardenedWinFindAdversaries(void)
                     uint32_t fOld = 0;
                     uint32_t fNew = 0;
                     if (   (s_aFiles[i].fAdversary & SUPHARDNT_ADVERSARY_DIGITAL_GUARDIAN_OLD)
-                    {   && (   VER_IN_RANGE("7.3.2.0000", "999999999.9.9.9999")
+                        && (   VER_IN_RANGE("7.3.2.0000", "999999999.9.9.9999")
                             || VER_IN_RANGE("7.3.1.1000", "7.3.1.3000")
                             || VER_IN_RANGE("7.3.0.3000", "7.3.0.999999999")
                             || VER_IN_RANGE("7.2.1.3000", "7.2.999999999.999999999") ) )
