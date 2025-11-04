@@ -1,4 +1,4 @@
-/* $Id: VBoxGuestLibGuestProp.h 111526 2025-11-03 15:08:13Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxGuestLibGuestProp.h 111546 2025-11-04 13:03:27Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxGuestLib - Guest Properties Interface (both user & kernel mode).
  */
@@ -60,8 +60,6 @@ typedef struct VBGLGUESTPROPENUM VBGLGUESTPROPENUM;
 /** @todo Docs. */
 typedef VBGLGUESTPROPENUM *PVBGLGUESTPROPENUM;
 
-DECLVBGL(int)  VbglGuestPropInit(void);
-DECLVBGL(void) VbglGuestPropTerm(void);
 DECLVBGL(int)  VbglGuestPropConnect(PVBGLGSTPROPCLIENT pClient);
 DECLVBGL(int)  VbglGuestPropDisconnect(PVBGLGSTPROPCLIENT pClient);
 

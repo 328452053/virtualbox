@@ -1,4 +1,4 @@
-/* $Id: VBoxGuestLibGuestProp.cpp 111526 2025-11-03 15:08:13Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxGuestLibGuestProp.cpp 111546 2025-11-04 13:03:27Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxGuestLib - Support Library for VirtualBox guest additions, guest properties.
  *
@@ -135,22 +135,6 @@ struct VBGLGUESTPROPENUM
     char *pchNext;
 };
 
-
-DECLVBGL(int) VbglGuestPropInit(void)
-{
-#ifdef IN_RING0
-    return VbglR0InitClient();
-#else
-    return VINF_SUCCESS;
-#endif
-}
-
-DECLVBGL(void) VbglGuestPropTerm(void)
-{
-#ifdef IN_RING0
-    VbglR0TerminateClient();
-#endif
-}
 
 
 /**
