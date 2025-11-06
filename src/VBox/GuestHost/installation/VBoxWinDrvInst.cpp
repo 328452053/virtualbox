@@ -1,4 +1,4 @@
-/* $Id: VBoxWinDrvInst.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxWinDrvInst.cpp 111556 2025-11-06 10:09:50Z andreas.loeffler@oracle.com $ */
 /** @file
  * VBoxWinDrvInst - Windows driver installation handling.
  */
@@ -3243,7 +3243,7 @@ int VBoxWinDrvPatternReplace(const char *pszInput, const PVBOXWINDRVSTRPATTERN p
  *
  * @sa FNVBOXWINDRVSTRPATTERN
  */
-DECLCALLBACK(char *) vboxWinDrvInstPatternToEnvCallback(const char *pszPattern, void *pvUser)
+static DECLCALLBACK(char *) vboxWinDrvInstPatternToEnvCallback(const char *pszPattern, void *pvUser)
 {
     RT_NOREF(pvUser);
 
@@ -3269,7 +3269,7 @@ DECLCALLBACK(char *) vboxWinDrvInstPatternToEnvCallback(const char *pszPattern, 
  * @param   ppszResolved        Where to return the resolved path on success.
  *                              Must be free'd using RTStrFree().
  */
-int vboxWinDrvInstRegResolveRegPath(const char *pszPath, char **ppszResolved)
+static int vboxWinDrvInstRegResolveRegPath(const char *pszPath, char **ppszResolved)
 {
     static VBOXWINDRVSTRPATTERN s_aPatterns[] =
     {
