@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceVMInfo.cpp 111559 2025-11-06 13:20:31Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceVMInfo.cpp 111560 2025-11-06 13:34:38Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Virtual Machine Information for the Host.
  */
@@ -453,6 +453,7 @@ DECLHIDDEN(int) VGSvcUserUpdateF(PVBOXSERVICEVEPROPCACHE pCache, const char *psz
     char *pszValue = NULL;
     if (pszValueFormat)
     {
+        /** @todo use static buffer. duh.   */
         va_list va;
         va_start(va, pszValueFormat);
         if (RTStrAPrintfV(&pszValue, pszValueFormat, va) < 0)
@@ -1136,14 +1137,14 @@ static int vgsvcVMInfoWriteUsers(void)
     if (pszUserList)
     {
         AssertMsg(cUsersInList, ("pszUserList contains users whereas cUsersInList is 0\n"));
-        rc = VGSvcPropCacheUpdate(&g_VMInfoPropCache, g_pszPropCacheValLoggedInUsersList, "%s", pszUserList);
+        rc = VGSvcPropCacheUpdate(&g_VMInfoPropCache, g_pszPropCacheValLoggedInUsersList, pszUserList);
     }
     else
         rc = VGSvcPropCacheUpdate(&g_VMInfoPropCache, g_pszPropCacheValLoggedInUsersList, NULL);
     if (RT_FAILURE(rc))
         VGSvcError("Error writing logged in users list, rc=%Rrc\n", rc);
 
-    rc = VGSvcPropCacheUpdate(&g_VMInfoPropCache, g_pszPropCacheValLoggedInUsers, "%RU32", cUsersInList);
+    rc = VGSvcPropCacheUpdateF(&g_VMInfoPropCache, g_pszPropCacheValLoggedInUsers, "%RU32", cUsersInList);
     if (RT_FAILURE(rc))
         VGSvcError("Error writing logged in users count, rc=%Rrc\n", rc);
 
@@ -1291,17 +1292,17 @@ static int vgsvcVMInfoWriteNetwork(void)
             continue;
         sockaddr_in *pAddress = &aInterfaces[i].iiAddress.AddressIn;
         char szIp[32];
-        RTStrPrintf(szIp, sizeof(szIp), "%s", g_pfninet_ntoa(pAddress->sin_addr));
+        RTStrPrintf(szIp, sizeof(szIp), "%s", g_pfninet_ntoa(pAddress->sin_addr)); /* (Keep a copy for the MAC lookup below.) */
         RTStrPrintf(szPropPath, sizeof(szPropPath), "/VirtualBox/GuestInfo/Net/%RU32/V4/IP", cIfsReported);
-        VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", szIp);
+        VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, szIp);
 
         pAddress = &aInterfaces[i].iiBroadcastAddress.AddressIn;
         RTStrPrintf(szPropPath, sizeof(szPropPath), "/VirtualBox/GuestInfo/Net/%RU32/V4/Broadcast", cIfsReported);
-        VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", g_pfninet_ntoa(pAddress->sin_addr));
+        VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, g_pfninet_ntoa(pAddress->sin_addr));
 
         pAddress = (sockaddr_in *)&aInterfaces[i].iiNetmask;
         RTStrPrintf(szPropPath, sizeof(szPropPath), "/VirtualBox/GuestInfo/Net/%RU32/V4/Netmask", cIfsReported);
-        VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", g_pfninet_ntoa(pAddress->sin_addr));
+        VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, g_pfninet_ntoa(pAddress->sin_addr));
 
         RTStrPrintf(szPropPath, sizeof(szPropPath), "/VirtualBox/GuestInfo/Net/%RU32/Status", cIfsReported);
         VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, aInterfaces[i].iiFlags & IFF_UP ? "Up" : "Down");
@@ -1315,13 +1316,9 @@ static int vgsvcVMInfoWriteNetwork(void)
 
             RTStrPrintf(szPropPath, sizeof(szPropPath), "/VirtualBox/GuestInfo/Net/%RU32/MAC", cIfsReported);
             if (pAdp)
-            {
-                char szMac[32];
-                RTStrPrintf(szMac, sizeof(szMac), "%02X%02X%02X%02X%02X%02X",
-                            pAdp->Address[0], pAdp->Address[1], pAdp->Address[2],
-                            pAdp->Address[3], pAdp->Address[4], pAdp->Address[5]);
-                VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", szMac);
-            }
+                VGSvcPropCacheUpdateF(&g_VMInfoPropCache, szPropPath, "%02X%02X%02X%02X%02X%02X",
+                                      pAdp->Address[0], pAdp->Address[1], pAdp->Address[2],
+                                      pAdp->Address[3], pAdp->Address[4], pAdp->Address[5]);
             else
                 VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, NULL);
         }
@@ -1363,19 +1360,19 @@ static int vgsvcVMInfoWriteNetwork(void)
             getnameinfo(pIfCurr->ifa_addr, sizeof(struct sockaddr_in),
                         szInetAddr, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
             RTStrPrintf(szPropPath, sizeof(szPropPath), "/VirtualBox/GuestInfo/Net/%RU32/V4/IP", cIfsReported);
-            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", szInetAddr);
+            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, szInetAddr);
 
             memset(szInetAddr, 0, NI_MAXHOST);
             getnameinfo(pIfCurr->ifa_broadaddr, sizeof(struct sockaddr_in),
                         szInetAddr, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
             RTStrPrintf(szPropPath, sizeof(szPropPath), "/VirtualBox/GuestInfo/Net/%RU32/V4/Broadcast", cIfsReported);
-            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", szInetAddr);
+            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, szInetAddr);
 
             memset(szInetAddr, 0, NI_MAXHOST);
             getnameinfo(pIfCurr->ifa_netmask, sizeof(struct sockaddr_in),
                         szInetAddr, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
             RTStrPrintf(szPropPath, sizeof(szPropPath), "/VirtualBox/GuestInfo/Net/%RU32/V4/Netmask", cIfsReported);
-            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", szInetAddr);
+            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, szInetAddr);
 
             /* Search for the AF_LINK interface of the current AF_INET one and get the mac. */
             for (struct ifaddrs *pIfLinkCurr = pIfHead; pIfLinkCurr; pIfLinkCurr = pIfLinkCurr->ifa_next)
@@ -1383,16 +1380,12 @@ static int vgsvcVMInfoWriteNetwork(void)
                 if (   pIfLinkCurr->ifa_addr->sa_family == AF_LINK
                     && !strcmp(pIfCurr->ifa_name, pIfLinkCurr->ifa_name))
                 {
-                    char szMac[32];
-                    uint8_t *pu8Mac = NULL;
                     struct sockaddr_dl *pLinkAddress = (struct sockaddr_dl *)pIfLinkCurr->ifa_addr;
-
                     AssertPtr(pLinkAddress);
-                    pu8Mac = (uint8_t *)LLADDR(pLinkAddress);
-                    RTStrPrintf(szMac, sizeof(szMac), "%02X%02X%02X%02X%02X%02X",
-                                pu8Mac[0], pu8Mac[1], pu8Mac[2], pu8Mac[3],  pu8Mac[4], pu8Mac[5]);
+                    uint8_t const      *pu8Mac       = (uint8_t const *)LLADDR(pLinkAddress);
                     RTStrPrintf(szPropPath, sizeof(szPropPath), "/VirtualBox/GuestInfo/Net/%RU32/MAC", cIfsReported);
-                    VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", szMac);
+                    VGSvcPropCacheUpdateF(&g_VMInfoPropCache, szPropPath, "%02X%02X%02X%02X%02X%02X",
+                                          pu8Mac[0], pu8Mac[1], pu8Mac[2], pu8Mac[3],  pu8Mac[4], pu8Mac[5]);
                     break;
                 }
             }
@@ -1529,7 +1522,7 @@ static int vgsvcVMInfoWriteNetwork(void)
 
             sockaddr_in *pAddress = (sockaddr_in *)&pCur->ifr_addr;
             strcpy(&szPropPath[offSubProp], "/V4/IP");
-            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", inet_ntoa(pAddress->sin_addr));
+            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, inet_ntoa(pAddress->sin_addr));
 
             /* Get the broadcast address. */
             IfReqTmp = *pCur;
@@ -1541,7 +1534,7 @@ static int vgsvcVMInfoWriteNetwork(void)
             }
             pAddress = (sockaddr_in *)&IfReqTmp.ifr_broadaddr;
             strcpy(&szPropPath[offSubProp], "/V4/Broadcast");
-            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", inet_ntoa(pAddress->sin_addr));
+            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, inet_ntoa(pAddress->sin_addr));
 
             /* Get the net mask. */
             IfReqTmp = *pCur;
@@ -1557,7 +1550,7 @@ static int vgsvcVMInfoWriteNetwork(void)
             pAddress = (sockaddr_in *)&IfReqTmp.ifr_netmask;
 # endif
             strcpy(&szPropPath[offSubProp], "/V4/Netmask");
-            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%s", inet_ntoa(pAddress->sin_addr));
+            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, inet_ntoa(pAddress->sin_addr));
 
 # if defined(RT_OS_SOLARIS)
             /*
@@ -1612,8 +1605,8 @@ static int vgsvcVMInfoWriteNetwork(void)
             RTMAC IfMac = *(PRTMAC)&IfReqTmp.ifr_hwaddr.sa_data[0];
 # endif
             strcpy(&szPropPath[offSubProp], "/MAC");
-            VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%02X%02X%02X%02X%02X%02X",
-                                       IfMac.au8[0], IfMac.au8[1], IfMac.au8[2], IfMac.au8[3], IfMac.au8[4], IfMac.au8[5]);
+            VGSvcPropCacheUpdateF(&g_VMInfoPropCache, szPropPath, "%02X%02X%02X%02X%02X%02X",
+                                  IfMac.au8[0], IfMac.au8[1], IfMac.au8[2], IfMac.au8[3], IfMac.au8[4], IfMac.au8[5]);
 
             strcpy(&szPropPath[offSubProp], "/Status");
             VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, fIfUp ? "Up" : "Down");
@@ -1623,7 +1616,7 @@ static int vgsvcVMInfoWriteNetwork(void)
             if (RT_SUCCESS(rc2))
             {
                 strcpy(&szPropPath[offSubProp], "/Name");
-                VGSvcPropCacheUpdate(&g_VMInfoPropCache, szPropPath, "%.*s", sizeof(pCur->ifr_name), pCur->ifr_name);
+                VGSvcPropCacheUpdateF(&g_VMInfoPropCache, szPropPath, "%.*s", sizeof(pCur->ifr_name), pCur->ifr_name);
             }
 
             cIfsReported++;
@@ -1675,7 +1668,7 @@ static int vgsvcVMInfoWriteNetwork(void)
      * does not change. If this property is missing, the host assumes that all other GuestInfo
      * properties are no longer valid.
      */
-    VGSvcPropCacheUpdate(&g_VMInfoPropCache, g_pszPropCacheValNetCount, "%RU32", cIfsReported);
+    VGSvcPropCacheUpdateF(&g_VMInfoPropCache, g_pszPropCacheValNetCount, "%RU32", cIfsReported);
 
     /* Don't fail here; just report everything we got. */
     return VINF_SUCCESS;

@@ -1,4 +1,4 @@
-/* $Id: VBoxServicePropCache.cpp 111559 2025-11-06 13:20:31Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServicePropCache.cpp 111560 2025-11-06 13:34:38Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxServicePropCache - Guest property cache.
  */
@@ -290,18 +290,17 @@ static int vgsvcPropCacheUpdateNode(PVBOXSERVICEVEPROPCACHE pCache, PVBOXSERVICE
 
 
 /**
- * Creates/Updates the locally cached value and writes it to HGCM if modified.
+ * Creates/Updates the locally cached value and writes it to the host if modified.
  *
  * @returns VBox status code.
  * @retval  VERR_BUFFER_OVERFLOW if the property name or value exceeds the limit.
  * @retval  VINF_NO_CHANGE if the value is the same and nothing was written.
  * @param   pCache          The property cache.
  * @param   pszName         The property name.
- * @param   pszValueFormat  The property format string.  If this is NULL then
- *                          the property will be deleted (if possible).
- * @param   ...             Format arguments.
+ * @param   pszValue        The property value.  If this is NULL then the
+ *                          property will be deleted (if possible).
  */
-int VGSvcPropCacheUpdate(PVBOXSERVICEVEPROPCACHE pCache, const char *pszName, const char *pszValueFormat, ...)
+int VGSvcPropCacheUpdate(PVBOXSERVICEVEPROPCACHE pCache, const char *pszName, const char *pszValue)
 {
     AssertPtrReturn(pCache, VERR_INVALID_POINTER);
     AssertPtrReturn(pszName, VERR_INVALID_POINTER);
@@ -310,22 +309,6 @@ int VGSvcPropCacheUpdate(PVBOXSERVICEVEPROPCACHE pCache, const char *pszName, co
 
     if (RTStrNLen(pszName, GUEST_PROP_MAX_NAME_LEN) > GUEST_PROP_MAX_NAME_LEN - 1 /* Terminator */)
         return VERR_BUFFER_OVERFLOW;
-
-    /*
-     * Format the value first.
-     */
-    char  szValue[GUEST_PROP_MAX_VALUE_LEN];
-    char *pszValue = NULL;
-    if (pszValueFormat)
-    {
-        va_list va;
-        va_start(va, pszValueFormat);
-        ssize_t cchValue = RTStrPrintf2V(szValue, sizeof(szValue), pszValueFormat, va);
-        va_end(va);
-        if (cchValue < 0)
-            return VERR_BUFFER_OVERFLOW;
-        pszValue = szValue;
-    }
 
     /*
      * Lock the cache.
@@ -353,6 +336,35 @@ int VGSvcPropCacheUpdate(PVBOXSERVICEVEPROPCACHE pCache, const char *pszName, co
 
     VGSvcVerbose(4, "[PropCache %p]: Updating '%s' resulted in rc=%Rrc\n", pCache, pszName, rc);
     return rc;
+}
+
+
+/**
+ * Creates/Updates the locally cached value and writes it to the host if modified.
+ *
+ * @returns VBox status code.
+ * @retval  VERR_BUFFER_OVERFLOW if the property name or value exceeds the limit.
+ * @retval  VINF_NO_CHANGE if the value is the same and nothing was written.
+ * @param   pCache          The property cache.
+ * @param   pszName         The property name.
+ * @param   pszValueFormat  The property format string.  If this is NULL then
+ *                          the property will be deleted (if possible).
+ * @param   ...             Format arguments.
+ */
+int VGSvcPropCacheUpdateF(PVBOXSERVICEVEPROPCACHE pCache, const char *pszName, const char *pszValueFormat, ...)
+{
+    if (pszValueFormat)
+    {
+        char    szValue[GUEST_PROP_MAX_VALUE_LEN];
+        va_list va;
+        va_start(va, pszValueFormat);
+        ssize_t cchValue = RTStrPrintf2V(szValue, sizeof(szValue), pszValueFormat, va);
+        va_end(va);
+        if (cchValue >= 0)
+            return VGSvcPropCacheUpdate(pCache, pszName, szValue);
+        return VERR_BUFFER_OVERFLOW;
+    }
+    return VGSvcPropCacheUpdate(pCache, pszName, NULL);
 }
 
 
