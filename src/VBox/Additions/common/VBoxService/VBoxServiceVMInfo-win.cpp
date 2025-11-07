@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceVMInfo-win.cpp 111555 2025-11-06 09:49:17Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceVMInfo-win.cpp 111572 2025-11-07 17:40:37Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Virtual Machine Information for the Host, Windows specifics.
  */
@@ -56,7 +56,6 @@
 #include <VBox/HostServices/GuestPropertySvc.h> /* GUEST_PROP_MAX_NAME_LEN */
 #include "VBoxServiceInternal.h"
 #include "VBoxServiceUtils.h"
-#include "VBoxServiceVMInfo.h"
 #include "../../WINNT/VBoxTray/VBoxTrayMsg.h" /* For IPC. */
 
 
@@ -1046,7 +1045,7 @@ static int vgsvcVMInfoWinUserSidLookup(const char *pszUser, PSID *ppSid)
 static int vgsvcVMInfoWinUserUpdateFallbackV(PVBOXSERVICEVEPROPCACHE pCache, const char *pszUser, const char *pszDomain,
                                              WCHAR *pwszSid, const char *pszKey, const char *pszValueFormat, va_list va)
 {
-    int rc = VGSvcUserUpdateF(pCache, pszUser, NULL /* pszDomain */, "Domain", pszDomain);
+    int rc = VGSvcUserUpdate(pCache, pszUser, NULL /* pszDomain */, "Domain", pszDomain);
     if (pwszSid && RT_SUCCESS(rc))
         rc = VGSvcUserUpdateF(pCache, pszUser, NULL /* pszDomain */, "SID", "%ls", pwszSid);
 
@@ -1113,12 +1112,11 @@ static int vgsvcVMInfoWinUserUpdateF(PVBOXSERVICEVEPROPCACHE pCache, const char 
                     char  szUserRid[16 + 1];
                     if (RTStrPrintf2(szUserRid, sizeof(szUserRid), "%ld", dwUserRid) > 0)
                     {
-                        rc = vgsvcVMInfoWinUserUpdateFallbackV(pCache, szUserRid, pszDomain, pwszSid, pszKey,
-                                                               pszValueFormat, va);
+                        rc = vgsvcVMInfoWinUserUpdateFallbackV(pCache, szUserRid, pszDomain, pwszSid, pszKey, pszValueFormat, va);
                         /* Also write the resolved user name into a dedicated key,
                          * so that it's easier to look it up for the host. */
                         if (RT_SUCCESS(rc))
-                            rc = VGSvcUserUpdateF(pCache, szUserRid, NULL /* pszDomain */, "User", pszUser);
+                            rc = VGSvcUserUpdate(pCache, szUserRid, NULL /* pszDomain */, "User", pszUser);
                     }
                     else
                         rc = VERR_BUFFER_OVERFLOW;

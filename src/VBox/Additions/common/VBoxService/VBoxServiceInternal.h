@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceInternal.h 111555 2025-11-06 09:49:17Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceInternal.h 111572 2025-11-07 17:40:37Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Guest Additions Services.
  */
@@ -271,6 +271,13 @@ extern decltype(LsaNtStatusToWinError)         *g_pfnLsaNtStatusToWinError;
 #endif
 
 # ifdef VBOX_WITH_GUEST_PROPS
+extern uint32_t                                 g_uVMInfoUserIdleThresholdMS;
+extern int                      VGSvcUserUpdate(PVBOXSERVICEVEPROPCACHE pCache, const char *pszUser, const char *pszDomain,
+                                                const char *pszKey, const char *pszValue);
+extern int                      VGSvcUserUpdateF(PVBOXSERVICEVEPROPCACHE pCache, const char *pszUser, const char *pszDomain,
+                                                 const char *pszKey, const char *pszValueFormat, ...);
+extern int                      VGSvcUserUpdateV(PVBOXSERVICEVEPROPCACHE pCache, const char *pszUser, const char *pszDomain,
+                                                 const char *pszKey, const char *pszFormat, va_list va);
 extern int                      VGSvcVMInfoWinWriteUsers(PVBOXSERVICEVEPROPCACHE pCache, char **ppszUserList, uint32_t *pcUsersInList);
 extern int                      VGSvcVMInfoWinGetComponentVersions(PVBGLGSTPROPCLIENT pClient);
 # endif /* VBOX_WITH_GUEST_PROPS */

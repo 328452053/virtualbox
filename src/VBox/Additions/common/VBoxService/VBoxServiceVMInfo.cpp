@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceVMInfo.cpp 111571 2025-11-07 17:20:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceVMInfo.cpp 111572 2025-11-07 17:40:37Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Virtual Machine Information for the Host.
  */
@@ -150,7 +150,6 @@
 #include "VBoxServiceInternal.h"
 #include "VBoxServiceUtils.h"
 #include "VBoxServicePropCache.h"
-#include "VBoxServiceVMInfo.h"
 
 
 /** Structure containing information about a location awarness
@@ -194,7 +193,7 @@ static uint64_t                 g_LAClientAttachedTS = 0;
 static VBOXSERVICELACLIENTINFO  g_LAClientInfo;
 /** User idle threshold (in ms). This specifies the minimum time a user is considered
  *  as being idle and then will be reported to the host. Default is 5s. */
-DECL_HIDDEN_DATA(uint32_t)      g_uVMInfoUserIdleThresholdMS = 5 * 1000;
+uint32_t                        g_uVMInfoUserIdleThresholdMS = 5 * 1000;
 
 
 /*********************************************************************************************************************************
@@ -455,17 +454,16 @@ static void vgsvcFreeLAClientInfo(PVBOXSERVICELACLIENTINFO pClient)
  * @param   pszUser                 Name of guest user to update.
  * @param   pszDomain               Domain of guest user to update. Optional.
  * @param   pszKey                  Key name of guest property to update.
- * @param   pszValueFormat          Guest property value to set. Pass NULL for deleting
- *                                  the property.
+ * @param   pszValue                Guest property value to set. Pass NULL for
+ *                                  deleting the property.
  */
-DECLHIDDEN(int) VGSvcUserUpdateF(PVBOXSERVICEVEPROPCACHE pCache, const char *pszUser, const char *pszDomain,
-                                 const char *pszKey, const char *pszValueFormat, ...)
+int VGSvcUserUpdate(PVBOXSERVICEVEPROPCACHE pCache, const char *pszUser, const char *pszDomain,
+                    const char *pszKey, const char *pszValue)
 {
     AssertPtrReturn(pCache, VERR_INVALID_POINTER);
     AssertPtrReturn(pszUser, VERR_INVALID_POINTER);
     AssertPtrNullReturn(pszDomain, VERR_INVALID_POINTER);
     AssertPtrReturn(pszKey, VERR_INVALID_POINTER);
-    AssertPtrNullReturn(pszValueFormat, VERR_INVALID_POINTER);
 
     /*
      * We limit guest property names to 64 characters (see GUEST_PROP_MAX_NAME_LEN,
@@ -475,7 +473,8 @@ DECLHIDDEN(int) VGSvcUserUpdateF(PVBOXSERVICEVEPROPCACHE pCache, const char *psz
     char szName[GUEST_PROP_MAX_NAME_LEN];
     AssertCompile(GUEST_PROP_MAX_NAME_LEN == 64); /* Can we improve stuff once we (ever) raise this limit? */
 
-    /* Try to write things the legacy way first. */ /** @todo r=bird: Which legacy is this? */
+    /* Try to write things the legacy way first.
+       bird: Confused as to what 'legacy' refers to here, but it's possibly the pszDomain == NULL situation. */
     ssize_t const cchName = pszDomain
                           ? RTStrPrintf2(szName, sizeof(szName), "%s/%s@%s/%s", g_pszPropCacheKeyUser, pszUser, pszDomain, pszKey)
                           : RTStrPrintf2(szName, sizeof(szName), "%s/%s/%s",    g_pszPropCacheKeyUser, pszUser, pszKey);
@@ -484,26 +483,34 @@ DECLHIDDEN(int) VGSvcUserUpdateF(PVBOXSERVICEVEPROPCACHE pCache, const char *psz
     if (cchName < 0)
         return VERR_BUFFER_OVERFLOW;
 
-    int rc = VINF_SUCCESS;
+    /*
+     * Set the property.
+     */
+    return VGSvcPropCacheUpdate(pCache, szName, pszValue);
+}
 
-    char *pszValue = NULL;
-    if (pszValueFormat)
-    {
-        /** @todo use static buffer. duh.   */
-        va_list va;
-        va_start(va, pszValueFormat);
-        if (RTStrAPrintfV(&pszValue, pszValueFormat, va) < 0)
-            rc = VERR_NO_MEMORY;
-        va_end(va);
-        if (   RT_SUCCESS(rc)
-            && !pszValue)
-            rc = VERR_NO_STR_MEMORY;
-    }
 
-    if (RT_SUCCESS(rc))
-        rc = VGSvcPropCacheUpdate(pCache, szName, pszValue);
-
-    RTStrFree(pszValue);
+/**
+ * Updates a per-guest user guest property inside the given property cache.
+ *
+ * @return  VBox status code.
+ * @retval  VERR_BUFFER_OVERFLOW if the final property name length exceeds the maximum supported length.
+ * @retval  VERR_INVALID_PARAMETER if the value is too long.
+ * @param   pCache                  Pointer to guest property cache to update user in.
+ * @param   pszUser                 Name of guest user to update.
+ * @param   pszDomain               Domain of guest user to update. Optional.
+ * @param   pszKey                  Key name of guest property to update.
+ * @param   pszValueFormat          Guest property value (format string) to set.
+ *                                  Pass NULL for deleting the property.
+ * @param   ...                     Format arguments.
+ */
+int VGSvcUserUpdateF(PVBOXSERVICEVEPROPCACHE pCache, const char *pszUser, const char *pszDomain,
+                     const char *pszKey, const char *pszValueFormat, ...)
+{
+    va_list va;
+    va_start(va, pszValueFormat);
+    int rc = VGSvcUserUpdateV(pCache, pszUser, pszDomain, pszKey, pszValueFormat, va);
+    va_end(va);
     return rc;
 }
 
@@ -513,24 +520,32 @@ DECLHIDDEN(int) VGSvcUserUpdateF(PVBOXSERVICEVEPROPCACHE pCache, const char *psz
  *
  * @return  VBox status code.
  * @retval  VERR_BUFFER_OVERFLOW if the final property name length exceeds the maximum supported length.
+ * @retval  VERR_INVALID_PARAMETER if the value is too long.
  * @param   pCache                  Pointer to guest property cache to update user in.
  * @param   pszUser                 Name of guest user to update.
  * @param   pszDomain               Domain of guest user to update. Optional.
  * @param   pszKey                  Key name of guest property to update.
- * @param   pszFormat               Format string to set. Pass NULL for deleting the property.
+ * @param   pszValueFormat          Guest property value (format string) to set.
+ *                                  Pass NULL for deleting the property.
  * @param   va                      Format arguments.
  */
-DECLHIDDEN(int) VGSvcUserUpdateV(PVBOXSERVICEVEPROPCACHE pCache, const char *pszUser, const char *pszDomain,
-                                 const char *pszKey, const char *pszFormat, va_list va)
+int VGSvcUserUpdateV(PVBOXSERVICEVEPROPCACHE pCache, const char *pszUser, const char *pszDomain,
+                     const char *pszKey, const char *pszValueFormat, va_list va)
 {
-    char *psz = NULL;
-    if (pszFormat) /* Might be NULL to delete a property. */
+    int rc;
+    if (pszValueFormat)
     {
-        if (RTStrAPrintfV(&psz, pszFormat, va) < 0)
-            return VERR_NO_MEMORY;
+        AssertPtrReturn(pszValueFormat, VERR_INVALID_POINTER);
+
+        char    szValue[GUEST_PROP_MAX_VALUE_LEN];
+        ssize_t cchValue = RTStrPrintf2V(szValue, sizeof(szValue), pszValueFormat, va);
+        if (cchValue >= 0)
+            rc = VGSvcUserUpdate(pCache, pszUser, pszDomain, pszKey, szValue);
+        else
+            rc = VERR_INVALID_PARAMETER;
     }
-    int const rc = VGSvcUserUpdateF(pCache, pszUser, pszDomain, pszKey, psz);
-    RTStrFree(psz);
+    else
+        rc = VGSvcUserUpdate(pCache, pszUser, pszDomain, pszKey, NULL);
     return rc;
 }
 
