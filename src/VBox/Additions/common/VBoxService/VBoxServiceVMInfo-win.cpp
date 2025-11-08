@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceVMInfo-win.cpp 111581 2025-11-08 14:09:19Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceVMInfo-win.cpp 111582 2025-11-08 14:09:35Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Virtual Machine Information for the Host, Windows specifics.
  */
@@ -455,7 +455,7 @@ static int vgsvcVMInfoWinTokenQueryInteractive(HANDLE hToken, DWORD pid, bool *p
                 return VINF_SUCCESS;
             }
             dwErr = GetLastError();
-            RTMemFree(pGroups);
+            RTMemTmpFree(pGroups);
         }
         else
             dwErr = ERROR_OUTOFMEMORY;
