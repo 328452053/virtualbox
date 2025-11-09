@@ -1,4 +1,4 @@
-/* $Id: nt.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: nt.h 111583 2025-11-09 03:44:00Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Header for code using the Native NT API.
  */
@@ -3225,6 +3225,7 @@ typedef struct _VM_COUNTERS
     SIZE_T QuotaNonPagedPoolUsage;
     SIZE_T PagefileUsage;
     SIZE_T PeakPagefileUsage;
+    SIZE_T PrivatePageCount;
 } VM_COUNTERS;
 typedef VM_COUNTERS *PVM_COUNTERS;
 #endif
@@ -3242,23 +3243,26 @@ typedef struct _IO_COUNTERS
 typedef IO_COUNTERS *PIO_COUNTERS;
 #endif
 
-typedef struct _RTNT_SYSTEM_PROCESS_INFORMATION
+typedef struct RTNT_SYSTEM_PROCESS_INFORMATION
 {
-    ULONG NextEntryOffset;          /**< 0x00 / 0x00 */
-    ULONG NumberOfThreads;          /**< 0x04 / 0x04 */
-    LARGE_INTEGER Reserved1[3];     /**< 0x08 / 0x08 */
-    LARGE_INTEGER CreationTime;     /**< 0x20 / 0x20 */
-    LARGE_INTEGER UserTime;         /**< 0x28 / 0x28 */
-    LARGE_INTEGER KernelTime;       /**< 0x30 / 0x30 */
-    UNICODE_STRING ProcessName;     /**< 0x38 / 0x38 Clean unicode encoding? */
-    int32_t BasePriority;           /**< 0x40 / 0x48 */
-    HANDLE UniqueProcessId;         /**< 0x44 / 0x50 */
-    HANDLE ParentProcessId;         /**< 0x48 / 0x58 */
-    ULONG HandleCount;              /**< 0x4c / 0x60 */
-    ULONG Reserved2;                /**< 0x50 / 0x64 Session ID? */
-    ULONG_PTR Reserved3;            /**< 0x54 / 0x68 */
-    VM_COUNTERS VmCounters;         /**< 0x58 / 0x70 */
-    IO_COUNTERS IoCounters;         /**< 0x88 / 0xd0 Might not be present in earlier windows versions. */
+    ULONG NextEntryOffset;              /**< 0x00 / 0x00 */
+    ULONG NumberOfThreads;              /**< 0x04 / 0x04 */
+    LARGE_INTEGER WorkingSetPrivateSize;/**< 0x08 / 0x08 NT 6.0 (vista) and higher. (NT 3.10 ReadTransferCount; spare from 3.50 thru 5.2)*/
+    ULONG HardFaultCount;               /**< 0x10 / 0x10 NT 6.1 (w7) and higher. (NT 3.10 WriteTransferCount.Lo; spare from 3.50 thru 6.0) */
+    ULONG NumberOfThreadsHighWatermark; /**< 0x14 / 0x14 NT 6.1 (w7) and higher. (NT 3.10 WriteTransferCount.Hi; spare from 3.50 thru 6.0) */
+    ULONGLONG CycleTime;                /**< 0x18 / 0x18 NT 6.1 (w7) and higher. (NT 3.10 OtherTransferCount; spare from 3.50 thru 6.0) */
+    LARGE_INTEGER CreationTime;         /**< 0x20 / 0x20 */
+    LARGE_INTEGER UserTime;             /**< 0x28 / 0x28 */
+    LARGE_INTEGER KernelTime;           /**< 0x30 / 0x30 */
+    UNICODE_STRING ProcessName;         /**< 0x38 / 0x38 XP may set the full path here or fall back on 8-bit unicode chars (max 15). Older versions may return NULL. */
+    int32_t BasePriority;               /**< 0x40 / 0x48 */
+    HANDLE UniqueProcessId;             /**< 0x44 / 0x50 */
+    HANDLE ParentProcessId;             /**< 0x48 / 0x58 */
+    ULONG HandleCount;                  /**< 0x4c / 0x60 NT 3.51 and higher.      (NT 3.10 ReadOperationCount; spare in 3.50) */
+    ULONG SessionId;                    /**< 0x50 / 0x64 NT 5.0 (w2k) and higher. (NT 3.10 WriteOperationCount; spare from 3.50 thru 4.0) */
+    ULONG_PTR UniqueProcessKey;         /**< 0x54 / 0x68 NT 5.1 (xp) and higher.  (NT 3.10 OtherOperationCount; space from 3.50 thru 5.0) */
+    VM_COUNTERS VmCounters;             /**< 0x58 / 0x70 Last entry for NT 3.10. */
+    IO_COUNTERS IoCounters;             /**< 0x88 / 0xd0 NT 5.0 (w2k) and higher.  */
     /* After this follows the threads, then the ProcessName.Buffer. */
 } RTNT_SYSTEM_PROCESS_INFORMATION;
 typedef RTNT_SYSTEM_PROCESS_INFORMATION *PRTNT_SYSTEM_PROCESS_INFORMATION;
