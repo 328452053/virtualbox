@@ -1,4 +1,4 @@
-/* $Id: VBoxWinDrvInst.cpp 111565 2025-11-07 16:33:13Z andreas.loeffler@oracle.com $ */
+/* $Id: VBoxWinDrvInst.cpp 111591 2025-11-10 11:16:29Z andreas.loeffler@oracle.com $ */
 /** @file
  * VBoxWinDrvInst - Windows driver installation handling.
  */
@@ -2317,18 +2317,15 @@ static int vboxWinDrvUninstallFromFsCopyFilesSingle(PVBOXWINDRVINSTINTERNAL pCtx
 
                         if (!(pCtx->Parms.fFlags & VBOX_WIN_DRIVERINSTALL_F_DRYRUN))
                         {
-                            char *pszPathAbs = NULL;
-                            rc = RTUtf16ToUtf8(wszPathAbs, &pszPathAbs);
-                            if (RT_SUCCESS(rc))
+                            /* Use DeleteFileW() instead of RTFileDelete() to better
+                             * resolve SetupAPI / not-handled-by-IPRT errors codes here. */
+                            if (!DeleteFileW(wszPathAbs))
                             {
-                                rc = RTFileDelete(pszPathAbs);
-                                if (RT_FAILURE(rc))
-                                    vboxWinDrvInstLogError(pCtx, "Failed deleting file '%s': %Rrc",
-                                                           pszPathAbs, rc);
-
-                                RTStrFree(pszPathAbs);
-                                /* Keep going. */
+                                DWORD const dwErr = GetLastError();
+                                if (dwErr != ERROR_FILE_NOT_FOUND)
+                                    rc = vboxWinDrvInstLogLastError(pCtx, "Could not delete file '%ls'", wszPathAbs);
                             }
+                            /* Keep going. */
                         }
                     }
                 }
