@@ -1,4 +1,4 @@
-/* $Id: VBoxMPVModes.cpp 111551 2025-11-05 18:33:23Z dmitrii.grigorev@oracle.com $ */
+/* $Id: VBoxMPVModes.cpp 111593 2025-11-10 13:12:10Z dmitrii.grigorev@oracle.com $ */
 /** @file
  * VBox WDDM Miniport driver
  */
@@ -311,48 +311,57 @@ int vboxWddmVModesAdd(PVBOXMP_DEVEXT pExt, VBOXWDDM_VMODES *pModes, uint32_t u32
     return rc;
 }
 
+#define VBOXWDDM_PROPNAME_PREFIX "/VirtualBox/VMInfo/Video/"
+
 int vboxWddmEnforceSingleVMode(VBOXWDDM_VMODES *pModes, uint32_t u32Target)
 {
     VBGLGSTPROPCLIENT hPropClient;
-    uint32_t u32XRes = 0, u32YRes = 0;
     int rc;
 
     rc = VbglGuestPropConnect(&hPropClient);
+    AssertRCReturn(rc, rc);
 
-    if (RT_SUCCESS(rc))
+    char    szPropName[sizeof(VBOXWDDM_PROPNAME_PREFIX) + 8]; // 8 is for "XRes%d"
+    ssize_t cchPropName;
+    char    szPropValue[64]; // Should be large enough to match the buffer layout: Value\0Flags\0
+
+    uint32_t u32XRes = 0, u32YRes = 0;
+
+    cchPropName = RTStrPrintf2(szPropName, sizeof(szPropName), VBOXWDDM_PROPNAME_PREFIX "XRes%d", u32Target);
+    if (cchPropName > 0)
     {
-        char szPropValue[64];
+        if (u32Target == 0)
+            szPropName[cchPropName - 1] = 0; // Converts XRes0 to XRes by replacing '0' with '\0'
 
-        rc = VbglGuestPropRead(&hPropClient, "/VirtualBox/GuestInfo/XRes", szPropValue, sizeof(szPropValue), 0, 0, 0, 0);
+        rc = VbglGuestPropRead(&hPropClient, szPropName, szPropValue, sizeof(szPropValue), 0, 0, 0, 0);
         if (RT_SUCCESS(rc))
         {
             u32XRes = RTStrToUInt32(szPropValue);
         }
+    }
 
-        rc = VbglGuestPropRead(&hPropClient, "/VirtualBox/GuestInfo/YRes", szPropValue, sizeof(szPropValue), 0, 0, 0, 0);
+    cchPropName = RTStrPrintf2(szPropName, sizeof(szPropName), VBOXWDDM_PROPNAME_PREFIX "YRes%d", u32Target);
+    if (cchPropName > 0)
+    {
+        if (u32Target == 0)
+            szPropName[cchPropName - 1] = 0;
+
+        rc = VbglGuestPropRead(&hPropClient, szPropName, szPropValue, sizeof(szPropValue), 0, 0, 0, 0);
         if (RT_SUCCESS(rc))
         {
             u32YRes = RTStrToUInt32(szPropValue);
         }
-
-        VbglGuestPropDisconnect(&hPropClient);
     }
+
+    VbglGuestPropDisconnect(&hPropClient);
 
     if (u32XRes > 0 && u32YRes > 0)
     {
         /* Appling the arbitrary 8K limits to always have a sensible values */
-        if (u32XRes > 7680)
-            u32XRes = 7680;
-        else if (u32XRes < 800)
-            u32XRes = 800;
-
-        if (u32YRes > 4320)
-            u32YRes = 4320;
-        else if (u32YRes < 600)
-            u32YRes = 600;
+        u32XRes = u32XRes > 7680 ? 7680 : u32XRes < 800 ? 800 : u32XRes;
+        u32YRes = u32YRes > 4320 ? 4320 : u32YRes < 600 ? 600 : u32YRes;
 
         RTRECTSIZE rect = {u32XRes, u32YRes};
-
         VBoxVModesAdd(&pModes->Modes, u32Target, CR_RSIZE2U64(rect));
 
         LogRel(("vboxWddmEnforceSingleVMode %dx%d for target %d\n", u32XRes, u32YRes, u32Target));
