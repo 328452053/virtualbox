@@ -1,4 +1,4 @@
-/* $Id: VBoxCryptoVfs.cpp 111604 2025-11-10 16:25:29Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxCryptoVfs.cpp 111605 2025-11-10 16:32:16Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox Cryptographic support module (for full VM encryption).
  */
@@ -222,7 +222,7 @@ DECLINLINE(uint64_t) vboxCryptoFileGetChunkIdFromPayloadOffset(PVBOXCRYPTOFILEVF
  */
 DECLINLINE(RTFOFF) vboxCryptoFileGetOffsetForChunkId(PVBOXCRYPTOFILEVFS pThis, uint64_t idChunk)
 {
-    return idChunk * pThis->cbUnit + pThis->cbSkipped + sizeof(ENCFILEHDR);
+    return (RTFOFF)(idChunk * pThis->cbUnit + pThis->cbSkipped + sizeof(ENCFILEHDR));
 }
 
 
@@ -496,7 +496,7 @@ static int vboxCryptoFileDeterminePayloadSize(PVBOXCRYPTOFILEVFS pThis, uint64_t
                     && cbRead == pThis->cbUnit)
                 {
                     /* Seek back */
-                    rc = RTVfsFileSeek(pThis->hFile, sizeof(ENCFILEHDR) + pThis->cbSkipped, RTFILE_SEEK_BEGIN, NULL /*poffActual*/);
+                    rc = RTVfsFileSeek(pThis->hFile, (RTFOFF)(sizeof(ENCFILEHDR) + pThis->cbSkipped), RTFILE_SEEK_BEGIN, NULL /*poffActual*/);
                     AssertRCReturn(rc, rc);
 
                     size_t cbDecrypted = 0;
@@ -735,7 +735,7 @@ static DECLCALLBACK(int) vboxCryptoFileVfs_QueryInfo(void *pvThis, PRTFSOBJINFO 
     if (RT_SUCCESS(rc))
     {
         /* Adjust the file size to exclude all the metadata. */
-        pObjInfo->cbObject = pThis->cbPayload;
+        pObjInfo->cbObject = (RTFOFF)pThis->cbPayload;
     }
 
     return rc;
@@ -934,7 +934,7 @@ static DECLCALLBACK(int) vboxCryptoFileVfs_Tell(void *pvThis, PRTFOFF poffActual
 {
     PVBOXCRYPTOFILEVFS pThis = (PVBOXCRYPTOFILEVFS)pvThis;
 
-    *poffActual = pThis->offPayloadPos;
+    *poffActual = (RTFOFF)pThis->offPayloadPos;
     return VINF_SUCCESS;
 }
 
@@ -1031,13 +1031,13 @@ static DECLCALLBACK(int) vboxCryptoFileVfs_Seek(void *pvThis, RTFOFF offSeek, un
         offNew = offWrt;
     else if (offSeek > 0)
     {
-        offNew = offWrt + offSeek;
+        offNew = offWrt + (uint64_t)offSeek;
         if (   offNew < offWrt
             || offNew > RTFOFF_MAX)
             offNew = RTFOFF_MAX;
     }
     else if ((uint64_t)-offSeek < offWrt)
-        offNew = offWrt + offSeek;
+        offNew = offWrt + (uint64_t)offSeek;
     else
         offNew = 0;
 
@@ -1053,7 +1053,7 @@ static DECLCALLBACK(int) vboxCryptoFileVfs_Seek(void *pvThis, RTFOFF offSeek, un
     }
 
 
-    *poffActual = offNew;
+    *poffActual = (RTFOFF)offNew;
     return VINF_SUCCESS;
 }
 
