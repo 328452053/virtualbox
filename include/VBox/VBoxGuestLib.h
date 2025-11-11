@@ -106,7 +106,7 @@ struct VBGLGSTPROPCLIENT;
 /** @defgroup grp_vboxguest_lib_r0     Ring-0 interface.
  * @{
  */
-#ifdef IN_RING0
+#if defined(IN_RING0) || defined(DOXYGEN_RUNNING)
 /** @def DECLR0VBGL
  * Declare a VBGL ring-0 API with the right calling convention and visibilitiy.
  * @param type      Return type.  */
@@ -234,7 +234,7 @@ DECLR0VBGL(int) VbglGR0Verify(const struct VMMDevRequestHeader *pReq, size_t cbR
 
 /** @} */
 
-# ifdef VBOX_WITH_HGCM
+# if defined(VBOX_WITH_HGCM) || defined(DOXYGEN_RUNNING)
 struct VBGLIOCHGCMCALL;
 struct VBGLIOCIDCHGCMFASTCALL;
 
@@ -350,16 +350,16 @@ DECLR0VBGL(int) VbglR0HGCMInternalCall32(struct VBGLIOCHGCMCALL *pCallInfo, uint
 
 #  else  /* !VBGL_VBOXGUEST */
 
-#ifndef VBGL_VBOXGUEST
+#   ifndef VBGL_VBOXGUEST
 /** @internal  */
 typedef struct VBGLHGCMHANDLEDATA
 {
     uint32_t fAllocated;
     VBGLIDCHANDLE IdcHandle;
 } VBGLHGCMHANDLEDATA;
-#else
+#   else
 struct VBGLHGCMHANDLEDATA;
-#endif
+#   endif
 
 typedef struct VBGLHGCMHANDLEDATA *VBGLHGCMHANDLE;
 
@@ -479,7 +479,7 @@ DECLR0VBGL(int) VbglR0CrCtlConCallUserDataRaw(VBGLCRCTLHANDLE hCtl, struct VBGLI
 
 #  endif /* !VBGL_VBOXGUEST */
 
-# endif /* VBOX_WITH_HGCM */
+# endif /* VBOX_WITH_HGCM || DOXYGEN_RUNNING */
 
 
 /**
@@ -532,24 +532,22 @@ DECLR0VBGL(void)    VbglR0PhysHeapFree(void *pv);
 DECLR0VBGL(int)     VbglR0QueryVMMDevMemory(struct VMMDevMemory **ppVMMDevMemory);
 DECLR0VBGL(bool)    VbglR0CanUsePhysPageList(void);
 
-# ifndef VBOX_GUEST
+# if !defined(VBOX_GUEST) || defined(DOXYGEN_RUNNING)
 /** @name Mouse
  * @{ */
 DECLR0VBGL(int)     VbglR0SetMouseNotifyCallback(PFNVBOXGUESTMOUSENOTIFY pfnNotify, void *pvUser);
 DECLR0VBGL(int)     VbglR0GetMouseStatus(uint32_t *pfFeatures, uint32_t *px, uint32_t *py);
 DECLR0VBGL(int)     VbglR0SetMouseStatus(uint32_t fFeatures);
 /** @}  */
-# endif /* VBOX_GUEST */
+# endif /* VBOX_GUEST || DOXYGEN_RUNNING */
 
-#endif /* IN_RING0 */
-
+#endif /* IN_RING0  || DOXYGEN_RUNNING */
 /** @} */
-
 
 /** @defgroup grp_vboxguest_lib_r3      Ring-3 interface.
  * @{
  */
-#ifdef IN_RING3
+#if defined(IN_RING3) || defined(DOXYGEN_RUNNING)
 
 /** @def VBGLR3DECL
  * Ring 3 VBGL declaration.
@@ -564,7 +562,7 @@ DECLR0VBGL(int)     VbglR0SetMouseStatus(uint32_t fFeatures);
  * @{ */
 /** Exit code which is returned by VBoxClient child process to notify
  * parent to release VBoxGuest driver resources on Unix-like guests. */
-#define VBGLR3_EXITCODE_RELOAD  (2)
+# define VBGLR3_EXITCODE_RELOAD (2)
 
 VBGLR3DECL(int)     VbglR3Init(void);
 VBGLR3DECL(int)     VbglR3InitUser(void);
@@ -594,11 +592,11 @@ VBGLR3DECL(int)     VbglR3QuerySessionId(uint64_t *pu64IdSession);
 
 /** @} */
 
-# ifdef VBOX_WITH_SHARED_CLIPBOARD
+# if defined(VBOX_WITH_SHARED_CLIPBOARD) || defined(DOXYGEN_RUNNING)
 /** @name Shared Clipboard
  * @{ */
 
-# ifdef VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS
+#  ifdef VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS
 /**
  * Structure for maintaining a VbglR3 Shared Clipboard transfer context.
  */
@@ -615,7 +613,7 @@ typedef struct VBGLR3SHCLTRANSFERCMDCTX
 } VBGLR3SHCLTRANSFERCTX;
 /** Pointer to a Shared Clipboard transfer context. */
 typedef VBGLR3SHCLTRANSFERCMDCTX *PVBGLR3SHCLTRANSFERCMDCTX;
-# endif /* VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS */
+#  endif /* VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS */
 
 /**
  * The context required for either retrieving or sending a HGCM shared clipboard
@@ -642,10 +640,10 @@ typedef struct VBGLR3SHCLCMDCTX
     uint64_t                    fGuestFeatures;
     /** The context ID - input or/and output depending on the operation. */
     uint64_t                    idContext;
-# ifdef VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS
+#  ifdef VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS
     /** Data related to Shared Clipboard file transfers. */
     VBGLR3SHCLTRANSFERCMDCTX    Transfers;
-# endif
+#  endif
 } VBGLR3SHCLCMDCTX;
 /** Pointer to a shared clipboard context for Vbgl. */
 typedef VBGLR3SHCLCMDCTX *PVBGLR3SHCLCMDCTX;
@@ -704,7 +702,8 @@ typedef struct _VBGLR3CLIPBOARDEVENT
 typedef const PVBGLR3CLIPBOARDEVENT CPVBGLR3CLIPBOARDEVENT;
 
 /** @todo r=bird: I'm not sure it is appropriate for the VbglR3 to use types
- *        from VBox/GuestHost/SharedClipboard*.h, doesn't seem clean to me. */
+ *        from VBox/GuestHost/SharedClipboard*.h, doesn't seem clean to me.
+ * Put all this in a separate header, please.  */
 
 VBGLR3DECL(int)     VbglR3ClipboardConnect(HGCMCLIENTID *pidClient);
 VBGLR3DECL(int)     VbglR3ClipboardDisconnect(HGCMCLIENTID idClient);
@@ -766,7 +765,7 @@ VBGLR3DECL(int)     VbglR3ClipboardTransferObjWriteSend(PVBGLR3SHCLCMDCTX pCtx, 
                                                 uint32_t *pcbWritten);
 #  endif /* VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS */
 /** @} */
-# endif /* VBOX_WITH_SHARED_CLIPBOARD */
+# endif /* VBOX_WITH_SHARED_CLIPBOARD || DOXYGEN_RUNNING */
 
 /** @name Seamless mode
  * @{ */
@@ -796,15 +795,16 @@ VBGLR3DECL(int)     VbglR3SetPointerShapeReq(struct VMMDevReqMousePointer *pReq)
 /** @name Display
  * @{ */
 /** The folder for the video mode hint unix domain socket on Unix-like guests.
- * @note This can be safely changed as all users are rebuilt in lock-step. */
-#define VBGLR3HOSTDISPSOCKETPATH    "/tmp/.VBoxService"
+ * @note This can be safely changed as all users are rebuilt in lock-step.
+ * @todo fix name using '_' between words!  */
+# define VBGLR3HOSTDISPSOCKETPATH    "/tmp/.VBoxService"
 /** The path to the video mode hint unix domain socket on Unix-like guests. */
-#define VBGLR3HOSTDISPSOCKET        VBGLR3VIDEOMODEHINTSOCKETPATH "/VideoModeHint"
+# define VBGLR3HOSTDISPSOCKET        VBGLR3VIDEOMODEHINTSOCKETPATH "/VideoModeHint"
 
 /** The folder for saving video mode hints to between sessions. */
-#define VBGLR3HOSTDISPSAVEDMODEPATH "/var/lib/VBoxGuestAdditions"
+# define VBGLR3HOSTDISPSAVEDMODEPATH "/var/lib/VBoxGuestAdditions"
 /** The path to the file for saving video mode hints to between sessions. */
-#define VBGLR3HOSTDISPSAVEDMODE     VBGLR3HOSTDISPSAVEDMODEPATH "/SavedVideoModes"
+# define VBGLR3HOSTDISPSAVEDMODE     VBGLR3HOSTDISPSAVEDMODEPATH "/SavedVideoModes"
 
 VBGLR3DECL(int)     VbglR3GetDisplayChangeRequest(uint32_t *pcx, uint32_t *pcy, uint32_t *pcBits, uint32_t *piDisplay,
                                                   uint32_t *pdx, uint32_t *pdy, bool *pfEnabled, bool *pfChangeOrigin, bool fAck);
@@ -1170,6 +1170,8 @@ VBGLR3DECL(int) VbglR3GuestCtrlFsObjCbQueryInfo(PVBGLR3GUESTCTRLCMDCTX pCtx, int
 VBGLR3DECL(int) VbglR3GuestCtrlProcCbStatus(PVBGLR3GUESTCTRLCMDCTX pCtx, uint32_t uPID, uint32_t uStatus, uint32_t fFlags, void *pvData, uint32_t cbData);
 VBGLR3DECL(int) VbglR3GuestCtrlProcCbOutput(PVBGLR3GUESTCTRLCMDCTX pCtx, uint32_t uPID, uint32_t uHandle, uint32_t fFlags, void *pvData, uint32_t cbData);
 VBGLR3DECL(int) VbglR3GuestCtrlProcCbStatusInput(PVBGLR3GUESTCTRLCMDCTX pCtx, uint32_t u32PID, uint32_t uStatus, uint32_t fFlags, uint32_t cbWritten);
+
+/** @} */
 # endif /* VBOX_WITH_GUEST_CONTROL defined */
 
 /** @name Auto-logon handling
@@ -1206,7 +1208,7 @@ VBGLR3DECL(bool)    VbglR3PageSharingIsEnabled(void);
 VBGLR3DECL(int)     VbglR3PageIsShared(RTGCPTR pPage, bool *pfShared, uint64_t *puPageFlags);
 /** @} */
 
-# ifdef VBOX_WITH_DRAG_AND_DROP
+# if defined(VBOX_WITH_DRAG_AND_DROP) || defined(DOXYGEN_RUNNING)
 /** @name Drag and Drop
  * @{ */
 /**
@@ -1300,11 +1302,11 @@ typedef enum VBGLR3DNDEVENTTYPE
     VBGLR3DNDEVENTTYPE_HG_LEAVE,
     VBGLR3DNDEVENTTYPE_HG_DROP,
     VBGLR3DNDEVENTTYPE_HG_RECEIVE,
-# ifdef VBOX_WITH_DRAG_AND_DROP_GH
+#  ifdef VBOX_WITH_DRAG_AND_DROP_GH
     VBGLR3DNDEVENTTYPE_GH_ERROR,
     VBGLR3DNDEVENTTYPE_GH_REQ_PENDING,
     VBGLR3DNDEVENTTYPE_GH_DROP,
-# endif
+#  endif
     /** Tells the caller that it has to quit operation. */
     VBGLR3DNDEVENTTYPE_QUIT,
     /** Blow the type up to 32-bit. */
@@ -1321,7 +1323,7 @@ typedef struct VBGLR3DNDEVENT
         {
             /** Screen ID this request belongs to. */
             uint32_t uScreenID;
-            /** Format list (UTF-8, \r\n separated). */
+            /** Format list (UTF-8, \\r\\n separated). */
             char    *pszFormats;
             /** Size (in bytes) of pszFormats (\0 included). */
             uint32_t cbFormats;
@@ -1356,7 +1358,7 @@ typedef struct VBGLR3DNDEVENT
             /** IPRT-style error code. */
             int rc;
         } HG_Error;
-# ifdef VBOX_WITH_DRAG_AND_DROP_GH
+#  ifdef VBOX_WITH_DRAG_AND_DROP_GH
         struct
         {
             /** Screen ID this request belongs to. */
@@ -1371,7 +1373,7 @@ typedef struct VBGLR3DNDEVENT
             /** Requested DnD action. */
             VBOXDNDACTION dndActionRequested;
         } GH_Drop;
-# endif
+#  endif
     } u;
 } VBGLR3DNDEVENT;
 typedef VBGLR3DNDEVENT *PVBGLR3DNDEVENT;
@@ -1394,7 +1396,7 @@ VBGLR3DECL(int)     VbglR3DnDGHSendAckPending(PVBGLR3GUESTDNDCMDCTX pCtx, VBOXDN
 VBGLR3DECL(int)     VbglR3DnDGHSendData(PVBGLR3GUESTDNDCMDCTX pCtx, const char *pszFormat, void *pvData, uint32_t cbData);
 #  endif /* VBOX_WITH_DRAG_AND_DROP_GH */
 /** @} */
-# endif /* VBOX_WITH_DRAG_AND_DROP */
+# endif /* VBOX_WITH_DRAG_AND_DROP || DOXYGEN_RUNNING */
 
 /* Generic Host Channel Service. */
 VBGLR3DECL(int)  VbglR3HostChannelInit(uint32_t *pidClient);
@@ -1436,7 +1438,7 @@ struct VBGLIOCHGCMCALL;
 VBGLR3DECL(int)     VbglR3HGCMCall(struct VBGLIOCHGCMCALL *pInfo, size_t cbInfo);
 /** @} */
 
-#endif /* IN_RING3 */
+#endif /* IN_RING3 || DOXYGEN_RUNNING */
 /** @} */
 
 RT_C_DECLS_END
