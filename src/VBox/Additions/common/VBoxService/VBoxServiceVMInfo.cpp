@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceVMInfo.cpp 111618 2025-11-11 08:44:36Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceVMInfo.cpp 111619 2025-11-11 08:53:12Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Virtual Machine Information for the Host.
  */
@@ -194,7 +194,7 @@ typedef struct VBOXSERVICELACLIENTINFO
     char       *pszLocation;
     char       *pszDomain;
     bool        fAttached;
-    uint64_t    uAttachedTS;
+    uint64_t    nsAttachedTS;
 } VBOXSERVICELACLIENTINFO, *PVBOXSERVICELACLIENTINFO;
 #endif
 
@@ -225,7 +225,7 @@ static const char              *g_pszPropCacheKeyUser              = "/VirtualBo
 /** The VM session ID. Changes whenever the VM is restored or reset. */
 static uint64_t                 g_idVMInfoSession;
 /** The last attached locartion awareness (LA) client timestamp. */
-static uint64_t                 g_LAClientAttachedTS = 0;
+static uint64_t                 g_nsLAClientAttachedTS = 0;
 /** User idle threshold (in ms). This specifies the minimum time a user is considered
  *  as being idle and then will be reported to the host. Default is 5s. */
 uint32_t                        g_cMsVMInfoUserIdleThreshold = 5 * 1000;
@@ -426,7 +426,7 @@ static int vgsvcGetLAClientInfo(uint32_t uClientID, PVBOXSERVICELACLIENTINFO pCl
     if (RT_SUCCESS(rc))
     {
         char *pszAttach;
-        rc = vgsvcGetLAClientValue(uClientID, "Attach", &pszAttach, &pClient->uAttachedTS);
+        rc = vgsvcGetLAClientValue(uClientID, "Attach", &pszAttach, &pClient->nsAttachedTS);
         if (RT_SUCCESS(rc))
         {
             AssertPtr(pszAttach);
@@ -1814,33 +1814,33 @@ static DECLCALLBACK(int) vbsvcVMInfoWorker(bool volatile *pfShutdown)
         if (RT_SUCCESS(rc2))
         {
             AssertPtr(pszLAClientID);
-            if (RTStrICmp(pszLAClientID, "0")) /* Is a client connected? */
+            if (strcmp(pszLAClientID, "0") != 0) /* Is a client connected? */
             {
-                uint32_t uLAClientID = RTStrToInt32(pszLAClientID);
-                uint64_t uLAClientAttachedTS;
+                uint32_t idLAClient = RTStrToInt32(pszLAClientID);
 
                 /* Peek at "Attach" value to figure out if hotdesking happened. */
-                char *pszAttach = NULL;
-                rc2 = vgsvcGetLAClientValue(uLAClientID, "Attach", &pszAttach, &uLAClientAttachedTS);
-
+                char    *pszAttach            = NULL;
+                uint64_t nsLAClientAttachedTS = 0;
+                rc2 = vgsvcGetLAClientValue(idLAClient, "Attach", &pszAttach, &nsLAClientAttachedTS);
                 if (   RT_SUCCESS(rc2)
-                    && (   !g_LAClientAttachedTS
-                        || (g_LAClientAttachedTS != uLAClientAttachedTS)))
+                    && (   !g_nsLAClientAttachedTS
+                        || (g_nsLAClientAttachedTS != nsLAClientAttachedTS)))
                 {
                     vgsvcFreeLAClientInfo(&g_LAClientInfo);
 
                     /* Note: There is a race between setting the guest properties by the host and getting them by
                      *       the guest. */
-                    rc2 = vgsvcGetLAClientInfo(uLAClientID, &g_LAClientInfo);
+                    rc2 = vgsvcGetLAClientInfo(idLAClient, &g_LAClientInfo);
                     if (RT_SUCCESS(rc2))
                     {
                         VGSvcVerbose(1, "VRDP: Hotdesk client %s with ID=%RU32, Name=%s, Domain=%s\n",
-                                     /* If g_LAClientAttachedTS is 0 this means there already was an active
+                                     /* If g_nsLAClientAttachedTS is 0 this means there already was an active
                                       * hotdesk session when VBoxService started. */
-                                     !g_LAClientAttachedTS ? "already active" : g_LAClientInfo.fAttached ? "connected" : "disconnected",
-                                     uLAClientID, g_LAClientInfo.pszName, g_LAClientInfo.pszDomain);
+                                     !g_nsLAClientAttachedTS ? "already active"
+                                     : g_LAClientInfo.fAttached ? "connected" : "disconnected",
+                                     idLAClient, g_LAClientInfo.pszName, g_LAClientInfo.pszDomain);
 
-                        g_LAClientAttachedTS = g_LAClientInfo.uAttachedTS;
+                        g_nsLAClientAttachedTS = g_LAClientInfo.nsAttachedTS;
 
                         /* Don't wait for event semaphore below anymore because we now know that the client
                          * changed. This means we need to iterate all VM information again immediately. */
@@ -1848,16 +1848,13 @@ static DECLCALLBACK(int) vbsvcVMInfoWorker(bool volatile *pfShutdown)
                     }
                     else
                     {
-                        static int s_iBitchedAboutLAClientInfo = 0;
-                        if (s_iBitchedAboutLAClientInfo < 10)
-                        {
-                            s_iBitchedAboutLAClientInfo++;
+                        static uint64_t s_cBitchedAboutLAClientInfo = 0;
+                        if (s_cBitchedAboutLAClientInfo++ < 10)
                             VGSvcError("Error getting active location awareness client info, rc=%Rrc\n", rc2);
-                        }
                     }
                 }
                 else if (RT_FAILURE(rc2))
-                     VGSvcError("Error getting attached value of location awareness client %RU32, rc=%Rrc\n", uLAClientID, rc2);
+                     VGSvcError("Error getting attached value of location awareness client %RU32, rc=%Rrc\n", idLAClient, rc2);
                 if (pszAttach)
                     RTStrFree(pszAttach);
             }
