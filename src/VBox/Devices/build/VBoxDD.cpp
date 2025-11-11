@@ -1,4 +1,4 @@
-/* $Id: VBoxDD.cpp 110689 2025-08-12 05:31:16Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxDD.cpp 111610 2025-11-11 06:37:00Z alexander.eichner@oracle.com $ */
 /** @file
  * VBoxDD - Built-in drivers & devices (part 1).
  */
@@ -495,6 +495,13 @@ extern "C" DECLEXPORT(int) VBoxDriversRegister(PCPDMDRVREGCB pCallbacks, uint32_
     if (RT_FAILURE(rc))
         return rc;
 #endif
+
+#ifdef VBOX_WITH_USB_CARDREADER_TEST
+    rc = pCallbacks->pfnRegister(pCallbacks, &g_DrvCardReaderReg);
+    if (RT_FAILURE(rc))
+        return rc;
+#endif
+
     return VINF_SUCCESS;
 }
 
@@ -534,6 +541,11 @@ extern "C" DECLEXPORT(int) VBoxUsbRegister(PCPDMUSBREGCB pCallbacks, uint32_t u3
 #endif
 #ifdef VBOX_WITH_USB_VIDEO_IMPL
     rc = pCallbacks->pfnRegister(pCallbacks, &g_DevWebcam);
+    if (RT_FAILURE(rc))
+        return rc;
+#endif
+#ifdef VBOX_WITH_USB_CARDREADER
+    rc = pCallbacks->pfnRegister(pCallbacks, &g_UsbSCardReader);
     if (RT_FAILURE(rc))
         return rc;
 #endif

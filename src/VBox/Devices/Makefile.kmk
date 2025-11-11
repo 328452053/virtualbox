@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 110883 2025-09-04 07:02:15Z alexander.eichner@oracle.com $
+# $Id: Makefile.kmk 111610 2025-11-11 06:37:00Z alexander.eichner@oracle.com $
 ## @file
 # Top-level sub-makefile for the devices, drivers and services.
 #
@@ -537,6 +537,35 @@ if !defined(VBOX_ONLY_EXTPACKS) && "$(intersects $(KBUILD_TARGET_ARCH),$(VBOX_SU
    	-framework CoreVideo \
    	-framework Foundation
   endif
+
+ if defined(VBOX_WITH_USB_CARDREADER)
+   VBoxDD_DEFS    += VBOX_WITH_USB_CARDREADER
+   VBoxDD_SOURCES += \
+   	Security/UsbCardReader.cpp \
+   	Security/CardReaderDebug.cpp
+
+   # @todo Use the lazy loader to dynamically load the PCSC library
+   #       and define the necessary interface bits ourselves to avoid
+   #       relying on the PCSC SDK.
+   if defined(VBOX_WITH_USB_CARDREADER_TEST)
+
+    VBoxDD_DEFS    += VBOX_WITH_USB_CARDREADER_TEST
+    VBoxDD_SOURCES += Security/DrvDirectCardReader2.cpp
+
+    if1of ($(KBUILD_TARGET), linux)
+     # PCSC framework on darwin isn't available, so I've used custom build at least for Unix compilation test
+     PCSC_sdk ?= /usr
+     VBoxDD_INCS.linux += $(PCSC_sdk)/include/PCSC
+    endif
+
+    VBoxDD_LDFLAGS.darwin += -L/usr/local/lib
+    VBoxDD_LDFLAGS.linux += -L$(PCSC_sdk)/lib
+    VBoxDD_LIBS.win += Winscard.lib
+    ifn1of ($(KBUILD_TARGET), win)
+     VBoxDD_LIBS += pcsclite
+    endif
+  endif
+ endif
 
  endif # VBOX_WITH_USB
 

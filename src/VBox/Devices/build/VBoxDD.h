@@ -1,4 +1,4 @@
-/* $Id: VBoxDD.h 110689 2025-08-12 05:31:16Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxDD.h 111610 2025-11-11 06:37:00Z alexander.eichner@oracle.com $ */
 /** @file
  * Built-in drivers & devices (part 1) header.
  */
@@ -239,6 +239,13 @@ extern const PDMDEVREG g_DevicePciGenericEcamBridge;
 extern const PDMDEVREG g_DevicePlatform;
 
 extern const PDMDRVREG g_DrvGpioButton;
+#endif
+
+#ifdef VBOX_WITH_USB_CARDREADER
+extern const PDMUSBREG g_UsbSCardReader;
+# ifdef VBOX_WITH_USB_CARDREADER_TEST
+extern const PDMDRVREG g_DrvCardReaderReg;
+# endif
 #endif
 
 /* VBoxAcpi.cpp */
