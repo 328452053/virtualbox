@@ -1,4 +1,4 @@
-/* $Id: VBoxCrypto.cpp 111607 2025-11-10 16:48:14Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxCrypto.cpp 111613 2025-11-11 07:37:07Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox Cryptographic support module (for full VM encryption).
  */
@@ -1208,7 +1208,7 @@ static int vboxCryptoKeyStoreEncode(PVBoxKeyStore pKeyStore, char **ppszEnc)
  * @interface_method_impl{VBOXCRYPTOIF,pfnCryptoKeyStoreGetDekFromEncoded}
  */
 static DECLCALLBACK(int) vboxCryptoKeyStoreGetDekFromEncoded(const char *pszEnc, const char *pszPassword,
-                                                             uint8_t **ppbDek, size_t *pcbDek, char **ppszCipher)
+                                                             uint8_t **ppbKey, size_t *pcbKey, char **ppszCipher)
 {
     VBoxKeyStore KeyStore;
 
@@ -1258,8 +1258,8 @@ static DECLCALLBACK(int) vboxCryptoKeyStoreGetDekFromEncoded(const char *pszEnc,
             vrc = vboxCryptoKeyStoreCheckDekAgainstDigest(&KeyStore, pbDekDecrypted);
             if (RT_SUCCESS(vrc))
             {
-                *pcbDek = KeyStore.cbKey;
-                *ppbDek = pbDekDecrypted;
+                *pcbKey = KeyStore.cbKey;
+                *ppbKey = pbDekDecrypted;
                 *ppszCipher = pszCipher;
             }
             else
@@ -1280,7 +1280,7 @@ static DECLCALLBACK(int) vboxCryptoKeyStoreGetDekFromEncoded(const char *pszEnc,
 /**
  * @interface_method_impl{VBOXCRYPTOIF,pfnCryptoKeyStoreCreate}
  */
-static DECLCALLBACK(int) vboxCryptoKeyStoreCreate(const char *pszPassword, const uint8_t *pbDek, size_t cbDek,
+static DECLCALLBACK(int) vboxCryptoKeyStoreCreate(const char *pszPassword, const uint8_t *pbKey, size_t cbKey,
                                                   const char *pszCipher, char **ppszEnc)
 {
     VBoxKeyStore KeyStore;
@@ -1296,15 +1296,15 @@ static DECLCALLBACK(int) vboxCryptoKeyStoreCreate(const char *pszPassword, const
         vrc = RTStrCopy(&KeyStore.szCipher[0], sizeof(KeyStore.szCipher), pszCipher);
         if (RT_SUCCESS(vrc))
         {
-            KeyStore.cbKey = (uint32_t)cbDek;
-            Assert(KeyStore.cbKey == cbDek);
+            KeyStore.cbKey = (uint32_t)cbKey;
+            Assert(KeyStore.cbKey == cbKey);
             strcpy(&KeyStore.szKeyDeriv[0], "PBKDF2-SHA256");
             KeyStore.cDekIterations = vboxCryptoKeyStoreIterationCountBenchmark(vboxCryptoKeyStoreGetDigest(&KeyStore),
                                                                                 strlen(pszPassword),
-                                                                                cbDek, VBOX_KEYSTORE_PBKDF2_COMPUTE_MAX);
+                                                                                cbKey, VBOX_KEYSTORE_PBKDF2_COMPUTE_MAX);
             if (KeyStore.cDekIterations > 0)
             {
-                vrc = vboxCryptoKeyStoreDekDigestGenerate(&KeyStore, pbDek);
+                vrc = vboxCryptoKeyStoreDekDigestGenerate(&KeyStore, pbKey);
                 if (RT_SUCCESS(vrc))
                 {
                     uint8_t *pbDerivKey = NULL;
@@ -1312,7 +1312,7 @@ static DECLCALLBACK(int) vboxCryptoKeyStoreCreate(const char *pszPassword, const
                     vrc = vboxCryptoKeyStoreDeriveKeyFromPassword(pszPassword, &KeyStore, &pbDerivKey, &cbDerivKey);
                     if (RT_SUCCESS(vrc))
                     {
-                        vrc = vboxCryptoKeyStoreDekEncryptWithKey(&KeyStore, pbDerivKey, cbDerivKey, pbDek);
+                        vrc = vboxCryptoKeyStoreDekEncryptWithKey(&KeyStore, pbDerivKey, cbDerivKey, pbKey);
                         if (RT_SUCCESS(vrc))
                             vrc = vboxCryptoKeyStoreEncode(&KeyStore, ppszEnc);
 

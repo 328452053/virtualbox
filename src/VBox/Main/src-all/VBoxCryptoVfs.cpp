@@ -1,4 +1,4 @@
-/* $Id: VBoxCryptoVfs.cpp 111607 2025-11-10 16:48:14Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxCryptoVfs.cpp 111613 2025-11-11 07:37:07Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox Cryptographic support module (for full VM encryption).
  */
@@ -271,6 +271,9 @@ static uint64_t vboxCryptoFileGetSizeWithoutMetadata(PVBOXCRYPTOFILEVFS pThis, u
  * @returns VBox status code.
  * @param   pThis               The encrypted file VFS instance.
  * @param   idChunk             ID of the chunk to write.
+ * @param   pcbPayload          Where to store the size of the payload in bytes.
+ * @param   pbPayload           The payload data.
+ * @param   cbDataInChunk       Actual size of the data in the chunk, can be less than the chunk size.
  * @param   fEos                Flag whether this is the last chunk in the stream, only random padding comes after this chunk.
  */
 static int vboxCryptoFileWriteChunkWithId(PVBOXCRYPTOFILEVFS pThis, uint64_t idChunk, uint32_t *pcbPayload, uint8_t *pbPayload,
@@ -335,7 +338,6 @@ static int vboxCryptoFileAppendChunk(PVBOXCRYPTOFILEVFS pThis, bool fEos)
  *
  * @returns VBox status code.
  * @param   pThis               The encrypted file VFS instance.
- * @param   fEos                Flag whether this is the last chunk in the stream, only random padding comes after this chunk.
  */
 static int vboxCryptoFileWriteModifiedChunk(PVBOXCRYPTOFILEVFS pThis)
 {
@@ -940,7 +942,7 @@ static DECLCALLBACK(int) vboxCryptoFileVfs_Tell(void *pvThis, PRTFOFF poffActual
 
 
 /**
- * @interface_method_impl{RTVFSOBJSETOPS,pfnMode}
+ * @interface_method_impl{RTVFSOBJSETOPS,pfnSetMode}
  */
 static DECLCALLBACK(int) vboxCryptoFileVfs_SetMode(void *pvThis, RTFMODE fMode, RTFMODE fMask)
 {

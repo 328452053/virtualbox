@@ -1110,7 +1110,7 @@ typedef struct RTVFSFILEOPS
      *          supported by the file system / host operating system.
      *
      * @param   pvThis      The implementation specific file data.
-     * @param   pcbFile     Where to store the current file size.
+     * @param   cbFile      The new file size in bytes.
      * @param   fFlags      RTVFSFILE_SET_SIZE_F_XXX.
      * @note    Optional.  If NULL, VERR_WRITE_PROTECT will be returned.
      * @sa      RTFileSetSize, RTFileSetAllocationSize
