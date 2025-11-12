@@ -1,4 +1,4 @@
-/* $Id: SUPDrv-linux.c 111623 2025-11-11 09:36:02Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: SUPDrv-linux.c 111642 2025-11-12 06:39:07Z ramshankar.venkataraman@oracle.com $ */
 /** @file
  * VBoxDrv - The VirtualBox Support Driver - Linux specifics.
  */
@@ -191,10 +191,6 @@ static bool                 g_fFoundKvmHwvirtSymbols;
 static int                  (*g_pfnKvmEnableVirtualization)(void);
 /** Function pointer to kvm_disable_virtualization(). */
 static void                 (*g_pfnKvmDisableVirtualization)(void);
-/** Paranoia: Pull in any exported function from the kvm module to prevent it from
- *  being unloaded while we use it. __symbol_get() already increments the module
- *  reference count. */
-PFNRT                       g_apfnKvmDep = (PFNRT)kvm_get_kvm;
 #endif
 
 /** Module parameter.
