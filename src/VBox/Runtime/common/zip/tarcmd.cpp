@@ -1,4 +1,4 @@
-/* $Id: tarcmd.cpp 111661 2025-11-12 12:00:49Z knut.osmundsen@oracle.com $ */
+/* $Id: tarcmd.cpp 111689 2025-11-12 23:15:34Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - A mini TAR Command.
  */
@@ -128,8 +128,8 @@ typedef struct RTZIPTARCMDOPS
     bool            fRecursive;
     /** The compressor/decompressor method to employ (0, z or j or J). */
     char            chZipper;
-    /** The compression level, -1 for default. */
-    int8_t          iZipLevel;
+    /** The compression level, 0 for default. */
+    uint8_t         bZipLevel;
 
     /** The owner to set. NULL if not applicable.
      * Always resolved into uidOwner for extraction. */
@@ -606,7 +606,8 @@ static RTEXITCODE rtZipTarCmdOpenOutputArchive(PRTZIPTARCMDOPS pOpts, PRTVFSFSST
 
         /* gunzip */
         case 'z':
-            rc = RTZipGzipCompressIoStream(hVfsIos, 0 /*fFlags*/, pOpts->iZipLevel < 0 ? 6 : pOpts->iZipLevel, &hVfsIosComp);
+            rc = RTZipGzipCompressIoStream(hVfsIos, 0 /*fFlags*/, pOpts->bZipLevel == 0 ? 6 : RT_MIN(pOpts->bZipLevel, 9),
+                                           &hVfsIosComp);
             if (RT_FAILURE(rc))
                 RTMsgError("Failed to open gzip decompressor: %Rrc", rc);
             break;
@@ -614,7 +615,8 @@ static RTEXITCODE rtZipTarCmdOpenOutputArchive(PRTZIPTARCMDOPS pOpts, PRTVFSFSST
 #ifdef IPRT_WITH_LZMA
         /* xz/lzma */
         case 'J':
-            rc = RTZipXzCompressIoStream(hVfsIos, 0 /*fFlags*/, pOpts->iZipLevel < 0 ? 6 : pOpts->iZipLevel, &hVfsIosComp);
+            rc = RTZipXzCompressIoStream(hVfsIos, 0 /*fFlags*/, pOpts->bZipLevel == 0 ? 6 : RT_MIN(pOpts->bZipLevel, 9),
+                                         &hVfsIosComp);
             if (RT_FAILURE(rc))
                 RTMsgError("Failed to open xz compressor: %Rrc", rc);
             break;
@@ -1846,7 +1848,7 @@ RTDECL(RTEXITCODE) RTZipTarCmd(unsigned cArgs, char **papszArgs)
         { "--dir-mode-or-mask",     RTZIPTARCMD_OPT_DIR_MODE_OR_MASK,   RTGETOPT_REQ_UINT32 | RTGETOPT_FLAG_OCT },
         { "--read-ahead",           RTZIPTARCMD_OPT_READ_AHEAD,         RTGETOPT_REQ_NOTHING },
         { "--use-push-file",        RTZIPTARCMD_OPT_USE_PUSH_FILE,      RTGETOPT_REQ_NOTHING },
-        { "--compression-level",    RTZIPTARCMD_OPT_COMPRESSION_LEVEL,  RTGETOPT_REQ_INT8 },
+        { "--compression-level",    RTZIPTARCMD_OPT_COMPRESSION_LEVEL,  RTGETOPT_REQ_UINT8 },
     };
 
     RTGETOPTSTATE GetState;
@@ -2043,7 +2045,7 @@ RTDECL(RTEXITCODE) RTZipTarCmd(unsigned cArgs, char **papszArgs)
                 break;
 
             case RTZIPTARCMD_OPT_COMPRESSION_LEVEL:
-                Opts.iZipLevel = ValueUnion.i8;
+                Opts.bZipLevel = ValueUnion.u8;
                 break;
 
             /* Standard bits. */
