@@ -1,4 +1,4 @@
-/* $Id: tstVBoxWinDrvInstInf.cpp 111636 2025-11-11 15:47:46Z andreas.loeffler@oracle.com $ */
+/* $Id: tstVBoxWinDrvInstInf.cpp 111676 2025-11-12 13:48:56Z andreas.loeffler@oracle.com $ */
 /** @file
  * VirtualBox Windows driver installation tests.
  */
@@ -67,22 +67,6 @@ typedef struct VBOXWINDRVINSTTESTRES
 } VBOXWINDRVINSTTESTRES;
 
 /**
- * Parameters for a single test.
- */
-typedef struct VBOXWINDRVINSTTESTPARMS
-{
-    /** Expected section to (un)install.
-     *  NULL if not being used. */
-    const char           *pszSection;
-    /** Expected model name.
-     *  NULL if not being used. */
-    const char           *pszModel;
-    /** Expected PnP ID.
-     *  NULL if not being used. */
-    const char           *pszPnpId;
-} VBOXWINDRVINSTTESTPARMS;
-
-/**
  * A single test.
  */
 typedef struct VBOXWINDRVINSTTEST
@@ -93,8 +77,9 @@ typedef struct VBOXWINDRVINSTTEST
     uint32_t                fFlags;
     /** Expected overall result of the test. */
     int                     rc;
-    /** Test parameters. */
-    VBOXWINDRVINSTTESTPARMS Parms;
+    /** INF test parameters.
+     *  These contain the expected results. */
+    VBOXWINDRVINFPARMS      Parms;
     /** Test result(s). Must come last due to array initialization. */
     VBOXWINDRVINSTTESTRES   Result;
 } VBOXWINDRVINSTTEST;
@@ -127,11 +112,15 @@ VBOXWINDRVINSTTEST g_aTests[] =
      */
     /** Default section is present, but no model section.
      *  This actually is valid and has to succeed. */
-    { "testInstallDefaultInstallButNoModelSection.inf", VBOX_WIN_DRIVERINSTALL_F_NONE, VINF_SUCCESS },
+    { "testInstallDefaultInstallButNoModelSection.inf", VBOX_WIN_DRIVERINSTALL_F_NONE,
+      VINF_SUCCESS, { NULL /* Model (Service) */, NULL /* PnP ID*/, L"DefaultInstall" /* Section */ } },
+    /** Test whether we detect the service within in a primitive driver. */
+    { "testInstallDefaultInstallWithServiceSection.inf", VBOX_WIN_DRIVERINSTALL_F_NONE, VINF_SUCCESS },
     /** Manufacturer, model and section given. */
     { "testInstallManufacturerWithModelSection.inf", VBOX_WIN_DRIVERINSTALL_F_NONE,
-      VINF_SUCCESS, { "VBoxTest.NTAMD64" /* Section */, "VBoxTest.NTAMD64" /* Model */, "PCI\\VEN_80ee&DEV_cafe" /* PnP ID */, } }
+      VINF_SUCCESS, { L"VBoxTest.NTAMD64" /* Model */, L"PCI\\VEN_80ee&DEV_cafe" /* PnP ID */,  L"VBoxTest.NTAMD64" /* Section */ } }
 };
+/** Pointer to test definitions. */
 typedef VBOXWINDRVINSTTEST *PVBOXWINDRVINSTTEST;
 
 /**
@@ -173,33 +162,23 @@ static int tstVBoxDrvInstTestOne(PVBOXWINDRVINSTTESTCTX pCtx, const char *pszInf
 
     PVBOXWINDRVINSTPARMS const pParms = VBoxWinDrvInstTestGetParms(pCtx->hInst);
 
-    /* Check section. */
-    char *psz;
-    if (pTest->Parms.pszSection)
-    {
-        RTUtf16ToUtf8(pParms->u.UnInstall.pwszSection, &psz);
-        if (RTStrCmp(pTest->Parms.pszSection, psz))
-            RTTestFailed(pCtx->hTest, "*** Error: Got section %s, expected %s\n", psz, pTest->Parms.pszSection);
-        RTStrFree(psz);
+#define CHECK_INF_PARM(a_Parm) \
+    if (pTest->Parms.##a_Parm) \
+    { \
+        if (pParms->u.UnInstall.##a_Parm) \
+        { \
+            if (RTUtf16Cmp(pTest->Parms.##a_Parm, pParms->u.UnInstall.##a_Parm)) \
+                RTTestFailed(pCtx->hTest, "*** Error for INF parameter %s: Got %ls, expected %ls\n", #a_Parm, pParms->u.UnInstall.##a_Parm, pTest->Parms.##a_Parm); \
+        } \
+        else \
+            RTTestFailed(pCtx->hTest, "*** Error for INF parameter %s: Got nothing, expected %ls\n", #a_Parm, pTest->Parms.##a_Parm); \
     }
 
-    /* Check model. */
-    if (pTest->Parms.pszModel)
-    {
-        RTUtf16ToUtf8(pParms->u.UnInstall.pwszModel, &psz);
-        if (RTStrCmp(pTest->Parms.pszModel, psz))
-            RTTestFailed(pCtx->hTest, "*** Error: Got model %s, expected %s\n", psz, pTest->Parms.pszModel);
-        RTStrFree(psz);
-    }
+    CHECK_INF_PARM(pwszModel);
+    CHECK_INF_PARM(pwszPnpId);
+    CHECK_INF_PARM(pwszSection);
 
-    /* Check PnP ID. */
-    if (pTest->Parms.pszPnpId)
-    {
-        RTUtf16ToUtf8(pParms->u.UnInstall.pwszPnpId, &psz);
-        if (RTStrCmp(pTest->Parms.pszPnpId, psz))
-            RTTestFailed(pCtx->hTest, "*** Error: Got PnP ID %s, expected %s\n", psz, pTest->Parms.pszPnpId);
-        RTStrFree(psz);
-    }
+#undef CHECK_INF_PARM
 
     VBoxWinDrvInstTestParmsDestroy(pParms); /* For VBOX_WIN_DRIVERINSTALL_F_NO_DESTROY. */
 
