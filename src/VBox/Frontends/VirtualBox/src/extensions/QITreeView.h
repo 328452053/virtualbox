@@ -1,4 +1,4 @@
-/* $Id: QITreeView.h 111677 2025-11-12 14:02:36Z sergey.dubov@oracle.com $ */
+/* $Id: QITreeView.h 111678 2025-11-12 14:10:30Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: QITreeView class declaration.
  */
@@ -48,6 +48,9 @@ class SHARED_LIBRARY_STUFF QITreeViewItem : public QObject
     Q_OBJECT;
 
 public:
+
+    /** Acquires QTreeViewItem* from passed @a idx. */
+    static QITreeViewItem *toItem(const QModelIndex &idx);
 
     /** Constructs tree-view item for passed @a pParent. */
     QITreeViewItem(QITreeView *pParent)
