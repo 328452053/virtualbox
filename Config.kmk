@@ -1,4 +1,4 @@
-# $Id: Config.kmk 111665 2025-11-12 12:13:27Z knut.osmundsen@oracle.com $
+# $Id: Config.kmk 111668 2025-11-12 12:23:09Z knut.osmundsen@oracle.com $
 ## @file
 # The global build configuration file for VBox.
 #
@@ -5080,20 +5080,20 @@ VBOXLNX32GUEST_SUFF_LIB = .a
 #
 ifdef VBOX_WITH_DXVK
  SDK_VBoxDxVk                  := Direct3D 9/10/11 to Vulkan - for dll linking.
- SDK_VBoxDxVk_DEFAULT_INCS     := \
+ SDK_VBoxDxVk_VBOX_DEFAULT_INCS := \
  	$(PATH_ROOT)/src/libs/dxvk-2.6.2/include/native/directx \
  	$(PATH_ROOT)/src/libs/dxvk-2.6.2/include/native/windows
- SDK_VBoxDxVk_INCS             ?= $(SDK_VBoxDxVk_DEFAULT_INCS)
+ SDK_VBoxDxVk_INCS             ?= $(SDK_VBoxDxVk_VBOX_DEFAULT_INCS)
  # Loaded dynamically
  SDK_VBoxDxVk_LIBS             ?=
 endif
 
 ifdef VBOX_WITH_DXMT
  SDK_VBoxDxMt                  := Direct3D 9/10/11 to Metal - for dll linking.
- SDK_VBoxDxMt_DEFAULT_INCS     := \
+ SDK_VBoxDxMt_VBOX_DEFAULT_INCS := \
  	$(PATH_ROOT)/src/libs/dxmt-0.60/include/native/directx \
  	$(PATH_ROOT)/src/libs/dxmt-0.60/include/native/windows
- SDK_VBoxDxMt_INCS             ?= $(SDK_VBoxDxMt_DEFAULT_INCS)
+ SDK_VBoxDxMt_INCS             ?= $(SDK_VBoxDxMt_VBOX_DEFAULT_INCS)
  # Loaded dynamically
  SDK_VBoxDxMt_LIBS             ?=
 endif
@@ -5168,24 +5168,24 @@ ifdef VBOX_WITH_BLD_RTSIGNTOOL_SIGNING
  	$(PATH_STAGE_LIB)/VBoxBldProg-libcrypto$(VBOX_SUFF_LIB)
 endif
 
-SDK_VBoxOpenSsl              := This is what you should be using!  It links against VBoxRT.
-SDK_VBoxOpenSsl_EXTENDS      := VBoxOpenSslStatic
+SDK_VBoxOpenSsl                       := This is what you should be using!  It links against VBoxRT.
+SDK_VBoxOpenSsl_EXTENDS               := VBoxOpenSslStatic
 if "$(SDK_VBoxOpenSslStatic_INCS)" == "$(SDK_VBoxOpenSslStatic_VBOX_DEFAULT_INCS)"
- SDK_VBoxOpenSsl_LIBS         = $(NO_SUCH_VARIABLE)
+ SDK_VBoxOpenSsl_LIBS                  = $(NO_SUCH_VARIABLE)
 endif
 
 ifdef VBOX_WITH_LIBOGG
- SDK_VBoxLibOgg                := libogg for dll linking.
- SDK_VBoxLibOgg_DEFAULT_INCS   := $(PATH_ROOT)/src/libs/libogg-1.3.5/include
- SDK_VBoxLibOgg_INCS           ?= $(SDK_VBoxLibOgg_DEFAULT_INCS)
- SDK_VBoxLibOgg_LIBS           ?= $(PATH_STAGE_LIB)/VBox-libogg$(VBOX_SUFF_LIB)
+ SDK_VBoxLibOgg                       := libogg for dll linking.
+ SDK_VBoxLibOgg_VBOX_DEFAULT_INCS     := $(PATH_ROOT)/src/libs/libogg-1.3.5/include
+ SDK_VBoxLibOgg_INCS                  ?= $(SDK_VBoxLibOgg_VBOX_DEFAULT_INCS)
+ SDK_VBoxLibOgg_LIBS                  ?= $(PATH_STAGE_LIB)/VBox-libogg$(VBOX_SUFF_LIB)
 endif
 
 ifdef VBOX_WITH_LIBVORBIS
- SDK_VBoxLibVorbis               := libvorbis for dll linking.
- SDK_VBoxLibVorbis_DEFAULT_INCS  := $(PATH_ROOT)/src/libs/libvorbis-1.3.7/include
- SDK_VBoxLibVorbis_INCS          ?= $(SDK_VBoxLibVorbis_DEFAULT_INCS)
- SDK_VBoxLibVorbis_LIBS          ?= $(PATH_STAGE_LIB)/VBox-libvorbis$(VBOX_SUFF_LIB)
+ SDK_VBoxLibVorbis                    := libvorbis for dll linking.
+ SDK_VBoxLibVorbis_VBOX_DEFAULT_INCS  := $(PATH_ROOT)/src/libs/libvorbis-1.3.7/include
+ SDK_VBoxLibVorbis_INCS               ?= $(SDK_VBoxLibVorbis_VBOX_DEFAULT_INCS)
+ SDK_VBoxLibVorbis_LIBS               ?= $(PATH_STAGE_LIB)/VBox-libvorbis$(VBOX_SUFF_LIB)
 endif
 
 # Our SoftFloat 3e variant.
@@ -5234,37 +5234,37 @@ ifdef VBOX_WITH_LIBSSH
 endif
 
 ifdef VBOX_WITH_LIBTPMS
- SDK_VBoxLibTpms                 := libtpms for dll linking.
- SDK_VBoxLibTpms_DEFAULT_INCS    := $(PATH_ROOT)/src/libs/libtpms-0.10.1/include
- SDK_VBoxLibTpms_INCS            ?= $(SDK_VBoxLibTpms_DEFAULT_INCS)
- SDK_VBoxLibTpms_LIBS            ?= $(PATH_STAGE_LIB)/VBox-libtpms$(VBOX_SUFF_LIB)
+ SDK_VBoxLibTpms                      := libtpms for dll linking.
+ SDK_VBoxLibTpms_VBOX_DEFAULT_INCS    := $(PATH_ROOT)/src/libs/libtpms-0.10.1/include
+ SDK_VBoxLibTpms_INCS                 ?= $(SDK_VBoxLibTpms_VBOX_DEFAULT_INCS)
+ SDK_VBoxLibTpms_LIBS                 ?= $(PATH_STAGE_LIB)/VBox-libtpms$(VBOX_SUFF_LIB)
 endif
 
 ifdef VBOX_WITH_LIBVPX
- SDK_VBoxLibVpx                  := libvpx for dll linking.
- SDK_VBoxLibVpx_DEFAULT_INCS     := $(PATH_ROOT)/src/libs/libvpx-1.14.1
- SDK_VBoxLibVpx_INCS             ?= $(SDK_VBoxLibVpx_DEFAULT_INCS)
- SDK_VBoxLibVpx_LIBS             ?= $(PATH_STAGE_LIB)/VBox-libvpx$(VBOX_SUFF_LIB)
+ SDK_VBoxLibVpx                       := libvpx for dll linking.
+ SDK_VBoxLibVpx_VBOX_DEFAULT_INCS     := $(PATH_ROOT)/src/libs/libvpx-1.14.1
+ SDK_VBoxLibVpx_INCS                  ?= $(SDK_VBoxLibVpx_VBOX_DEFAULT_INCS)
+ SDK_VBoxLibVpx_LIBS                  ?= $(PATH_STAGE_LIB)/VBox-libvpx$(VBOX_SUFF_LIB)
 endif
 
 ifdef VBOX_WITH_LIBLZMA
- SDK_VBoxLibLzma                 := liblzma for dll linking.
- SDK_VBoxLibLzma_DEFAULT_INCS    := $(PATH_ROOT)/src/libs/liblzma-5.8.1/api
- SDK_VBoxLibLzma_INCS            ?= $(SDK_VBoxLibLzma_DEFAULT_INCS)
- SDK_VBoxLibLzma_LIBS            ?= $(PATH_STAGE_LIB)/VBox-liblzma$(VBOX_SUFF_LIB)
+ SDK_VBoxLibLzma                      := liblzma for dll linking.
+ SDK_VBoxLibLzma_VBOX_DEFAULT_INCS    := $(PATH_ROOT)/src/libs/liblzma-5.8.1/api
+ SDK_VBoxLibLzma_INCS                 ?= $(SDK_VBoxLibLzma_VBOX_DEFAULT_INCS)
+ SDK_VBoxLibLzma_LIBS                 ?= $(PATH_STAGE_LIB)/VBox-liblzma$(VBOX_SUFF_LIB)
 
- SDK_VBoxLibLzma-x86             := liblzma/x86 compressor/decompressor for dll linking.
- SDK_VBoxLibLzma-x86_EXTENDS     := VBoxLibLzma
- SDK_VBoxLibLzma-x86_LIBS        ?= $(PATH_STAGE_LIB)/VBox-liblzma-x86$(VBOX_SUFF_LIB)
+ SDK_VBoxLibLzma-x86                  := liblzma/x86 compressor/decompressor for dll linking.
+ SDK_VBoxLibLzma-x86_EXTENDS          := VBoxLibLzma
+ SDK_VBoxLibLzma-x86_LIBS             ?= $(PATH_STAGE_LIB)/VBox-liblzma-x86$(VBOX_SUFF_LIB)
 
- SDK_VBoxLibLzmaStatic           := liblzma for static linking
- SDK_VBoxLibLzmaStatic_EXTENDS   := VBoxLibLzma
- SDK_VBoxLibLzmaStatic_LIBS      ?= $(PATH_STAGE_LIB)/VBox-liblzma-static$(VBOX_SUFF_LIB)
+ SDK_VBoxLibLzmaStatic                := liblzma for static linking
+ SDK_VBoxLibLzmaStatic_EXTENDS        := VBoxLibLzma
+ SDK_VBoxLibLzmaStatic_LIBS           ?= $(PATH_STAGE_LIB)/VBox-liblzma-static$(VBOX_SUFF_LIB)
 
- SDK_VBoxLibLzmaBldProg          := liblzma for build programs
- SDK_VBoxLibLzmaBldProg_EXTENDS  := VBoxLibLzma
- SDK_VBoxLibLzmaBldProg_LIBS     ?= $(NO_SUCH_VARIABLE)
- ifeq ($(SDK_VBoxLibLzma_INCS),$(SDK_VBoxLibLzma_DEFAULT_INCS))
+ SDK_VBoxLibLzmaBldProg               := liblzma for build programs
+ SDK_VBoxLibLzmaBldProg_EXTENDS       := VBoxLibLzma
+ SDK_VBoxLibLzmaBldProg_LIBS          ?= $(NO_SUCH_VARIABLE)
+ ifeq ($(SDK_VBoxLibLzma_INCS),$(SDK_VBoxLibLzma_VBOX_DEFAULT_INCS))
   SDK_VBoxLibLzmaBldProg_LATE_LIBS ?= $(PATH_STAGE_LIB)/VBoxBldProg-liblzma$(VBOX_SUFF_LIB)
  else
   SDK_VBoxLibLzmaBldProg_LATE_LIBS ?= $(SDK_VBoxLibLzma_LIBS)
@@ -5310,11 +5310,11 @@ endif
 
 if (defined(VBOX_WITH_INIP) || defined(VBOX_WITH_NAT_SERVICE))
  SDK_VBoxLwip                  := lwip for dll linking.
- SDK_VBoxLwip_DEFAULT_INCS     := \
+ SDK_VBoxLwip_VBOX_DEFAULT_INCS := \
  	$(PATH_ROOT)/src/libs/lwip-2.2.1/src/include \
  	$(PATH_ROOT)/src/libs/lwip-2.2.1/vbox \
  	$(PATH_ROOT)/src/libs/lwip-2.2.1/vbox/include
- SDK_VBoxLwip_INCS             ?= $(SDK_VBoxLwip_DEFAULT_INCS)
+ SDK_VBoxLwip_INCS             ?= $(SDK_VBoxLwip_VBOX_DEFAULT_INCS)
  SDK_VBoxLwip_LIBS             ?= $(PATH_STAGE_LIB)/VBox-lwip$(VBOX_SUFF_LIB)
 
  SDK_VBoxLwipDhcp              := Special lwip for the DHCP service.
@@ -9468,7 +9468,7 @@ SVN                    ?= svn$(HOSTSUFF_EXE)
 GIT                    ?= git$(HOSTSUFF_EXE)
 VBOX_SVN_REV_KMK        = $(PATH_OUT)/revision.kmk
 ifndef VBOX_SVN_REV
- VBOX_SVN_REV_CONFIG_FALLBACK := $(patsubst %:,,  $Rev: 111665 $  )
+ VBOX_SVN_REV_CONFIG_FALLBACK := $(patsubst %:,,  $Rev: 111668 $  )
  VBOX_SVN_REV_FALLBACK := $(if-expr $(VBOX_SVN_REV_CONFIG_FALLBACK) > $(VBOX_SVN_REV_VERSION_FALLBACK),$(VBOX_SVN_REV_CONFIG_FALLBACK),$(VBOX_SVN_REV_VERSION_FALLBACK))
  VBOX_SVN_DEP          := $(firstword $(wildcard $(PATH_ROOT)/.svn/wc.db $(abspath $(PATH_ROOT)/../.svn/wc.db) $(abspath $(PATH_ROOT)/../../.svn/wc.db) $(PATH_ROOT)/.svn/entries))
  VBOX_GIT_DEP          := $(firstword $(wildcard $(PATH_ROOT)/.git/config $(abspath $(PATH_ROOT)/../.git/config) $(abspath $(PATH_ROOT)/../../.git/config)))
@@ -9482,7 +9482,7 @@ ifndef VBOX_SVN_REV
  ifneq ($(VBOX_GIT_DEP),)
   #
   # VBOX_SVN_REV_CONFIG_FALLBACK is not properly populated for a git checkout,
-  # as the $Rev: 111665 $ is not expanded, so we have to set it based on the information in the repo.
+  # as the $Rev: 111668 $ is not expanded, so we have to set it based on the information in the repo.
   #
   VBOX_SVN_REV_FALLBACK := $(shell $(GIT) log -1 $(PATH_ROOT)/Config.kmk | $(SED) -e 's/^[ \t]*//' -e '/svn:sync-xref-src-repo-rev\: r/!d' -e 's/svn:sync-xref-src-repo-rev\: r*//; t a; :a q')
  endif

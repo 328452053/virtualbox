@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 111651 2025-11-12 10:06:48Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 111668 2025-11-12 12:23:09Z knut.osmundsen@oracle.com $
 ## @file
 # Top-level makefile for the external libraries.
 #
@@ -50,7 +50,7 @@ endif
 # dxvk for supporting DirectX over Vulkan on platforms other than Windows.
 if   defined(VBOX_WITH_DXVK) \
   && !defined(VBOX_ONLY_BUILD) \
-  && "$(SDK_VBoxDxVk_INCS)" == "$(SDK_VBoxDxVk_DEFAULT_INCS)" \
+  && "$(SDK_VBoxDxVk_INCS)" == "$(SDK_VBoxDxVk_VBOX_DEFAULT_INCS)" \
   && "$(intersects $(KBUILD_TARGET_ARCH),$(VBOX_SUPPORTED_HOST_ARCHS))" != ""
  include $(PATH_SUB_CURRENT)/dxvk-2.6.2/Makefile.kmk
 endif
@@ -59,7 +59,7 @@ endif
 # DXMT for supporting DirectX over Vulkan on macOS.
 if   defined(VBOX_WITH_DXMT) \
   && !defined(VBOX_ONLY_BUILD) \
-  && "$(SDK_VBoxDxMt_INCS)" == "$(SDK_VBoxDxMt_DEFAULT_INCS)" \
+  && "$(SDK_VBoxDxMt_INCS)" == "$(SDK_VBoxDxMt_VBOX_DEFAULT_INCS)" \
   && "$(intersects $(KBUILD_TARGET_ARCH),$(VBOX_SUPPORTED_HOST_ARCHS))" != ""
  include $(PATH_SUB_CURRENT)/dxmt-0.60/Makefile.kmk
 endif
@@ -98,7 +98,7 @@ endif
 if   defined(VBOX_WITH_LIBTPMS) \
   && !defined(VBOX_ONLY_BUILD) \
   && "$(intersects $(KBUILD_TARGET_ARCH),$(VBOX_SUPPORTED_HOST_ARCHS))" != "" \
-  && ("$(SDK_VBoxLibTpms_INCS)" == "$(SDK_VBoxLibTpms_DEFAULT_INCS)")
+  && ("$(SDK_VBoxLibTpms_INCS)" == "$(SDK_VBoxLibTpms_VBOX_DEFAULT_INCS)")
  include $(PATH_SUB_CURRENT)/libtpms-0.10.1/Makefile.kmk
 endif
 
@@ -170,13 +170,13 @@ if   defined(VBOX_WITH_MAIN) \
 
   # libogg, needed for building libvorbis.
   if   defined(VBOX_WITH_LIBOGG) \
-    && ("$(SDK_VBoxLibOgg_INCS)" == "$(SDK_VBoxLibOgg_DEFAULT_INCS)")
+    && ("$(SDK_VBoxLibOgg_INCS)" == "$(SDK_VBoxLibOgg_VBOX_DEFAULT_INCS)")
    include $(PATH_SUB_CURRENT)/libogg-1.3.5/Makefile.kmk
   endif
 
   # libvorbis for supporting audio with video recording.
   if   defined(VBOX_WITH_LIBVORBIS) \
-    && ("$(SDK_VBoxLibVorbis_INCS)" == "$(SDK_VBoxLibVorbis_DEFAULT_INCS)")
+    && ("$(SDK_VBoxLibVorbis_INCS)" == "$(SDK_VBoxLibVorbis_VBOX_DEFAULT_INCS)")
    include $(PATH_SUB_CURRENT)/libvorbis-1.3.7/Makefile.kmk
   endif
 
@@ -189,7 +189,7 @@ if   defined(VBOX_WITH_MAIN) \
 
   # libvpx is used for video capture.
   if   defined(VBOX_WITH_LIBVPX) \
-    && ("$(SDK_VBoxLibVpx_INCS)" == "$(SDK_VBoxLibVpx_DEFAULT_INCS)")
+    && ("$(SDK_VBoxLibVpx_INCS)" == "$(SDK_VBoxLibVpx_VBOX_DEFAULT_INCS)")
    include $(PATH_SUB_CURRENT)/libvpx-1.14.1/Makefile.kmk
   endif
 
