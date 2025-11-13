@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 111712 2025-11-13 15:17:23Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 111714 2025-11-13 15:31:19Z knut.osmundsen@oracle.com $
 ## @file
 # Top-level makefile for the VMM.
 #
@@ -936,7 +936,8 @@ VMMStatic_SOURCES.$(KBUILD_TARGET_ARCH) = \
 		, $($(VMMStatic_EXTENDS)_SOURCES.$(KBUILD_TARGET_ARCH)))
 VMMStatic_SOURCES.$(KBUILD_TARGET).$(KBUILD_TARGET_ARCH) = \
 	$(filter-out \
-		VMMR3/target-$(KBUILD_TARGET_ARCH)/NEMR3Native-% \
+		VMMR3/target-armv8/NEMR3Native-% \
+		VMMR3/target-x86/NEMR3Native-% \
 		VMMR3/target-armv8/GICR3Nem-% \
 		VMMR3/target-x86/APICR3Nem-% \
 		, $($(VMMStatic_EXTENDS)_SOURCES.$(KBUILD_TARGET).$(KBUILD_TARGET_ARCH)))
