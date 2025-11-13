@@ -125,12 +125,12 @@ Rules for adding a changelog entry to make them look more uniform:
 
       <listitem>
         <para>Linux Guest Additions: Introduced additional fixes for RHEL 9.6
-          and 9.7 kernels (github:GH-12)</para>
+          and 9.7 kernels (github:gh-12)</para>
       </listitem>
 
       <listitem>
         <para>Windows Guest Additions: Introduced additional fixes for issue
-          when installation was failing in Windows XP SP2 guest (github:GH-142)</para>
+          when installation was failing in Windows XP SP2 guest (github:gh-142)</para>
       </listitem>
 
     </itemizedlist>
@@ -328,7 +328,7 @@ Rules for adding a changelog entry to make them look more uniform:
 
       <listitem>
         <para>GUI: Fixed a bug in clone VM wizard which made impossible to include
-          snapshots in clone result (github:GH-59)</para>
+          snapshots in clone result (github:gh-59)</para>
       </listitem>
 
       <listitem>
