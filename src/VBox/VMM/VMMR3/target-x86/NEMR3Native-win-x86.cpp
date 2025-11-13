@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-win.cpp 111345 2025-10-13 12:54:08Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: NEMR3Native-win-x86.cpp 111706 2025-11-13 14:54:45Z knut.osmundsen@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Windows backend.
  *

@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux.cpp 111177 2025-09-30 07:47:26Z knut.osmundsen@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 111706 2025-11-13 14:54:45Z knut.osmundsen@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -58,7 +58,7 @@ static int nemR3LnxInitSetupVm(PVM pVM, PRTERRINFO pErrInfo);
 
 
 /* Instantiate the common bits we share with the ARMv8 KVM backend. */
-#include "NEMR3NativeTemplate-linux.cpp.h"
+#include "../NEMR3NativeTemplate-linux.cpp.h"
 
 
 

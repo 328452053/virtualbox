@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 111702 2025-11-13 14:09:21Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 111706 2025-11-13 14:54:45Z knut.osmundsen@oracle.com $
 ## @file
 # Top-level makefile for the VMM.
 #
@@ -316,21 +316,22 @@ ifdef VBOX_WITH_IEM_RECOMPILER
 endif
 
 ifdef VBOX_WITH_NATIVE_NEM
- VBoxVMM_SOURCES.linux.amd64 += VMMR3/NEMR3Native-linux.cpp
+ VBoxVMM_SOURCES.linux.amd64 += \
+ 	VMMR3/target-x86/NEMR3Native-linux-x86.cpp
 
  VBoxVMM_SOURCES.win.amd64 += \
- 	VMMR3/NEMR3Native-win.cpp \
+ 	VMMR3/target-x86/NEMR3Native-win-x86.cpp \
  	VMMR3/target-x86/APICR3Nem-win-x86.cpp
 
  VBoxVMM_DEFS.win.amd64   += VBOX_WITH_NATIVE_NEM
  VBoxVMM_SDKS.win         += VBoxNtDll
- VMMR3/NEMR3Native-win.cpp_DEFS.amd64 = _AMD64_
- VMMR3/NEMR3Native-win.cpp_INCS = \
+ VMMR3/target-x86/NEMR3Native-win-x86.cpp_DEFS.amd64 = _AMD64_
+ VMMR3/target-x86/NEMR3Native-win-x86.cpp_INCS = \
  	$(KBUILD_DEVTOOLS)/win.x86/sdk/v10.0.17134.0/include/10.0.17134.0/um \
  	$(KBUILD_DEVTOOLS)/win.x86/sdk/v10.0.17134.0/include/10.0.17134.0/shared
 
  VBoxVMM_SOURCES.darwin.amd64 += \
- 	VMMR3/NEMR3Native-darwin.cpp
+ 	VMMR3/target-x86/NEMR3Native-darwin-x86.cpp
  VBoxVMM_DEFS.darwin.amd64   += VBOX_WITH_NATIVE_NEM
 endif
 
@@ -601,18 +602,18 @@ ifdef VBOX_WITH_VIRT_ARMV8
  	VMMR3/PGMR3DbgA.asm
 
  VBoxVMMArm_SOURCES.darwin.arm64 += \
- 	VMMR3/NEMR3Native-darwin-armv8.cpp \
+ 	VMMR3/target-armv8/NEMR3Native-darwin-armv8.cpp \
  	VMMR3/GICR3Nem-darwin.cpp
  VBoxVMMArm_DEFS.darwin.arm64   += VBOX_WITH_NATIVE_NEM
  VBoxVMMArm_LDFLAGS.darwin.arm64 = -framework Hypervisor
 
  VBoxVMMArm_SOURCES.linux.arm64 += \
- 	VMMR3/NEMR3Native-linux-armv8.cpp \
+ 	VMMR3/target-armv8/NEMR3Native-linux-armv8.cpp \
  	VMMR3/GICR3Nem-linux.cpp
  VBoxVMMArm_DEFS.linux.arm64    += VBOX_WITH_NATIVE_NEM
 
  VBoxVMMArm_SOURCES.win.arm64 += \
- 	VMMR3/NEMR3Native-win-armv8.cpp \
+ 	VMMR3/target-armv8/NEMR3Native-win-armv8.cpp \
  	VMMR3/GICR3Nem-win.cpp
  VBoxVMMArm_DEFS.win.arm64   += VBOX_WITH_NATIVE_NEM
 
@@ -935,7 +936,8 @@ VMMStatic_SOURCES.$(KBUILD_TARGET_ARCH) = \
 		, $($(VMMStatic_EXTENDS)_SOURCES.$(KBUILD_TARGET_ARCH)))
 VMMStatic_SOURCES.$(KBUILD_TARGET).$(KBUILD_TARGET_ARCH) = \
 	$(filter-out \
-		VMMR3/NEMR3Native-% \
+		VMMR3/target-$(KBUILD_TARGET)/NEMR3Native-% \
+		VMMR3/target-$(KBUILD_TARGET)/NEMR3Native-% \
 		VMMR3/GICR3Nem-% \
 		VMMR3/target-x86/APICR3Nem-% \
 		, $($(VMMStatic_EXTENDS)_SOURCES.$(KBUILD_TARGET).$(KBUILD_TARGET_ARCH)))
