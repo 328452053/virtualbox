@@ -1,4 +1,4 @@
-/* $Id: NEMAllNativeTemplate-win.cpp.h 111296 2025-10-09 09:36:25Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: NEMAllNativeTemplate-win.cpp.h 111694 2025-11-13 13:00:17Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, Windows code template ring-0/3.
  */
@@ -493,6 +493,18 @@ NEM_TMPL_STATIC int nemHCWinCopyStateToHyperV(PVMCC pVM, PVMCPUCC pVCpu)
     AssertLogRelMsgFailed(("WHvSetVirtualProcessorRegisters(%p, %u,,%u,) -> %Rhrc (Last=%#x/%u)\n",
                            pVM->nem.s.hPartition, pVCpu->idCpu, iReg,
                            hrc, RTNtLastStatusValue(), RTNtLastErrorValue()));
+    /* Try to figure out the register causing the error. */
+    for (uint32_t i = 0; i < iReg; i++)
+    {
+        hrc = WHvSetVirtualProcessorRegisters(pVM->nem.s.hPartition, pVCpu->idCpu, &aenmNames[i], 1, &aValues[i]);
+        if (FAILED(hrc))
+        {
+            AssertLogRelMsgFailed(("WHvSetVirtualProcessorRegisters(%p, %u, %#RX64, 1, %#RX64) -> %Rhrc (Last=%#x/%u)\n",
+                                   pVM->nem.s.hPartition, pVCpu->idCpu, aenmNames[i], aValues[i].Reg64,
+                                   hrc, RTNtLastStatusValue(), RTNtLastErrorValue()));
+            break;
+        }
+    }
     return VERR_INTERNAL_ERROR;
 }
 
