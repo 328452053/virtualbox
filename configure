@@ -2704,7 +2704,7 @@ for option in "$@"; do
       ;;
     --disable-dxvk)
       [ $WITH_DXVK -eq 1 ] && WITH_DXVK=0
-      ;;      
+      ;;
     --disable-kmods)
       [ $WITH_KMODS -eq 1 ] && WITH_KMODS=0
       ;;
@@ -3031,7 +3031,7 @@ if [ "$OS" = "linux" ]; then
     fi
     if [ $WITH_DXVK -eq 0 ]; then
       cnf_append "VBOX_WITH_DXVK" ""
-    fi    
+    fi
     if [ $WITH_DEVMAPPER -eq 1 ]; then
       check_libdevmapper
     else
