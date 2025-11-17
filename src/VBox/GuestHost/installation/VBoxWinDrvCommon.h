@@ -1,4 +1,4 @@
-/* $Id: VBoxWinDrvCommon.h 111690 2025-11-12 23:43:03Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxWinDrvCommon.h 111752 2025-11-17 10:34:24Z andreas.loeffler@oracle.com $ */
 /** @file
  * VBoxWinDrvCommon - Common Windows driver functions.
  */
@@ -39,6 +39,13 @@
 #include <VBox/GuestHost/VBoxWinDrvDefs.h>
 
 
+/*********************************************************************************************************************************
+*   Structures and Typedefs                                                                                                      *
+*********************************************************************************************************************************/
+/** Function pointer for a general try INF section callback. */
+typedef int (*PFNVBOXWINDRVINST_TRYINFSECTION_CALLBACK)(HINF hInf, PCRTUTF16 pwszSection, void *pvCtx);
+
+
 /* newdev.dll: */
 typedef BOOL(WINAPI* PFNDIINSTALLDRIVERW) (HWND hwndParent, LPCWSTR InfPath, DWORD Flags, PBOOL NeedReboot);
 typedef BOOL(WINAPI* PFNDIUNINSTALLDRIVERW) (HWND hwndParent, LPCWSTR InfPath, DWORD Flags, PBOOL NeedReboot);
@@ -49,7 +56,6 @@ typedef BOOL(WINAPI* PFNSETUPCOPYOEMINFW) (PCWSTR SourceInfFileName, PCWSTR OEMS
 typedef HINF(WINAPI* PFNSETUPOPENINFFILEW) (PCWSTR FileName, PCWSTR InfClass, DWORD InfStyle, PUINT ErrorLine);
 typedef VOID(WINAPI* PFNSETUPCLOSEINFFILE) (HINF InfHandle);
 typedef BOOL(WINAPI* PFNSETUPDIGETINFCLASSW) (PCWSTR, LPGUID, PWSTR, DWORD, PDWORD);
-typedef BOOL(WINAPI* PFNSETUPENUMINFSECTIONSW) (HINF InfHandle, UINT Index, PWSTR Buffer, UINT Size, UINT *SizeNeeded);
 typedef BOOL(WINAPI* PFNSETUPUNINSTALLOEMINFW) (PCWSTR InfFileName, DWORD Flags, PVOID Reserved);
 typedef BOOL(WINAPI *PFNSETUPSETNONINTERACTIVEMODE) (BOOL NonInteractiveFlag);
 /* advapi32.dll: */
@@ -64,7 +70,6 @@ extern PFNSETUPCOPYOEMINFW                    g_pfnSetupCopyOEMInf;
 extern PFNSETUPOPENINFFILEW                   g_pfnSetupOpenInfFileW;
 extern PFNSETUPCLOSEINFFILE                   g_pfnSetupCloseInfFile;
 extern PFNSETUPDIGETINFCLASSW                 g_pfnSetupDiGetINFClassW;
-extern PFNSETUPENUMINFSECTIONSW               g_pfnSetupEnumInfSectionsW;
 extern PFNSETUPUNINSTALLOEMINFW               g_pfnSetupUninstallOEMInfW;
 extern PFNSETUPSETNONINTERACTIVEMODE          g_pfnSetupSetNonInteractiveMode;
 
@@ -89,12 +94,12 @@ int VBoxWinDrvInfQuerySectionKeyByIndex(HINF hInf, PCRTUTF16 pwszSection, PRTUTF
 int VBoxWinDrvInfQuerySectionVerEx(HINF hInf, UINT uIndex, PVBOXWINDRVINFSECVERSION pVer);
 int VBoxWinDrvInfQuerySectionVer(HINF hInf, PVBOXWINDRVINFSECVERSION pVer);
 bool VBoxWinDrvInfSectionExists(HINF hInf, PCRTUTF16 pwszSection);
+int VBoxWinDrvInfTrySection(HINF hInf, PCRTUTF16 pwszSection, PCRTUTF16 pwszSuffix, PFNVBOXWINDRVINST_TRYINFSECTION_CALLBACK pfnCallback, void *pvCtx);
 
 PVBOXWINDRVINFLIST VBoxWinDrvInfListCreate(VBOXWINDRVINFLISTENTRY_T enmType);
 int VBoxWinDrvInfListInit(PVBOXWINDRVINFLIST pInfList, VBOXWINDRVINFLISTENTRY_T enmType);
 void VBoxWinDrvInfListDestroy(PVBOXWINDRVINFLIST pInfList);
 PVBOXWINDRVINFLIST VBoxWinDrvInfListDup(PVBOXWINDRVINFLIST pInfList);
-void VBoxWinDrvInfInfListCOPYFILEDestroy(PVBOXWINDRVINFLIST pCopyFiles);
 
 const char *VBoxWinDrvSetupApiErrToStr(const DWORD dwErr);
 const char *VBoxWinDrvWinErrToStr(const DWORD dwErr);

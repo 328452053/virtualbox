@@ -1,4 +1,4 @@
-/* $Id: VBoxWinDrvCommon.cpp 111682 2025-11-12 14:32:16Z andreas.loeffler@oracle.com $ */
+/* $Id: VBoxWinDrvCommon.cpp 111752 2025-11-17 10:34:24Z andreas.loeffler@oracle.com $ */
 /** @file
  * VBoxWinDrvCommon - Common Windows driver installation functions.
  */
@@ -411,6 +411,82 @@ bool VBoxWinDrvInfSectionExists(HINF hInf, PCRTUTF16 pwszSection)
 }
 
 /**
+ * Generic function for probing a list of well-known decorations for a given INF section.
+ *
+ * Due to the nature of INF files this function tries different combinations of decorations (e.g. SectionName[.NTAMD64|.X86])
+ * and invokes the given callback for the first found section.
+ *
+ * The code ends probing as soon as a callback succeeded.
+ *
+ * @returns VBox status code.
+ * @retval  VERR_NOT_FOUND if no matching section was found.
+ * @param   hInf                Handle of INF file.
+ * @param   pwszSection         Section name to probe for.
+ * @param   pwszSuffix          Section suffix to use (e.g. "Services").
+ *                              Optional and might be NULL.
+ * @param   pfnCallback         Callback to invoke for each found section.
+ * @param   pvCtx               User-supplied pointer to pass to \a pfnCallback.
+ *                              Optional and can be NULL.
+ */
+int VBoxWinDrvInfTrySection(HINF hInf, PCRTUTF16 pwszSection, PCRTUTF16 pwszSuffix,
+                            PFNVBOXWINDRVINST_TRYINFSECTION_CALLBACK pfnCallback, void *pvCtx)
+{
+    /* Sorted by most likely-ness. */
+    PCRTUTF16 apwszTryInstallSections[] =
+    {
+        pwszSection
+    };
+
+    PCRTUTF16 apwszTryInstallDecorations[] =
+    {
+        /* No decoration. Try that first. */
+        L"",
+        /* Native architecture. */
+        L"" VBOXWINDRVINF_DOT_NT_NATIVE_ARCH_STR
+    };
+
+    int rc = VERR_NOT_FOUND;
+
+    for (size_t i = 0; i < RT_ELEMENTS(apwszTryInstallSections); i++)
+    {
+        PCRTUTF16 const pwszTrySection = apwszTryInstallSections[i];
+        if (!pwszTrySection)
+            continue;
+
+        for (size_t d = 0; d < RT_ELEMENTS(apwszTryInstallDecorations); d++)
+        {
+            RTUTF16 wszTrySection[VBOXWINDRVINF_MAX_SECTION_NAME_LEN];
+            rc = RTUtf16Copy(wszTrySection, sizeof(wszTrySection), pwszTrySection);
+            AssertRCBreak(rc);
+            rc = RTUtf16Cat(wszTrySection, sizeof(wszTrySection), apwszTryInstallDecorations[d]);
+            AssertRCBreak(rc);
+            if (pwszSuffix)
+            {
+                rc = RTUtf16Cat(wszTrySection, sizeof(wszTrySection), L".");
+                AssertRCBreak(rc);
+                rc = RTUtf16Cat(wszTrySection, sizeof(wszTrySection), pwszSuffix);
+                AssertRCBreak(rc);
+            }
+
+            rc = pfnCallback(hInf, wszTrySection, pvCtx);
+            if (RT_SUCCESS(rc))
+                break;
+
+            if (rc == VERR_FILE_NOT_FOUND) /* File gone already. */
+            {
+                rc = VINF_SUCCESS;
+                break;
+            }
+        }
+
+        if (RT_SUCCESS(rc)) /* Bail out if callback above succeeded. */
+            break;
+    }
+
+    return rc;
+}
+
+/**
  * Queries the "Version" section of an INF file, extended version.
  *
  * @returns VBox status code.
@@ -745,6 +821,8 @@ int VBoxWinDrvInfQueryCopyFiles(HINF hInf, PRTUTF16 pwszSection, PVBOXWINDRVINFL
  * @param   pwszSection         Section to query model for.
  * @param   ppwszModel          Where to return the model on success.
  *                              Needs to be free'd by RTUtf16Free().
+ *
+ * @note   Only works for normal (e.g. non-primitive) drivers.
  */
 int VBoxWinDrvInfQueryFirstModel(HINF hInf, PCRTUTF16 pwszSection, PRTUTF16 *ppwszModel)
 {
@@ -762,6 +840,8 @@ int VBoxWinDrvInfQueryFirstModel(HINF hInf, PCRTUTF16 pwszSection, PRTUTF16 *ppw
  * @param   pwszModel           Model to query PnP ID for.
  * @param   ppwszPnPId          Where to return the PnP ID on success.
  *                              Needs to be free'd by RTUtf16Free().
+ *
+ * @note   Only works for normal (e.g. non-primitive) drivers.
  */
 int VBoxWinDrvInfQueryFirstPnPId(HINF hInf, PRTUTF16 pwszModel, PRTUTF16 *ppwszPnPId)
 {
@@ -781,6 +861,36 @@ int VBoxWinDrvInfQueryFirstPnPId(HINF hInf, PRTUTF16 pwszModel, PRTUTF16 *ppwszP
     }
 
     return rc;
+}
+
+/** Callback structure for querying a service name. */
+typedef struct QUERYSVCNAME_CALLBACK_CTX
+{
+    PRTUTF16 pwszSvcName;
+    size_t   cchSvcName;
+    unsigned idxSvc;
+} QUERYSVCNAME_CALLBACK_CTX;
+
+/** @copydoc PFNVBOXWINDRVINST_TRYINFSECTION_CALLBACK */
+static DECLCALLBACK(int) vboxWinDrvInfQuerySvcNameCallback(HINF hInf, PCRTUTF16 pwszSection, void *pvCtx)
+{
+    QUERYSVCNAME_CALLBACK_CTX *pCtx = (QUERYSVCNAME_CALLBACK_CTX *)pvCtx;
+
+    INFCONTEXT InfCtx;
+    unsigned   idxCur = 0;
+    if (SetupFindFirstLineW(hInf, pwszSection, L"AddService", &InfCtx))
+    {
+        do
+        {
+            if (   SetupGetStringFieldW(&InfCtx, 1, pCtx->pwszSvcName, (DWORD)pCtx->cchSvcName, NULL)
+                && idxCur == pCtx->idxSvc)
+                return VINF_SUCCESS;
+        }
+        while (   SetupFindNextLine(&InfCtx, &InfCtx)
+               && idxCur++ <= pCtx->idxSvc);
+    }
+
+    return VERR_NOT_FOUND;
 }
 
 /**
@@ -821,36 +931,26 @@ int VBoxWinDrvInfQueryParms(HINF hInf, PVBOXWINDRVINFPARMS pParms, bool fForce)
                 pParms->pwszModel = NULL;
             }
 
-            RTUTF16    wszSection[VBOXWINDRVINF_MAX_SECTION_NAME_LEN];
             RTUTF16    wszSvcName[VBOXWINDRVINF_MAX_MODEL_NAME_LEN];
-            DWORD      idxSection = 0;
-            INFCONTEXT context;
-
             wszSvcName[0] = L'\0';
 
-            /* Note: We don't support multi-service drivers here (yet). */
-            while (g_pfnSetupEnumInfSectionsW(hInf, idxSection, wszSection, RT_ELEMENTS(wszSection), NULL))
-            {
-                if (SetupFindFirstLineW(hInf, wszSection, L"AddService", &context))
-                {
-                    do
-                    {
-                        if (SetupGetStringFieldW(&context, 1, wszSvcName, RT_ELEMENTS(wszSvcName), NULL))
-                            break;
-                    }
-                    while (SetupFindNextLine(&context, &context));
-                }
+            QUERYSVCNAME_CALLBACK_CTX CbCtx;
+            RT_ZERO(CbCtx);
+            CbCtx.pwszSvcName = wszSvcName;
+            CbCtx.cchSvcName  = RT_ELEMENTS(wszSvcName);
 
+            rc = VBoxWinDrvInfTrySection(hInf, L"DefaultInstall", L"Services", vboxWinDrvInfQuerySvcNameCallback, &CbCtx);
+            if (RT_SUCCESS(rc))
+            {
                 if (wszSvcName[0] != L'\0')
                 {
                     pParms->pwszModel = RTUtf16Dup(wszSvcName);
                     if (!pParms->pwszModel)
                         rc = VERR_NO_MEMORY;
-                    break;
                 }
-
-                idxSection++;
             }
+            else /* No services found; INF is invalid. */
+                rc = VERR_INVALID_PARAMETER;
         }
     }
     else /* VBOXWINDRVINFTYPE_NORMAL */

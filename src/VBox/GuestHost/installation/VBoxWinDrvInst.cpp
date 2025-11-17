@@ -1,4 +1,4 @@
-/* $Id: VBoxWinDrvInst.cpp 111690 2025-11-12 23:43:03Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxWinDrvInst.cpp 111752 2025-11-17 10:34:24Z andreas.loeffler@oracle.com $ */
 /** @file
  * VBoxWinDrvInst - Windows driver installation handling.
  */
@@ -114,13 +114,6 @@
 
 
 /*********************************************************************************************************************************
-*   Structures and Typedefs                                                                                                      *
-*********************************************************************************************************************************/
-/** Function pointer for a general try INF section callback. */
-typedef int (*PFNVBOXWINDRVINST_TRYINFSECTION_CALLBACK)(HINF hInf, PCRTUTF16 pwszSection, void *pvCtx);
-
-
-/*********************************************************************************************************************************
 *   Global Variables                                                                                                             *
 *********************************************************************************************************************************/
 /** Init once structure for run-as-user functions we need. */
@@ -136,7 +129,6 @@ DECL_HIDDEN_DATA(PFNSETUPCOPYOEMINFW)                    g_pfnSetupCopyOEMInfW  
 DECL_HIDDEN_DATA(PFNSETUPOPENINFFILEW)                   g_pfnSetupOpenInfFileW                   = NULL; /* For W2K+. */
 DECL_HIDDEN_DATA(PFNSETUPCLOSEINFFILE)                   g_pfnSetupCloseInfFile                   = NULL; /* For W2K+. */
 DECL_HIDDEN_DATA(PFNSETUPDIGETINFCLASSW)                 g_pfnSetupDiGetINFClassW                 = NULL; /* For W2K+. */
-DECL_HIDDEN_DATA(PFNSETUPENUMINFSECTIONSW)               g_pfnSetupEnumInfSectionsW               = NULL; /* For W2K+. */
 DECL_HIDDEN_DATA(PFNSETUPUNINSTALLOEMINFW)               g_pfnSetupUninstallOEMInfW               = NULL; /* For XP+.  */
 DECL_HIDDEN_DATA(PFNSETUPSETNONINTERACTIVEMODE)          g_pfnSetupSetNonInteractiveMode          = NULL; /* For W2K+. */
 /* advapi32.dll: */
@@ -236,7 +228,6 @@ static VBOXWINDRVINSTIMPORTSYMBOL s_aSetupApiImports[] =
     { "SetupOpenInfFileW", (void **)&g_pfnSetupOpenInfFileW },
     { "SetupCloseInfFile", (void **)&g_pfnSetupCloseInfFile },
     { "SetupDiGetINFClassW", (void **)&g_pfnSetupDiGetINFClassW },
-    { "SetupEnumInfSectionsW", (void **)&g_pfnSetupEnumInfSectionsW },
     { "SetupSetNonInteractiveMode", (void **)&g_pfnSetupSetNonInteractiveMode }
 };
 
@@ -696,86 +687,6 @@ RT_C_DECLS_END
  *
  * @returns VBox status code.
  * @param   pCtx                Windows driver installer context.
- * @param   hInf                Handle of INF file.
- * @param   pwszSection         Section to invoke for [un]installation.
- *                              If NULL, the "DefaultInstall" / "DefaultUninstall" section will be tried.
- * @param   pfnCallback         Callback to invoke for each found section.
- */
-static int vboxWinDrvTryInfSectionEx(PVBOXWINDRVINSTINTERNAL pCtx, HINF hInf, PCRTUTF16 pwszSection,
-                                     PFNVBOXWINDRVINST_TRYINFSECTION_CALLBACK pfnCallback)
-{
-    if (pwszSection)
-        vboxWinDrvInstLogVerbose(pCtx, 1, "Trying section \"%ls\"", pwszSection);
-
-    /* Sorted by most likely-ness. */
-    PCRTUTF16 apwszTryInstallSections[] =
-    {
-        /* The more specific (using decorations), the better. Try these first. Might be NULL. */
-        pwszSection,
-        /* The Default[Un]Install sections apply to primitive (and legacy) drivers. */
-           pCtx->Parms.enmMode == VBOXWINDRVINSTMODE_INSTALL
-        ?  L"DefaultInstall" : L"DefaultUninstall"
-    };
-
-    PCRTUTF16 apwszTryInstallDecorations[] =
-    {
-        /* No decoration. Try that first. */
-        L"",
-        /* Native architecture. */
-        L"" VBOXWINDRVINF_DOT_NT_NATIVE_ARCH_STR
-    };
-
-    int rc = VERR_NOT_FOUND;
-
-    for (size_t i = 0; i < RT_ELEMENTS(apwszTryInstallSections); i++)
-    {
-        PCRTUTF16 const pwszTrySection = apwszTryInstallSections[i];
-        if (!pwszTrySection)
-            continue;
-
-        for (size_t d = 0; d < RT_ELEMENTS(apwszTryInstallDecorations); d++)
-        {
-            RTUTF16 wszTrySection[64];
-            rc = RTUtf16Copy(wszTrySection, sizeof(wszTrySection), pwszTrySection);
-            AssertRCBreak(rc);
-            rc = RTUtf16Cat(wszTrySection, sizeof(wszTrySection), apwszTryInstallDecorations[d]);
-            AssertRCBreak(rc);
-
-            rc = pfnCallback(hInf, wszTrySection, pCtx /* pvCtx */);
-            if (RT_SUCCESS(rc))
-                break;
-
-            if (rc == VERR_FILE_NOT_FOUND) /* File gone already. */
-            {
-                rc = VINF_SUCCESS;
-                break;
-            }
-
-            if (rc != VERR_NOT_FOUND)
-                vboxWinDrvInstLogError(pCtx, "Trying INF section failed with %Rrc", rc);
-        }
-
-        if (RT_SUCCESS(rc)) /* Bail out if callback above succeeded. */
-            break;
-    }
-
-    if (rc == VERR_NOT_FOUND)
-    {
-        vboxWinDrvInstLogWarn(pCtx, "No matching sections to try found -- buggy driver?");
-        rc = VINF_SUCCESS;
-    }
-
-    return rc;
-}
-
-/**
- * Generic function to for probing a list of well-known sections for [un]installation.
- *
- * Due to the nature of INF files this function tries different combinations of decorations (e.g. SectionName[.NTAMD64|.X86])
- * and invokes the given callback for the first found section.
- *
- * @returns VBox status code.
- * @param   pCtx                Windows driver installer context.
  * @param   pwszInfPathAbs      Absolute path of INF file to use for [un]installation.
  * @param   pwszSection         Section to invoke for [un]installation.
  *                              If NULL, the "DefaultInstall" / "DefaultUninstall" section will be tried.
@@ -793,7 +704,11 @@ static int vboxWinDrvTryInfSection(PVBOXWINDRVINSTINTERNAL pCtx, PCRTUTF16 pwszI
     }
     vboxWinDrvInstLogVerbose(pCtx, 1, "INF file \"%ls\" opened", pwszInfPathAbs);
 
-    rc = vboxWinDrvTryInfSectionEx(pCtx, hInf, pwszSection, pfnCallback);
+    rc = VBoxWinDrvInfTrySection(hInf,
+                                   pwszSection != NULL
+                                 ? pwszSection
+                                 :    pCtx->Parms.enmMode == VBOXWINDRVINSTMODE_INSTALL
+                                   ?  L"DefaultInstall" : L"DefaultUninstall", NULL /* Suffix */, pfnCallback, pCtx /* pvCtx */);
 
     VBoxWinDrvInfClose(hInf);
     vboxWinDrvInstLogVerbose(pCtx, 1, "INF file \"%ls\" closed", pwszInfPathAbs);
