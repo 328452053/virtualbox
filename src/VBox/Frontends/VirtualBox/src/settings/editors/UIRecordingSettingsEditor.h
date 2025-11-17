@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.h 111757 2025-11-17 13:44:16Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class declaration.
  */
@@ -118,19 +118,19 @@ private slots:
     /** Handles mode change. */
     void sltHandleModeComboChange();
     /** Handles frame size change. */
-    void sltHandleVideoFrameSizeComboChange();
+    void sltHandleFrameSizeComboChange();
     /** Handles frame width change. */
-    void sltHandleVideoFrameWidthChange();
+    void sltHandleFrameWidthChange();
     /** Handles frame height change. */
-    void sltHandleVideoFrameHeightChange();
+    void sltHandleFrameHeightChange();
     /** Handles frame rate slider change. */
-    void sltHandleVideoFrameRateSliderChange();
+    void sltHandleFrameRateSliderChange();
     /** Handles frame rate spinbox change. */
-    void sltHandleVideoFrameRateSpinboxChange();
-    /** Handles bit-rate slider change. */
-    void sltHandleVideoBitRateSliderChange();
-    /** Handles bit-rate spinbox change. */
-    void sltHandleVideoBitRateSpinboxChange();
+    void sltHandleFrameRateSpinboxChange();
+    /** Handles bit rate slider change. */
+    void sltHandleBitRateSliderChange();
+    /** Handles bit rate spinbox change. */
+    void sltHandleBitRateSpinboxChange();
 
 private:
 
@@ -155,9 +155,9 @@ private:
 
     /** Searches for the @a data field in corresponding @a pComboBox. */
     static void lookForCorrespondingPreset(QComboBox *pComboBox, const QVariant &data);
-    /** Calculates recording video bit-rate for passed @a iFrameWidth, @a iFrameHeight, @a iFrameRate and @a iQuality. */
+    /** Calculates recording bit rate for passed @a iFrameWidth, @a iFrameHeight, @a iFrameRate and @a iQuality. */
     static int calculateBitRate(int iFrameWidth, int iFrameHeight, int iFrameRate, int iQuality);
-    /** Calculates recording video quality for passed @a iFrameWidth, @a iFrameHeight, @a iFrameRate and @a iBitRate. */
+    /** Calculates recording quality for passed @a iFrameWidth, @a iFrameHeight, @a iFrameRate and @a iBitRate. */
     static int calculateQuality(int iFrameWidth, int iFrameHeight, int iFrameRate, int iBitRate);
 
     /** @name Values
@@ -227,20 +227,20 @@ private:
         QLabel             *m_pLabelFrameRateMin;
         /** Holds the frame rate max label instance. */
         QLabel             *m_pLabelFrameRateMax;
-        /** Holds the video quality label instance. */
-        QLabel             *m_pLabelVideoQuality;
-        /** Holds the video quality settings widget instance. */
-        QWidget            *m_pWidgetVideoQualitySettings;
-        /** Holds the video quality slider instance. */
-        QIAdvancedSlider   *m_pSliderVideoQuality;
-        /** Holds the video quality spinbox instance. */
-        QSpinBox           *m_pSpinboxVideoQuality;
-        /** Holds the video quality min label instance. */
-        QLabel             *m_pLabelVideoQualityMin;
-        /** Holds the video quality med label instance. */
-        QLabel             *m_pLabelVideoQualityMed;
-        /** Holds the video quality max label instance. */
-        QLabel             *m_pLabelVideoQualityMax;
+        /** Holds the bit rate label instance. */
+        QLabel             *m_pLabelBitRate;
+        /** Holds the bit rate settings widget instance. */
+        QWidget            *m_pWidgetBitRateSettings;
+        /** Holds the bit rate slider instance. */
+        QIAdvancedSlider   *m_pSliderBitRate;
+        /** Holds the bit rate spinbox instance. */
+        QSpinBox           *m_pSpinboxBitRate;
+        /** Holds the bit rate min label instance. */
+        QLabel             *m_pLabelBitRateMin;
+        /** Holds the bit rate med label instance. */
+        QLabel             *m_pLabelBitRateMed;
+        /** Holds the bit rate max label instance. */
+        QLabel             *m_pLabelBitRateMax;
         /** Holds the audio quality label instance. */
         QLabel             *m_pLabelAudioQuality;
         /** Holds the audio quality settings widget instance. */
