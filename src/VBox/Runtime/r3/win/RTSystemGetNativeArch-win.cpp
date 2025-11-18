@@ -1,4 +1,4 @@
-/* $Id: RTSystemGetNativeArch-win.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: RTSystemGetNativeArch-win.cpp 111802 2025-11-18 15:53:52Z andreas.loeffler@oracle.com $ */
 /** @file
  * IPRT - RTSystemGetNativeArch, Windows ring-3.
  */
@@ -53,10 +53,11 @@ static uint32_t rtSystemNativeToArchVal(USHORT uMachine)
 {
     switch (uMachine)
     {
-        case IMAGE_FILE_MACHINE_I386:       return RT_ARCH_VAL_X86;
-        case IMAGE_FILE_MACHINE_AMD64:      return RT_ARCH_VAL_AMD64;
-        case IMAGE_FILE_MACHINE_ARM:        return RT_ARCH_VAL_ARM32;
-        case IMAGE_FILE_MACHINE_ARM64:      return RT_ARCH_VAL_ARM64;
+        case IMAGE_FILE_MACHINE_I386:        return RT_ARCH_VAL_X86;
+        case IMAGE_FILE_MACHINE_AMD64:       return RT_ARCH_VAL_AMD64;
+        case IMAGE_FILE_MACHINE_ARM:         return RT_ARCH_VAL_ARM32;
+        case IMAGE_FILE_MACHINE_ARM64:       return RT_ARCH_VAL_ARM64;
+        case IMAGE_FILE_MACHINE_TARGET_HOST: return RT_ARCH_VAL;
         default:
             AssertMsgFailed(("Unknown value: uMachine=%#x\n", uMachine));
             return 0;
