@@ -1,4 +1,4 @@
-/* $Id: VBoxWinDrvInst.cpp 111752 2025-11-17 10:34:24Z andreas.loeffler@oracle.com $ */
+/* $Id: VBoxWinDrvInst.cpp 111777 2025-11-18 07:13:26Z andreas.loeffler@oracle.com $ */
 /** @file
  * VBoxWinDrvInst - Windows driver installation handling.
  */
@@ -1476,9 +1476,9 @@ static int vboxWinDrvInstallPerform(PVBOXWINDRVINSTINTERNAL pCtx, PVBOXWINDRVINS
                     rc = vboxWinDrvInstLogLastError(pCtx, "GetFullPathNameW() failed");
 
                 if (RT_SUCCESS(rc))
-                    rc = vboxWinDrvTryInfSection(pCtx,
-                                                 pParms->pwszInfFile, pParms->u.UnInstall.pwszSection,
-                                                 vboxWinDrvInstallTryInfSectionCallback);
+                    /* rc ignored, keep going */ vboxWinDrvTryInfSection(pCtx,
+                                                                         pParms->pwszInfFile, pParms->u.UnInstall.pwszSection,
+                                                                         vboxWinDrvInstallTryInfSectionCallback);
             }
 
             if (RT_FAILURE(rc))
