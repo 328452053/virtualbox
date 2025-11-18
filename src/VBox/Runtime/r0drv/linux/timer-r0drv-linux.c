@@ -1,4 +1,4 @@
-/* $Id: timer-r0drv-linux.c 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: timer-r0drv-linux.c 111804 2025-11-18 16:39:54Z vadim.galitsyn@oracle.com $ */
 /** @file
  * IPRT - Timers, Ring-0 Driver, Linux.
  */
@@ -748,7 +748,7 @@ static enum hrtimer_restart rtTimerLinuxHrCallback(struct hrtimer *pHrTimer)
  */
 static void rtTimerLinuxStdCallback(struct timer_list *pLnxTimer)
 {
-# if RTLNX_VER_MIN(6,16,0)
+# if RTLNX_VER_MIN(6,16,0) || RTLNX_RHEL_RANGE(10,2, 10,99)
     PRTTIMERLNXSUBTIMER pSubTimer = timer_container_of(pSubTimer, pLnxTimer, u.Std.LnxTimer);
 # else
     PRTTIMERLNXSUBTIMER pSubTimer = from_timer(pSubTimer, pLnxTimer, u.Std.LnxTimer);

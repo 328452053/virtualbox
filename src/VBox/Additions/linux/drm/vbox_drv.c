@@ -1,4 +1,4 @@
-/*  $Id: vbox_drv.c 111167 2025-09-29 14:04:45Z vadim.galitsyn@oracle.com $ */
+/*  $Id: vbox_drv.c 111804 2025-11-18 16:39:54Z vadim.galitsyn@oracle.com $ */
 /** @file
  * VirtualBox Additions Linux kernel video driver
  */
@@ -43,14 +43,14 @@
 # include <drm/drm_probe_helper.h>
 #endif
 
-#if RTLNX_VER_MIN(6,13,0) && defined(CONFIG_APERTURE_HELPERS) || RTLNX_RHEL_RANGE(9,7, 9,99)
+#if RTLNX_VER_MIN(6,13,0) && defined(CONFIG_APERTURE_HELPERS) || RTLNX_RHEL_RANGE(9,7, 9,99) || RTLNX_RHEL_RANGE(10,2, 10,99)
 # include <linux/aperture.h>
 #endif
 
 #if RTLNX_VER_RANGE(5,14,0, 6,13,0) || RTLNX_RHEL_RANGE(8,6, 8,99)
 /** RHEL 9.7 is based on 5.14, however this header is not available
- * there due to backports from newer kernels. */
-# if !RTLNX_RHEL_RANGE(9,7, 9,99)
+ * there due to backports from newer kernels. Same for RHEL 10.X (based on 6.12) */
+# if !RTLNX_RHEL_RANGE(9,7, 9,99) && !RTLNX_RHEL_RANGE(10,2, 10,99)
 #  include <drm/drm_aperture.h>
 # endif
 #endif
@@ -102,7 +102,7 @@ static int vbox_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	}
 #endif
 
-# if RTLNX_VER_MIN(6,13,0) && defined(CONFIG_APERTURE_HELPERS) || RTLNX_RHEL_RANGE(9,7, 9,99)
+# if RTLNX_VER_MIN(6,13,0) && defined(CONFIG_APERTURE_HELPERS) || RTLNX_RHEL_RANGE(9,7, 9,99) || RTLNX_RHEL_RANGE(10,2, 10,99)
 	ret = aperture_remove_conflicting_pci_devices(pdev, driver.name);
 # elif RTLNX_VER_RANGE(5,14,0, 6,13,0) || RTLNX_RHEL_RANGE(8,6, 8,99)
 #  if RTLNX_VER_MIN(5,15,0) || RTLNX_RHEL_RANGE(8,7, 8,99) || RTLNX_RHEL_MIN(9,1) || RTLNX_SUSE_MAJ_PREREQ(15,4)
@@ -399,10 +399,10 @@ static struct drm_driver driver = {
 #endif
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
-#if RTLNX_VER_MAX(6,14,0) && !RTLNX_RHEL_RANGE(9,7, 9,99)
+#if RTLNX_VER_MAX(6,14,0) && !RTLNX_RHEL_RANGE(9,7, 9,99) && !RTLNX_RHEL_RANGE(10,2, 10,99)
 	.date = DRIVER_DATE,
 #endif
-#if RTLNX_VER_MIN(6,15,0) || RTLNX_RHEL_RANGE(9,7, 9,99)
+#if RTLNX_VER_MIN(6,15,0) || RTLNX_RHEL_RANGE(9,7, 9,99) || RTLNX_RHEL_RANGE(10,2, 10,99)
 	.fbdev_probe = vboxfb_create,
 #endif
 	.major = DRIVER_MAJOR,
