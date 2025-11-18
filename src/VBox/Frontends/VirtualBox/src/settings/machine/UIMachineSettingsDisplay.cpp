@@ -1,4 +1,4 @@
-/* $Id: UIMachineSettingsDisplay.cpp 111785 2025-11-18 10:29:07Z sergey.dubov@oracle.com $ */
+/* $Id: UIMachineSettingsDisplay.cpp 111787 2025-11-18 11:20:58Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineSettingsDisplay class implementation.
  */
@@ -85,6 +85,7 @@ struct UIDataSettingsMachineDisplay
         , m_iRecordingVideoFrameHeight(0)
         , m_iRecordingVideoFrameRate(0)
         , m_iRecordingVideoBitRate(0)
+        , m_enmVideoQuality(KRecordingCodecDeadline_Default)
         , m_strAudioProfile(QString())
     {}
 
@@ -114,6 +115,7 @@ struct UIDataSettingsMachineDisplay
                && (m_iRecordingVideoBitRate == other.m_iRecordingVideoBitRate)
                && (m_vecRecordingScreens == other.m_vecRecordingScreens)
                && (m_strRecordingFeatures == other.m_strRecordingFeatures)
+               && (m_enmVideoQuality == other.m_enmVideoQuality)
                && (m_strAudioProfile == other.m_strAudioProfile)
                ;
     }
@@ -127,7 +129,6 @@ struct UIDataSettingsMachineDisplay
     enum RecordingOption
     {
         RecordingOption_Unknown,
-        /** @todo r=andy Add RecordingOption_VC_Quality ('vc_quality' in recording options) handling. */
     };
 
     /** Returns enum value corresponding to passed @a strKey. */
@@ -135,7 +136,6 @@ struct UIDataSettingsMachineDisplay
     {
         /* Compare case-sensitive: */
         QMap<QString, RecordingOption> keys;
-        /** @todo r=andy Add RecordingOption_VC_Quality ('vc_quality' in recording options) handling. */
         /* Return known value or RecordingOption_Unknown otherwise: */
         return keys.value(strKey, RecordingOption_Unknown);
     }
@@ -145,7 +145,6 @@ struct UIDataSettingsMachineDisplay
     {
         /* Compare case-sensitive: */
         QMap<RecordingOption, QString> values;
-        /** @todo r=andy Add RecordingOption_VC_Quality ('vc_quality' in recording options) handling. */
         /* Return known value or QString() otherwise: */
         return values.value(enmKey);
     }
@@ -186,8 +185,6 @@ struct UIDataSettingsMachineDisplay
         }
         strOptions = aPairs.join(',');
     }
-
-    /** @todo r=andy Add getVideoQualityFromOptions() via 'vc_quality'. */
 
     /** Sets the video recording options for @a enmOptions to @a values. */
     static QString setRecordingOptions(const QString &strOptions,
@@ -263,6 +260,8 @@ struct UIDataSettingsMachineDisplay
     QVector<bool>               m_vecRecordingScreens;
     /** Holds the recording features. */
     QVector<KRecordingFeature>  m_strRecordingFeatures;
+    /** Holds the video quality. */
+    KRecordingCodecDeadline     m_enmVideoQuality;
     /** Holds the audio profile. */
     QString                     m_strAudioProfile;
 };
@@ -404,6 +403,7 @@ void UIMachineSettingsDisplay::loadToCacheFrom(QVariant &data)
         oldDisplayData.m_iRecordingVideoFrameRate = comRecordingScreen0Settings.GetVideoFPS();
         oldDisplayData.m_iRecordingVideoBitRate = comRecordingScreen0Settings.GetVideoRate();
         oldDisplayData.m_strRecordingFeatures = comRecordingScreen0Settings.GetFeatures();
+        oldDisplayData.m_enmVideoQuality = comRecordingScreen0Settings.GetVideoDeadline();
         const ULONG uHz = comRecordingScreen0Settings.GetAudioHz();
         const ULONG uChannels = comRecordingScreen0Settings.GetAudioChannels();
         if (uHz == 8000 && uChannels == 1)
@@ -489,6 +489,7 @@ void UIMachineSettingsDisplay::getFromCache()
         m_pEditorRecordingSettings->setFrameRate(oldDisplayData.m_iRecordingVideoFrameRate);
         m_pEditorRecordingSettings->setBitRate(oldDisplayData.m_iRecordingVideoBitRate);
         m_pEditorRecordingSettings->setScreens(oldDisplayData.m_vecRecordingScreens);
+        m_pEditorRecordingSettings->setVideoQuality(oldDisplayData.m_enmVideoQuality);
         m_pEditorRecordingSettings->setAudioProfile(oldDisplayData.m_strAudioProfile);
 
         /* Load old 'Recording' features: */
@@ -559,6 +560,7 @@ void UIMachineSettingsDisplay::putToCache()
         newDisplayData.m_iRecordingVideoFrameRate = m_pEditorRecordingSettings->frameRate();
         newDisplayData.m_iRecordingVideoBitRate = m_pEditorRecordingSettings->bitRate();
         newDisplayData.m_vecRecordingScreens = m_pEditorRecordingSettings->screens();
+        newDisplayData.m_enmVideoQuality = m_pEditorRecordingSettings->videoQuality();
         newDisplayData.m_strAudioProfile = m_pEditorRecordingSettings->audioProfile();
 
         /* Gather new 'Recording' features: */
@@ -1307,6 +1309,12 @@ bool UIMachineSettingsDisplay::saveRecordingData()
                     comRecordingScreenSettings.SetFeatures(newDisplayData.m_strRecordingFeatures);
                     fSuccess = comRecordingScreenSettings.isOk();
                 }
+                /* Save video quality: */
+                if (fSuccess && newDisplayData.m_enmVideoQuality != oldDisplayData.m_enmVideoQuality)
+                {
+                    comRecordingScreenSettings.SetVideoDeadline(newDisplayData.m_enmVideoQuality);
+                    fSuccess = comRecordingScreenSettings.isOk();
+                }
                 /* Save audio profile: */
                 if (fSuccess && newDisplayData.m_strAudioProfile != oldDisplayData.m_strAudioProfile)
                     fSuccess = saveRecordingAudioProfileData(newDisplayData.m_strAudioProfile, comRecordingScreenSettings);
@@ -1384,6 +1392,12 @@ bool UIMachineSettingsDisplay::saveRecordingData()
             if (fSuccess && newDisplayData.m_strRecordingFeatures != oldDisplayData.m_strRecordingFeatures)
             {
                 comRecordingScreenSettings.SetFeatures(newDisplayData.m_strRecordingFeatures);
+                fSuccess = comRecordingScreenSettings.isOk();
+            }
+            /* Save video quality: */
+            if (fSuccess && newDisplayData.m_enmVideoQuality != oldDisplayData.m_enmVideoQuality)
+            {
+                comRecordingScreenSettings.SetVideoDeadline(newDisplayData.m_enmVideoQuality);
                 fSuccess = comRecordingScreenSettings.isOk();
             }
             /* Save audio profile: */

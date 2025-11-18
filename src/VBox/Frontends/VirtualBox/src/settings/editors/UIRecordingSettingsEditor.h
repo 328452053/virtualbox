@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.h 111785 2025-11-18 10:29:07Z sergey.dubov@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.h 111787 2025-11-18 11:20:58Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class declaration.
  */
@@ -34,6 +34,9 @@
 /* GUI includes: */
 #include "UIEditor.h"
 #include "UISettingsDefs.h"
+
+/* COM includes: */
+#include "KRecordingCodecDeadline.h"
 
 /* Forward declarations: */
 class QCheckBox;
@@ -97,6 +100,11 @@ public:
     void setBitRate(int iRate);
     /** Returns bit rate. */
     int bitRate() const;
+
+    /** Defines video @a enmQuality. */
+    void setVideoQuality(KRecordingCodecDeadline enmQuality);
+    /** Returns video quality. */
+    KRecordingCodecDeadline videoQuality() const;
 
     /** Defines audio @a strProfile. */
     void setAudioProfile(const QString &strProfile);
@@ -181,15 +189,17 @@ private:
         QString  m_strFilePath;
 
         /** Holds the frame width. */
-        int      m_iFrameWidth;
+        int                      m_iFrameWidth;
         /** Holds the frame height. */
-        int      m_iFrameHeight;
+        int                      m_iFrameHeight;
         /** Holds the frame rate. */
-        int      m_iFrameRate;
+        int                      m_iFrameRate;
         /** Holds the bit rate. */
-        int      m_iBitRate;
+        int                      m_iBitRate;
+        /** Holds the video quality. */
+        KRecordingCodecDeadline  m_enmVideoQuality;
         /** Holds the audio profile. */
-        QString  m_strAudioProfile;
+        QString                  m_strAudioProfile;
 
         /** Holds the screens. */
         QVector<bool>  m_screens;
@@ -241,6 +251,18 @@ private:
         QLabel             *m_pLabelBitRateMed;
         /** Holds the bit rate max label instance. */
         QLabel             *m_pLabelBitRateMax;
+        /** Holds the video quality label instance. */
+        QLabel             *m_pLabelVideoQuality;
+        /** Holds the video quality settings widget instance. */
+        QWidget            *m_pWidgetVideoQualitySettings;
+        /** Holds the video quality slider instance. */
+        QIAdvancedSlider   *m_pSliderVideoQuality;
+        /** Holds the video quality min label instance. */
+        QLabel             *m_pLabelVideoQualityMin;
+        /** Holds the video quality med label instance. */
+        QLabel             *m_pLabelVideoQualityMed;
+        /** Holds the video quality max label instance. */
+        QLabel             *m_pLabelVideoQualityMax;
         /** Holds the audio profile label instance. */
         QLabel             *m_pLabelAudioProfile;
         /** Holds the audio profile settings widget instance. */
