@@ -4818,7 +4818,7 @@ AuthResult AUTHCALL AuthEntry(
       <itemizedlist>
 
         <listitem><para>The recording settings now expose a dedicated stop method via
-          <link linkend="IRecordingSettings__stop">IRecordingSettings::stop</link>, which can be used 
+          <link linkend="IRecordingSettings__stop">IRecordingSettings::stop</link>, which can be used
           to stop an ongoing recording. This has the same effect as cancelling the
           <link linkend="IRecordingSettings__progress">IRecordingSettings::progress</link> object.</para>
         </listitem>
