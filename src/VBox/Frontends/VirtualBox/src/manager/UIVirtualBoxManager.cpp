@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.cpp 111240 2025-10-03 14:48:29Z sergey.dubov@oracle.com $ */
+/* $Id: UIVirtualBoxManager.cpp 111813 2025-11-19 17:43:49Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class implementation.
  */
@@ -865,7 +865,7 @@ void UIVirtualBoxManager::sltHandleOpenUrlCall(QList<QUrl> list /* = QList<QUrl>
             }
             else if (UICommon::hasAllowedExtension(strFile, isoExtensionList))
             {
-                openNewMachineWizard(strFile);
+                openNewMachineWizard(QString() /* means root group */, strFile);
             }
         }
     }
@@ -1233,7 +1233,7 @@ void UIVirtualBoxManager::sltOpenWizard(WizardType enmType)
         switch (enmType)
         {
             case WizardType_NewVM:
-                m_wizards[enmType] = new UIWizardNewVM(this, actionPool(), m_pWidget->fullGroupName(), m_strISOFilePath);
+                m_wizards[enmType] = new UIWizardNewVM(this, actionPool(), m_strGroupName, m_strISOFilePath);
                 break;
             case WizardType_CloneVM:
             {
@@ -1330,15 +1330,30 @@ void UIVirtualBoxManager::sltCloseWizard(WizardType enmType)
 
 void UIVirtualBoxManager::sltOpenNewMachineWizard()
 {
-    /* Get first selected item: */
-    UIVirtualMachineItem *pItem = currentItem();
+    /* Check the sender's action for the context-menu related flag: */
+    UIAction *pAction = actionPool()->action(UIActionIndexMN_M_Group_S_New);
+    AssertPtrReturnVoid(pAction);
+    const bool fIsContextMenuAction = pAction->property("is_context_menu_action").toBool();
 
-    /* If there is no items at all or first selected item is a local machine: */
-    if (!pItem || pItem->itemType() == UIVirtualMachineItemType_Local)
-        openNewMachineWizard();
-    /* Otherwise we guess it's cloud related item selected: */
-    else
-        sltOpenWizard(WizardType_NewCloudVM);
+    /* For the context-menu call we determine the selected item and context group (if any): */
+    if (fIsContextMenuAction)
+    {
+        /* Get first selected item: */
+        UIVirtualMachineItem *pItem = currentItem();
+
+        /* If there is no items at all or first selected item is a local machine: */
+        if (!pItem || pItem->itemType() == UIVirtualMachineItemType_Local)
+            openNewMachineWizard(m_pWidget->fullGroupName());
+        /* Otherwise we guess it's cloud related item selected: */
+        else
+            sltOpenWizard(WizardType_NewCloudVM);
+
+        return;
+    }
+
+    /* Otherwise, for the application-menu call we always use the root group,
+     * and for the root group the only possibility is to create local VM: */
+    openNewMachineWizard();
 }
 
 void UIVirtualBoxManager::sltOpenAddMachineDialog()
@@ -2959,9 +2974,11 @@ void UIVirtualBoxManager::openAddMachineDialog(const QString &strFileName /* = Q
     comVBox.RegisterMachine(comMachineNew);
 }
 
-void UIVirtualBoxManager::openNewMachineWizard(const QString &strISOFilePath /* = QString() */)
+void UIVirtualBoxManager::openNewMachineWizard(const QString &strGroupName /* = QString() */,
+                                               const QString &strISOFilePath /* = QString() */)
 {
     /* Configure wizard variables: */
+    m_strGroupName = strGroupName;
     m_strISOFilePath = strISOFilePath;
 
     /* Open New VM Wizard: */

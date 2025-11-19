@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.h 110737 2025-08-15 14:31:43Z sergey.dubov@oracle.com $ */
+/* $Id: UIVirtualBoxManager.h 111813 2025-11-19 17:43:49Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class declaration.
  */
@@ -406,8 +406,8 @@ private:
       * @{ */
         /** Opens add machine dialog specifying initial name with @a strFileName. */
         void openAddMachineDialog(const QString &strFileName = QString());
-        /** Opens new machine dialog specifying initial name with @a strFileName. */
-        void openNewMachineWizard(const QString &strISOFilePath = QString());
+        /** Opens new machine dialog specifying initial @a strGroupName and @a strISOFilePath. */
+        void openNewMachineWizard(const QString &strGroupName = QString(), const QString &strISOFilePath = QString());
 
         /** Opens Import Appliance wizard.
           * @param strFileName can bring the name of file to import appliance from. */
@@ -530,6 +530,8 @@ private:
     /** Holds the geometry save timer ID. */
     int  m_iGeometrySaveTimerId;
 
+    /** Holds the group name used by new VM wizard. */
+    QString  m_strGroupName;
     /** Holds the ISO file path used by new VM wizard. */
     QString  m_strISOFilePath;
 

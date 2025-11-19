@@ -1,4 +1,4 @@
-/* $Id: UIChooserModel.h 109420 2025-05-05 14:58:01Z sergey.dubov@oracle.com $ */
+/* $Id: UIChooserModel.h 111813 2025-11-19 17:43:49Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIChooserModel class declaration.
  */
@@ -333,7 +333,11 @@ private slots:
         void sltHandleSelectionChanged();
 
         /** Handles signal about context-menu being shown. */
-        void sltUpdateContextMenu();
+        void sltHandleContextMenuAboutToShow();
+        /** Handles signal about context-menu being hidden. */
+        void sltHandleContextMenuAboutToHide();
+        /** Clears context-menu flags. */
+        void sltClearContextMenuFlags();
     /** @} */
 
     /** @name Selection stuff.
