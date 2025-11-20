@@ -3910,6 +3910,7 @@
           Returns the host-only network by name.
     -->
     <method name="findHostOnlyNetworkByName">
+      <rest name="findByName" request="get" path="/hostonlynetwork/"/>
       <param name="networkName" type="wstring" dir="in"/>
       <param name="network" type="IHostOnlyNetwork" dir="return"/>
     </method>
@@ -3917,7 +3918,7 @@
           Returns the host-only network by id.
     -->
     <method name="findHostOnlyNetworkById">
-      <rest name="find" request="get" path="/hostonlynetwork/"/>
+      <rest name="findById" request="get" path="/hostonlynetwork/"/>
       <desc>
         Searches through all host networks for one with
         the given GUID.
@@ -12721,6 +12722,7 @@
     </attribute>
 
     <method name="getProcessorSpeed">
+      <rest name="speed" request="get" path="/host/processor/{procid}/"/>
       <desc>Query the (approximate) maximum speed of a specified host CPU in
         Megahertz.
       </desc>
@@ -12738,6 +12740,7 @@
     </method>
 
     <method name="getProcessorFeature">
+      <rest name="feature" request="get" path="/host/processor/"/>
       <desc>Query whether a CPU feature is supported or not.</desc>
       <param name="feature" type="ProcessorFeature" dir="in">
         <desc>
@@ -12752,6 +12755,7 @@
     </method>
 
     <method name="getProcessorDescription">
+      <rest name="description" request="get" path="/host/processor/{procid}/"/>
       <desc>Query the model string of a specified host CPU.
       </desc>
       <param name="cpuId" type="unsigned long" dir="in">
@@ -12792,6 +12796,7 @@
     </attribute>
 
     <method name="createHostOnlyNetworkInterface">
+      <rest name="create" request="post" path="/host/network/hostonly/"/>
       <desc>
         Creates a new adapter for Host Only Networking.
         <result name="E_INVALIDARG">
@@ -12811,6 +12816,7 @@
     </method>
 
     <method name="removeHostOnlyNetworkInterface">
+      <rest name="remove" request="delete" path="/host/network/hostonly/"/>
       <desc>
         Removes the given Host Only Networking interface.
         <result name="VBOX_E_OBJECT_NOT_FOUND">
@@ -12913,6 +12919,7 @@
     </method>
 
     <method name="findHostDVDDrive">
+      <rest name="find" request="get" path="/host/drive/dvd"/>
       <desc>
         Searches for a host DVD drive with the given @c name.
 
@@ -12930,6 +12937,7 @@
     </method>
 
     <method name="findHostFloppyDrive">
+      <rest name="find" request="get" path="/host/drive/floppy"/>
       <desc>
         Searches for a host floppy drive with the given @c name.
 
@@ -12947,6 +12955,7 @@
     </method>
 
     <method name="findHostNetworkInterfaceByName">
+      <rest name="find" request="get" path="/host/network"/>
       <desc>
         Searches through all host network interfaces for an interface with
         the given @c name.
@@ -12979,6 +12988,7 @@
       </param>
     </method>
     <method name="findHostNetworkInterfacesOfType">
+      <rest name="findType" request="get" path="/host/network"/>
       <desc>
         Searches through all host network interfaces and returns a list of interfaces of the specified type
       </desc>
