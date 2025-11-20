@@ -1,4 +1,4 @@
-/* $Id: UIActionPoolManager.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: UIActionPoolManager.h 111826 2025-11-20 15:08:39Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIActionPoolManager class declaration.
  */
@@ -69,7 +69,9 @@ enum UIActionIndexMN
     /* 'Group' menu actions: */
     UIActionIndexMN_M_Group,
     UIActionIndexMN_M_Group_S_New,
+    UIActionIndexMN_M_Group_S_NewCloud,
     UIActionIndexMN_M_Group_S_Add,
+    UIActionIndexMN_M_Group_S_AddCloud,
     UIActionIndexMN_M_Group_S_Rename,
     UIActionIndexMN_M_Group_S_Remove,
     UIActionIndexMN_M_Group_M_MoveToGroup,
@@ -106,7 +108,9 @@ enum UIActionIndexMN
     /* 'Machine' menu actions: */
     UIActionIndexMN_M_Machine,
     UIActionIndexMN_M_Machine_S_New,
+    UIActionIndexMN_M_Machine_S_NewCloud,
     UIActionIndexMN_M_Machine_S_Add,
+    UIActionIndexMN_M_Machine_S_AddCloud,
     UIActionIndexMN_M_Machine_S_Settings,
     UIActionIndexMN_M_Machine_S_Clone,
     UIActionIndexMN_M_Machine_S_Move,

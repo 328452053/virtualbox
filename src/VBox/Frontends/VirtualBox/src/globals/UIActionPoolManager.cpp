@@ -1,4 +1,4 @@
-/* $Id: UIActionPoolManager.cpp 111819 2025-11-20 14:39:07Z sergey.dubov@oracle.com $ */
+/* $Id: UIActionPoolManager.cpp 111826 2025-11-20 15:08:39Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIActionPoolManager class implementation.
  */
@@ -557,6 +557,38 @@ protected:
     }
 };
 
+/** Simple action extension, used as 'Perform Create Cloud Machine' action class. */
+class UIActionSimpleManagerGroupPerformCreateCloudMachine : public UIActionSimple
+{
+    Q_OBJECT;
+
+public:
+
+    /** Constructs action passing @a pParent to the base-class. */
+    UIActionSimpleManagerGroupPerformCreateCloudMachine(UIActionPool *pParent)
+        : UIActionSimple(pParent,
+                         ":/cloud_vm_new_32px.png", ":/cloud_vm_new_16px.png",
+                         ":/cloud_vm_new_disabled_32px.png", ":/cloud_vm_new_disabled_16px.png")
+    {}
+
+protected:
+
+    /** Returns shortcut extra-data ID. */
+    virtual QString shortcutExtraDataID() const RT_OVERRIDE
+    {
+        return QString("NewCloudVM");
+    }
+
+    /** Handles translation event. */
+    virtual void retranslateUi() RT_OVERRIDE
+    {
+        setIconText(QApplication::translate("UIActionPool", "&New"));
+        setName(QApplication::translate("UIActionPool", "&New Cloud Machine..."));
+        setStatusTip(QApplication::translate("UIActionPool", "Create new cloud virtual machine"));
+        setToolTip(simplifyText(text()) + (shortcut().isEmpty() ? QString() : QString(" (%1)").arg(shortcut().toString())));
+    }
+};
+
 /** Simple action extension, used as 'Perform Add Machine' action class. */
 class UIActionSimpleManagerGroupPerformAddMachine : public UIActionSimple
 {
@@ -591,6 +623,38 @@ protected:
         setIconText(QApplication::translate("UIActionPool", "&Open"));
         setName(QApplication::translate("UIActionPool", "&Open Machine..."));
         setStatusTip(QApplication::translate("UIActionPool", "Open existing virtual machine"));
+        setToolTip(simplifyText(text()) + (shortcut().isEmpty() ? QString() : QString(" (%1)").arg(shortcut().toString())));
+    }
+};
+
+/** Simple action extension, used as 'Perform Add Cloud Machine' action class. */
+class UIActionSimpleManagerGroupPerformAddCloudMachine : public UIActionSimple
+{
+    Q_OBJECT;
+
+public:
+
+    /** Constructs action passing @a pParent to the base-class. */
+    UIActionSimpleManagerGroupPerformAddCloudMachine(UIActionPool *pParent)
+        : UIActionSimple(pParent,
+                         ":/cloud_profile_add_32px.png", ":/cloud_profile_add_16px.png",
+                         ":/cloud_profile_add_disabled_32px.png", ":/cloud_profile_add_disabled_16px.png")
+    {}
+
+protected:
+
+    /** Returns shortcut extra-data ID. */
+    virtual QString shortcutExtraDataID() const RT_OVERRIDE
+    {
+        return QString("AddCloudVM");
+    }
+
+    /** Handles translation event. */
+    virtual void retranslateUi() RT_OVERRIDE
+    {
+        setIconText(QApplication::translate("UIActionPool", "&Open"));
+        setName(QApplication::translate("UIActionPool", "&Open Cloud Machine..."));
+        setStatusTip(QApplication::translate("UIActionPool", "Open existing cloud virtual machine"));
         setToolTip(simplifyText(text()) + (shortcut().isEmpty() ? QString() : QString(" (%1)").arg(shortcut().toString())));
     }
 };
@@ -738,6 +802,38 @@ protected:
     }
 };
 
+/** Simple action extension, used as 'Perform Create Cloud Machine' action class. */
+class UIActionSimpleManagerMachinePerformCreateCloud : public UIActionSimple
+{
+    Q_OBJECT;
+
+public:
+
+    /** Constructs action passing @a pParent to the base-class. */
+    UIActionSimpleManagerMachinePerformCreateCloud(UIActionPool *pParent)
+        : UIActionSimple(pParent,
+                         ":/cloud_vm_new_32px.png", ":/cloud_vm_new_16px.png",
+                         ":/cloud_vm_new_disabled_32px.png", ":/cloud_vm_new_disabled_16px.png")
+    {}
+
+protected:
+
+    /** Returns shortcut extra-data ID. */
+    virtual QString shortcutExtraDataID() const RT_OVERRIDE
+    {
+        return QString("NewCloudVM");
+    }
+
+    /** Handles translation event. */
+    virtual void retranslateUi() RT_OVERRIDE
+    {
+        setIconText(QApplication::translate("UIActionPool", "&New"));
+        setName(QApplication::translate("UIActionPool", "&New Cloud Machine..."));
+        setStatusTip(QApplication::translate("UIActionPool", "Create new cloud virtual machine"));
+        setToolTip(simplifyText(text()) + (shortcut().isEmpty() ? QString() : QString(" (%1)").arg(shortcut().toString())));
+    }
+};
+
 /** Simple action extension, used as 'Perform Add Machine' action class. */
 class UIActionSimpleManagerMachinePerformAdd : public UIActionSimple
 {
@@ -771,6 +867,38 @@ protected:
     {
         setName(QApplication::translate("UIActionPool", "&Open..."));
         setStatusTip(QApplication::translate("UIActionPool", "Open existing virtual machine"));
+        setToolTip(simplifyText(text()) + (shortcut().isEmpty() ? QString() : QString(" (%1)").arg(shortcut().toString())));
+    }
+};
+
+/** Simple action extension, used as 'Perform Add Cloud Machine' action class. */
+class UIActionSimpleManagerMachinePerformAddCloud : public UIActionSimple
+{
+    Q_OBJECT;
+
+public:
+
+    /** Constructs action passing @a pParent to the base-class. */
+    UIActionSimpleManagerMachinePerformAddCloud(UIActionPool *pParent)
+        : UIActionSimple(pParent,
+                         ":/cloud_profile_add_32px.png", ":/cloud_profile_add_16px.png",
+                         ":/cloud_profile_add_disabled_32px.png", ":/cloud_profile_add_disabled_16px.png")
+    {}
+
+protected:
+
+    /** Returns shortcut extra-data ID. */
+    virtual QString shortcutExtraDataID() const RT_OVERRIDE
+    {
+        return QString("AddCloudVM");
+    }
+
+    /** Handles translation event. */
+    virtual void retranslateUi() RT_OVERRIDE
+    {
+        setIconText(QApplication::translate("UIActionPool", "&Open"));
+        setName(QApplication::translate("UIActionPool", "&Open Cloud Machine..."));
+        setStatusTip(QApplication::translate("UIActionPool", "Open existing cloud virtual machine"));
         setToolTip(simplifyText(text()) + (shortcut().isEmpty() ? QString() : QString(" (%1)").arg(shortcut().toString())));
     }
 };
@@ -3589,7 +3717,9 @@ void UIActionPoolManager::preparePool()
     /* 'Group' actions: */
     m_pool[UIActionIndexMN_M_Group] = new UIActionMenuManagerGroup(this);
     m_pool[UIActionIndexMN_M_Group_S_New] = new UIActionSimpleManagerGroupPerformCreateMachine(this);
+    m_pool[UIActionIndexMN_M_Group_S_NewCloud] = new UIActionSimpleManagerGroupPerformCreateCloudMachine(this);
     m_pool[UIActionIndexMN_M_Group_S_Add] = new UIActionSimpleManagerGroupPerformAddMachine(this);
+    m_pool[UIActionIndexMN_M_Group_S_AddCloud] = new UIActionSimpleManagerGroupPerformAddCloudMachine(this);
     m_pool[UIActionIndexMN_M_Group_S_Rename] = new UIActionSimpleManagerGroupPerformRename(this);
     m_pool[UIActionIndexMN_M_Group_S_Remove] = new UIActionSimpleManagerGroupPerformRemove(this);
     m_pool[UIActionIndexMN_M_Group_M_MoveToGroup] = new UIActionMenuManagerCommonMoveToGroup(this);
@@ -3626,7 +3756,9 @@ void UIActionPoolManager::preparePool()
     /* 'Machine' actions: */
     m_pool[UIActionIndexMN_M_Machine] = new UIActionMenuManagerMachine(this);
     m_pool[UIActionIndexMN_M_Machine_S_New] = new UIActionSimpleManagerMachinePerformCreate(this);
+    m_pool[UIActionIndexMN_M_Machine_S_NewCloud] = new UIActionSimpleManagerMachinePerformCreateCloud(this);
     m_pool[UIActionIndexMN_M_Machine_S_Add] = new UIActionSimpleManagerMachinePerformAdd(this);
+    m_pool[UIActionIndexMN_M_Machine_S_AddCloud] = new UIActionSimpleManagerMachinePerformAddCloud(this);
     m_pool[UIActionIndexMN_M_Machine_S_Settings] = new UIActionSimpleManagerMachineShowSettings(this);
     m_pool[UIActionIndexMN_M_Machine_S_Clone] = new UIActionSimpleManagerMachinePerformClone(this);
     m_pool[UIActionIndexMN_M_Machine_S_Move] = new UIActionSimpleManagerMachinePerformMove(this);
@@ -3911,7 +4043,9 @@ void UIActionPoolManager::setShortcutsVisible(int iIndex, bool fVisible)
         case UIActionIndexMN_M_Group:
         {
             actions << action(UIActionIndexMN_M_Group_S_New)
+                    << action(UIActionIndexMN_M_Group_S_NewCloud)
                     << action(UIActionIndexMN_M_Group_S_Add)
+                    << action(UIActionIndexMN_M_Group_S_AddCloud)
                     << action(UIActionIndexMN_M_Group_S_Rename)
                     << action(UIActionIndexMN_M_Group_S_Remove)
                     << action(UIActionIndexMN_M_Group_M_MoveToGroup)
@@ -3944,7 +4078,9 @@ void UIActionPoolManager::setShortcutsVisible(int iIndex, bool fVisible)
         case UIActionIndexMN_M_Machine:
         {
             actions << action(UIActionIndexMN_M_Machine_S_New)
+                    << action(UIActionIndexMN_M_Machine_S_NewCloud)
                     << action(UIActionIndexMN_M_Machine_S_Add)
+                    << action(UIActionIndexMN_M_Machine_S_AddCloud)
                     << action(UIActionIndexMN_M_Machine_S_Settings)
                     << action(UIActionIndexMN_M_Machine_S_Clone)
                     << action(UIActionIndexMN_M_Machine_S_Move)

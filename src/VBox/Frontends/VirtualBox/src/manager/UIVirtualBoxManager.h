@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.h 111813 2025-11-19 17:43:49Z sergey.dubov@oracle.com $ */
+/* $Id: UIVirtualBoxManager.h 111826 2025-11-20 15:08:39Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class declaration.
  */
@@ -217,8 +217,12 @@ private slots:
 
         /** Handles call to open new machine wizard. */
         void sltOpenNewMachineWizard();
+        /** Handles call to open new cloud machine wizard. */
+        void sltOpenNewCloudMachineWizard();
         /** Handles call to open add machine dialog. */
         void sltOpenAddMachineDialog();
+        /** Handles call to open add cloud machine wizard. */
+        void sltOpenAddCloudMachineWizard();
 
         /** Handles call to open group name editor. */
         void sltOpenGroupNameEditor();
