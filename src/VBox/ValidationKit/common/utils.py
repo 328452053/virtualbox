@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: utils.py 111780 2025-11-18 08:39:38Z knut.osmundsen@oracle.com $
+# $Id: utils.py 111814 2025-11-20 08:56:26Z knut.osmundsen@oracle.com $
 # pylint: disable=too-many-lines
 
 """
@@ -39,7 +39,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111780 $"
+__version__ = "$Revision: 111814 $"
 
 
 # Standard Python imports.
@@ -236,7 +236,7 @@ def isValidOsDotArch(sOsDotArch):
     return isValidOs(asParts[0]) \
        and isValidArch(asParts[1]);
 
-def getHostOsVersion():
+def getHostOsVersion(): # pylint: disable=too-many-statements
     """
     Returns the host OS version.  This is platform.release with additional
     distro indicator on linux.
@@ -362,7 +362,7 @@ def getHostOsVersion():
                     elif oOsVersion.dwBuildNumber == 14393:
                         sVersion = '2016Server'
                     else:
-                        sVersion = 'unknown win server'
+                        sVersion += ' (server)'
                 elif oOsVersion.dwMajorVersion == 6 and oOsVersion.dwMinorVersion == 3:
                     sVersion = '2012ServerR2';
                 elif oOsVersion.dwMajorVersion == 6 and oOsVersion.dwMinorVersion == 2:
@@ -374,16 +374,25 @@ def getHostOsVersion():
                 elif oOsVersion.dwMajorVersion == 5 and oOsVersion.dwMinorVersion == 2:
                     sVersion = '2003Server';
             else:
-                if oOsVersion.dwBuildNumber == 26100:
-                    sVersion = '11 24H2'
-                elif oOsVersion.dwBuildNumber == 22631:
-                    sVersion = '11 23H2'
-                elif oOsVersion.dwBuildNumber == 22621:
-                    sVersion = '11 22H2'
-                elif oOsVersion.dwBuildNumber == 22000:
-                    sVersion = '11 21H2'
-                else:
-                    sVersion = '11 unknown'
+                if oOsVersion.dwBuildNumber == 26200:       sVersion = '11 25H2';
+                elif oOsVersion.dwBuildNumber == 26100:     sVersion = '11 24H2';
+                elif oOsVersion.dwBuildNumber == 22631:     sVersion = '11 23H2';
+                elif oOsVersion.dwBuildNumber == 22621:     sVersion = '11 22H2';
+                elif oOsVersion.dwBuildNumber == 22000:     sVersion = '11 21H2';
+                elif oOsVersion.dwBuildNumber == 19045:     sVersion = '10 22H2';
+                elif oOsVersion.dwBuildNumber == 19044:     sVersion = '10 21H2';
+                elif oOsVersion.dwBuildNumber == 19043:     sVersion = '10 21H1';
+                elif oOsVersion.dwBuildNumber == 19042:     sVersion = '10 20H2';
+                elif oOsVersion.dwBuildNumber == 19041:     sVersion = '10 2004';
+                elif oOsVersion.dwBuildNumber == 18363:     sVersion = '10 1909';
+                elif oOsVersion.dwBuildNumber == 18362:     sVersion = '10 1903';
+                elif oOsVersion.dwBuildNumber == 17763:     sVersion = '10 1809';
+                elif oOsVersion.dwBuildNumber == 17134:     sVersion = '10 1803';
+                elif oOsVersion.dwBuildNumber == 16299:     sVersion = '10 1709';
+                elif oOsVersion.dwBuildNumber == 15063:     sVersion = '10 1703';
+                elif oOsVersion.dwBuildNumber == 14393:     sVersion = '10 1607';
+                elif oOsVersion.dwBuildNumber == 10586:     sVersion = '10 1511';
+                elif oOsVersion.dwBuildNumber == 10240:     sVersion = '10 rtm';
             sVersion += ' build ' + str(oOsVersion.dwBuildNumber)
             if oOsVersion.wServicePackMajor:
                 sVersion += ' SP' + str(oOsVersion.wServicePackMajor)
