@@ -1,4 +1,4 @@
-; $Id: IEMAllAImpl-x86-amd64.asm 111743 2025-11-14 14:39:03Z alexander.eichner@oracle.com $
+; $Id: IEMAllAImpl-x86-amd64.asm 111850 2025-11-24 11:15:42Z knut.osmundsen@oracle.com $
 ;; @file
 ; IEM - Instruction Implementation in Assembly, x86 target, amd64 host.
 ;
@@ -2640,12 +2640,12 @@ ENDPROC iemAImpl_ %+ %1 %+ _u64 %+ %4
  %endif ; !RT_ARCH_AMD64
 %endmacro
 
-IEMIMPL_MUL_OP mul,  (X86_EFL_OF | X86_EFL_1 | X86_EFL_CF), (X86_EFL_SF | X86_EFL_ZF | X86_EFL_AF | X86_EFL_PF),       , 0
-IEMIMPL_MUL_OP mul,  (X86_EFL_OF | X86_EFL_1 | X86_EFL_CF), 0,                                                   _intel, 1
-IEMIMPL_MUL_OP mul,  (X86_EFL_OF | X86_EFL_1 | X86_EFL_CF), 0,                                                   _amd,   2
-IEMIMPL_MUL_OP imul, (X86_EFL_OF | X86_EFL_1 | X86_EFL_CF), (X86_EFL_SF | X86_EFL_ZF | X86_EFL_AF | X86_EFL_PF),       , 0
-IEMIMPL_MUL_OP imul, (X86_EFL_OF | X86_EFL_1 | X86_EFL_CF), 0,                                                   _intel, 1
-IEMIMPL_MUL_OP imul, (X86_EFL_OF | X86_EFL_1 | X86_EFL_CF), 0,                                                   _amd,   2
+IEMIMPL_MUL_OP mul,  (X86_EFL_OF | X86_EFL_CF), (X86_EFL_SF | X86_EFL_ZF | X86_EFL_AF | X86_EFL_PF),       , 0
+IEMIMPL_MUL_OP mul,  (X86_EFL_OF | X86_EFL_CF), 0,                                                   _intel, 1
+IEMIMPL_MUL_OP mul,  (X86_EFL_OF | X86_EFL_CF), 0,                                                   _amd,   2
+IEMIMPL_MUL_OP imul, (X86_EFL_OF | X86_EFL_CF), (X86_EFL_SF | X86_EFL_ZF | X86_EFL_AF | X86_EFL_PF),       , 0
+IEMIMPL_MUL_OP imul, (X86_EFL_OF | X86_EFL_CF), 0,                                                   _intel, 1
+IEMIMPL_MUL_OP imul, (X86_EFL_OF | X86_EFL_CF), 0,                                                   _amd,   2
 
 
 BEGINCODE
