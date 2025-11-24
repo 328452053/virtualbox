@@ -317,6 +317,8 @@
 # define SVM_EXIT_WRITE_CR15_TRAP        0x9f
 /** MCOMMIT instruction. */
 # define SVM_EXIT_MCOMMIT                0xa3
+/** Bus lock event happened (also called split lock). */
+# define SVM_EXIT_BUSLOCK                0xa5
 
 /** Nested paging: host-level page fault occurred (EXITINFO1 contains fault errorcode; EXITINFO2 contains the guest physical address causing the fault). */
 # define SVM_EXIT_NPF                    0x400
@@ -500,6 +502,25 @@
 #define SVM_CTRL_INTERCEPT_CR14_WRITES_TRAP   RT_BIT_64(32 + 30)
 /** Intercept CR0 writes after guest instruction finishes. */
 #define SVM_CTRL_INTERCEPT_CR15_WRITES_TRAP   RT_BIT_64(32 + 31)
+/** @} */
+
+/** @name SVMVMCB.ctrl.u64InterceptCtrl2
+ * @{
+ */
+/** Intercept all INVLPGB instructions. */
+#define SVM_CTRL_INTERCEPT_INVLPGB              RT_BIT_64(0)
+/** Intercept only illegal INVLPGB instructions. */
+#define SVM_CTRL_INTERCEPT_ILLEGAL_INVLPGB      RT_BIT_64(1)
+/** Intercept INVPCID instructions. */
+#define SVM_CTRL_INTERCEPT_INVPCID              RT_BIT_64(2)
+/** Intercept MCOMMIT instructions. */
+#define SVM_CTRL_INTERCEPT_MCOMMIT              RT_BIT_64(3)
+/** Intercept TLBSYNC instructions. */
+#define SVM_CTRL_INTERCEPT_TLBSYNC              RT_BIT_64(4)
+/** Intercept bus lock operations exceeding the bus lock threshold. */
+#define SVM_CTRL_INTERCEPT_BUSLOCK              RT_BIT_64(5)
+/** Intercept HLT instructions if no virtual interrupt is pending. */
+#define SVM_CTRL_INTERCEPT_HLT_NO_INTR_PENDING  RT_BIT_64(6)
 /** @} */
 
 /** @name SVMINTCTRL.u3Type
@@ -723,6 +744,21 @@ typedef union
 AssertCompileSize(SVMAVICPHYS, 8);
 
 /**
+ * SVM VMSA pointer.
+ */
+typedef union
+{
+    struct
+    {
+        RT_GCC_EXTENSION uint64_t u12Reserved0        : 12;
+        RT_GCC_EXTENSION uint64_t u40Addr             : 40;
+        RT_GCC_EXTENSION uint64_t u12Reserved1        : 12;
+    } n;
+    uint64_t    u;
+} SVMVMSA;
+AssertCompileSize(SVMVMSA, 8);
+
+/**
  * SVM Nested Paging struct.
  */
 typedef union
@@ -789,8 +825,10 @@ typedef struct
     uint32_t        u32InterceptXcpt;
     /** Offset 0x0c - Intercept control. */
     uint64_t        u64InterceptCtrl;
+    /** Offset 0x14 - Intercept control 2. */
+    uint64_t        u64InterceptCtrl2;
     /** Offset 0x14-0x3f - Reserved. */
-    uint8_t         u8Reserved0[0x3c - 0x14];
+    uint8_t         u8Reserved0[0x3c - 0x1c];
     /** Offset 0x3c - PAUSE filter threshold.  */
     uint16_t        u16PauseFilterThreshold;
     /** Offset 0x3e - PAUSE intercept filter count. */
@@ -844,20 +882,35 @@ typedef struct
     SVMAVIC         AvicLogicalTablePtr;
     /** Offset 0xf8 - AVIC PHYSICAL_TABLE pointer. */
     SVMAVICPHYS     AvicPhysicalTablePtr;
+    /** Offset 0x100-0x107 - Reserved. */
+    uint8_t         u8Reserved3[0x108 - 0x100];
+    /** Offset 0x108 - VMSA pointer. */
+    SVMVMSA         VmsaPtr;
+    /** Offset 0x110 - VMGEXIT RAX register. */
+    uint64_t        u64VmgExitRax;
+    /** Offset 0x118 - VMGEXIT CPL value. */
+    uint8_t         u8VmgExitCpl;
+    /** Offset 0x119-0x11f - Reserved. */
+    uint8_t         u8Reserved4[0x120 - 0x119];
+    /** Offset 0x120 - Bus Lock Threshold Counter. */
+    uint16_t        u16BusLockThresholdCnt;
+    /** Offset 0x122-0x3ff - Reserved. */
+    uint8_t         u8Reserved5[0x400 - 0x122];
 } SVMVMCBCTRL;
 #pragma pack()
 /** Pointer to the SVMVMCBSTATESAVE structure. */
 typedef SVMVMCBCTRL *PSVMVMCBCTRL;
 /** Pointer to a const SVMVMCBSTATESAVE structure. */
 typedef const SVMVMCBCTRL *PCSVMVMCBCTRL;
-AssertCompileSize(SVMVMCBCTRL, 0x100);
+AssertCompileSize(SVMVMCBCTRL, 0x400);
 AssertCompileMemberOffset(SVMVMCBCTRL, u16InterceptRdCRx,       0x00);
 AssertCompileMemberOffset(SVMVMCBCTRL, u16InterceptWrCRx,       0x02);
 AssertCompileMemberOffset(SVMVMCBCTRL, u16InterceptRdDRx,       0x04);
 AssertCompileMemberOffset(SVMVMCBCTRL, u16InterceptWrDRx,       0x06);
 AssertCompileMemberOffset(SVMVMCBCTRL, u32InterceptXcpt,        0x08);
 AssertCompileMemberOffset(SVMVMCBCTRL, u64InterceptCtrl,        0x0c);
-AssertCompileMemberOffset(SVMVMCBCTRL, u8Reserved0,             0x14);
+AssertCompileMemberOffset(SVMVMCBCTRL, u64InterceptCtrl2,       0x14);
+AssertCompileMemberOffset(SVMVMCBCTRL, u8Reserved0,             0x1c);
 AssertCompileMemberOffset(SVMVMCBCTRL, u16PauseFilterThreshold, 0x3c);
 AssertCompileMemberOffset(SVMVMCBCTRL, u16PauseFilterCount,     0x3e);
 AssertCompileMemberOffset(SVMVMCBCTRL, u64IOPMPhysAddr,         0x40);
@@ -884,6 +937,13 @@ AssertCompileMemberOffset(SVMVMCBCTRL, AvicBackingPagePtr,      0xe0);
 AssertCompileMemberOffset(SVMVMCBCTRL, u8Reserved2,             0xe8);
 AssertCompileMemberOffset(SVMVMCBCTRL, AvicLogicalTablePtr,     0xf0);
 AssertCompileMemberOffset(SVMVMCBCTRL, AvicPhysicalTablePtr,    0xf8);
+AssertCompileMemberOffset(SVMVMCBCTRL, u8Reserved3,             0x100);
+AssertCompileMemberOffset(SVMVMCBCTRL, VmsaPtr,                 0x108);
+AssertCompileMemberOffset(SVMVMCBCTRL, u64VmgExitRax,           0x110);
+AssertCompileMemberOffset(SVMVMCBCTRL, u8VmgExitCpl,            0x118);
+AssertCompileMemberOffset(SVMVMCBCTRL, u8Reserved4,             0x119);
+AssertCompileMemberOffset(SVMVMCBCTRL, u16BusLockThresholdCnt,  0x120);
+AssertCompileMemberOffset(SVMVMCBCTRL, u8Reserved5,             0x122);
 AssertCompileMemberSize(SVMVMCBCTRL,   abInstr,                 0x0f);
 
 /**
@@ -1034,8 +1094,6 @@ typedef struct SVMVMCB
 {
     /** Offset 0x00 - Control area. */
     SVMVMCBCTRL ctrl;
-    /** Offset 0x100-0x3FF - Reserved. */
-    uint8_t     u8Reserved0[0x400 - 0x100];
     /** Offset 0x400 - State save area. */
     SVMVMCBSTATESAVE guest;
     /** Offset 0x698-0xFFF- Reserved. */
@@ -1047,7 +1105,6 @@ typedef SVMVMCB *PSVMVMCB;
 /** Pointer to a const SVMVMCB structure. */
 typedef const SVMVMCB *PCSVMVMCB;
 AssertCompileMemberOffset(SVMVMCB, ctrl,         0x00);
-AssertCompileMemberOffset(SVMVMCB, u8Reserved0,  0x100);
 AssertCompileMemberOffset(SVMVMCB, guest,        0x400);
 AssertCompileMemberOffset(SVMVMCB, u8Reserved1,  0x698);
 AssertCompileSize(SVMVMCB, 0x1000);

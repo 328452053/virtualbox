@@ -1,4 +1,4 @@
-/* $Id: HMR0SVM-x86.cpp 111701 2025-11-13 14:05:10Z knut.osmundsen@oracle.com $ */
+/* $Id: HMR0SVM-x86.cpp 111854 2025-11-24 15:59:46Z alexander.eichner@oracle.com $ */
 /** @file
  * HM SVM (AMD-V) - Host Context Ring-0.
  */
@@ -379,6 +379,7 @@ static FNSVMEXITHANDLER hmR0SvmExitXcptGeneric;
 static FNSVMEXITHANDLER hmR0SvmExitSwInt;
 static FNSVMEXITHANDLER hmR0SvmExitTrRead;
 static FNSVMEXITHANDLER hmR0SvmExitTrWrite;
+static FNSVMEXITHANDLER hmR0SvmExitBusLock;
 #ifdef VBOX_WITH_NESTED_HWVIRT_SVM
 static FNSVMEXITHANDLER hmR0SvmExitClgi;
 static FNSVMEXITHANDLER hmR0SvmExitStgi;
@@ -908,6 +909,24 @@ DECLINLINE(bool) hmR0SvmSupportsNextRipSave(PVMCPUCC pVCpu)
 
 
 /**
+ * Returns whether the BUSLOCK_THRESHOLD feature is supported.
+ *
+ * @returns @c true if supported, @c false otherwise.
+ * @param   pVCpu       The cross context virtual CPU structure.
+ */
+DECLINLINE(bool) hmR0SvmSupportsBusLockThreshold(PVMCPUCC pVCpu)
+{
+    PVMCC pVM = pVCpu->CTX_SUFF(pVM);
+#ifdef VBOX_WITH_NESTED_HWVIRT_SVM
+    if (CPUMIsGuestInSvmNestedHwVirtMode(&pVCpu->cpum.GstCtx))
+        return (g_fHmSvmFeatures & X86_CPUID_SVM_FEATURE_EDX_BUS_LOCK_THRESHOLD)
+            &&  pVM->cpum.ro.GuestFeatures.fSvmBusLockThreshold;
+#endif
+    return RT_BOOL(g_fHmSvmFeatures & X86_CPUID_SVM_FEATURE_EDX_BUS_LOCK_THRESHOLD);
+}
+
+
+/**
  * Sets the permission bits for the specified MSR in the MSRPM bitmap.
  *
  * @param   pVCpu           The cross context virtual CPU structure.
@@ -1091,6 +1110,14 @@ VMMR0DECL(int) SVMR0SetupVM(PVMCC pVM)
         Assert(!pVCpu0->CTX_SUFF(pVM)->cpum.ro.GuestFeatures.fSvm);
         Assert(!pVmcbCtrl0->LbrVirt.n.u1VirtVmsaveVmload);
         Assert(!pVmcbCtrl0->IntCtrl.n.u1VGifEnable);
+    }
+
+    pVmcbCtrl0->u64InterceptCtrl2 = 0;
+    if (hmR0SvmSupportsBusLockThreshold(pVCpu0))
+    {
+        /* Always intercept the buslock threshold as we don't pass through this feature to the guest currently. */
+        pVmcbCtrl0->u64InterceptCtrl2 |= SVM_CTRL_INTERCEPT_BUSLOCK;
+        pVmcbCtrl0->u16BusLockThresholdCnt = 0;
     }
 
     /* CR4 writes must always be intercepted for tracking PGM mode changes and
@@ -5380,6 +5407,7 @@ static VBOXSTRICTRC hmR0SvmHandleExit(PVMCPUCC pVCpu, PSVMTRANSIENT pSvmTransien
         case SVM_EXIT_XCPT_GP:      VMEXIT_CALL_RET(0, hmR0SvmExitXcptGP(pVCpu, pSvmTransient));
         case SVM_EXIT_XSETBV:       VMEXIT_CALL_RET(0, hmR0SvmExitXsetbv(pVCpu, pSvmTransient));
         case SVM_EXIT_FERR_FREEZE:  VMEXIT_CALL_RET(0, hmR0SvmExitFerrFreeze(pVCpu, pSvmTransient));
+        case SVM_EXIT_BUSLOCK:      VMEXIT_CALL_RET(0, hmR0SvmExitBusLock(pVCpu, pSvmTransient));
 
         default:
         {
@@ -8920,6 +8948,87 @@ HMSVM_EXIT_DECL hmR0SvmExitTrWrite(PVMCPUCC pVCpu, PSVMTRANSIENT pSvmTransient)
         Log4Func(("%04x:%08RX64\n", pSvmTransient->pVmcb->guest.CS.u16Sel, pSvmTransient->pVmcb->guest.u64RIP));
 
     return hmR0SvmExitInterpretInstruction(pVCpu, pSvmTransient, CPUMCTX_EXTRN_TR | CPUMCTX_EXTRN_GDTR, HM_CHANGED_GUEST_TR);
+}
+
+
+/**
+ * \#VMEXIT handler for bus lock operations.
+ * Conditional \#VMEXIT.
+ */
+HMSVM_EXIT_DECL hmR0SvmExitBusLock(PVMCPUCC pVCpu, PSVMTRANSIENT pSvmTransient)
+{
+    HMSVM_VALIDATE_EXIT_HANDLER_PARAMS(pVCpu, pSvmTransient);
+    HMSVM_CHECK_EXIT_DUE_TO_EVENT_DELIVERY(pVCpu, pSvmTransient);
+    STAM_REL_COUNTER_INC(&pVCpu->hm.s.StatExitGuestAC);
+
+    /*
+     * Check for debug/trace events and import state accordingly.
+     */
+    if (!pSvmTransient->fIsNestedGuest)
+        STAM_REL_COUNTER_INC(&pVCpu->hm.s.StatExitGuestACSplitLock);
+    else
+        STAM_REL_COUNTER_INC(&pVCpu->hm.s.StatNestedExitACSplitLock);
+    PVMCC pVM = pVCpu->CTX_SUFF(pVM);
+    if (   !DBGF_IS_EVENT_ENABLED(pVM, DBGFEVENT_SVM_BUS_LOCK_THRESHOLD)
+        && !VBOXVMM_SVM_BUS_LOCK_THRESHOLD_ENABLED()
+        )
+    {
+        if (pVM->cCpus == 1)
+        {
+#if 0 /** @todo r=bird: This is potentially wrong.  Might have to just do a whole state sync above and mark everything changed to be safe... */
+            HMSVM_CPUMCTX_IMPORT_STATE(pVCpu, IEM_CPUMCTX_EXTRN_MUST_MASK);
+#else
+            HMSVM_CPUMCTX_IMPORT_STATE(pVCpu, HMSVM_CPUMCTX_EXTRN_ALL);
+#endif
+        }
+    }
+    else
+    {
+        HMSVM_CPUMCTX_IMPORT_STATE(pVCpu, HMSVM_CPUMCTX_EXTRN_ALL);
+        VBOXVMM_XCPT_DF(pVCpu, &pVCpu->cpum.GstCtx);
+
+        if (DBGF_IS_EVENT_ENABLED(pVM, DBGFEVENT_SVM_BUS_LOCK_THRESHOLD))
+        {
+            VBOXSTRICTRC rcStrict = DBGFEventGenericWithArgs(pVM, pVCpu, DBGFEVENT_SVM_BUS_LOCK_THRESHOLD, DBGFEVENTCTX_HM, 0);
+            if (rcStrict != VINF_SUCCESS)
+                return rcStrict;
+        }
+    }
+
+    /*
+     * Emulate the instruction.
+     *
+     * We have to ignore the LOCK prefix here as we must not retrigger the
+     * detection on the host.  This isn't all that satisfactory, though...
+     */
+    if (pVM->cCpus == 1)
+    {
+        Log8Func(("cs:rip=%#04x:%08RX64 rflags=%#RX64 cr0=%#RX64 split-lock #AC\n", pVCpu->cpum.GstCtx.cs.Sel,
+                  pVCpu->cpum.GstCtx.rip, pVCpu->cpum.GstCtx.rflags, pVCpu->cpum.GstCtx.cr0));
+
+        /** @todo For SMP configs we should do a rendezvous here. */
+        VBOXSTRICTRC rcStrict = IEMExecOneIgnoreLock(pVCpu);
+        if (rcStrict == VINF_SUCCESS)
+#if 0 /** @todo r=bird: This is potentially wrong.  Might have to just do a whole state sync above and mark everything changed to be safe... */
+            ASMAtomicUoOrU64(pVCpu->hm.s.fCtxChanged,
+                               HM_CHANGED_GUEST_RIP
+                             | HM_CHANGED_GUEST_RFLAGS
+                             | HM_CHANGED_GUEST_GPRS_MASK
+                             | HM_CHANGED_GUEST_CS
+                             | HM_CHANGED_GUEST_SS);
+#else
+            ASMAtomicUoOrU64(&pVCpu->hm.s.fCtxChanged, HM_CHANGED_ALL_GUEST);
+#endif
+        else if (rcStrict == VINF_IEM_RAISED_XCPT)
+        {
+            ASMAtomicUoOrU64(&pVCpu->hm.s.fCtxChanged, HM_CHANGED_RAISED_XCPT_MASK);
+            rcStrict = VINF_SUCCESS;
+        }
+        return rcStrict;
+    }
+    Log8Func(("cs:rip=%#04x:%08RX64 rflags=%#RX64 cr0=%#RX64 split-lock #AC -> VINF_EM_EMULATE_SPLIT_LOCK\n",
+              pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, pVCpu->cpum.GstCtx.rflags, pVCpu->cpum.GstCtx.cr0));
+    return VINF_EM_EMULATE_SPLIT_LOCK;
 }
 
 

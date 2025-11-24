@@ -509,6 +509,7 @@ typedef enum DBGFEVENTTYPE
     /** @name Misc VT-x and AMD-V execution events.
      * @{ */
     DBGFEVENT_VMX_SPLIT_LOCK,           /**< VT-x: Split-lock \#AC triggered by host having detection enabled. */
+    DBGFEVENT_SVM_BUS_LOCK_THRESHOLD,   /** < SVM: Buslock SVM exit triggered by host having detection enabled. */
     /** @} */
 
 
