@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 111857 2025-11-24 17:08:24Z andreas.loeffler@oracle.com $
+# $Id: configure.py 111858 2025-11-24 17:12:00Z andreas.loeffler@oracle.com $
 # pylint: disable=line-too-long
 # pylint: disable=too-many-lines
 # pylint: disable=unnecessary-semicolon
@@ -26,16 +26,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, see <https://www.gnu.org/licenses>.
 
-The contents of this file may alternatively be used under the terms
-of the Common Development and Distribution License Version 1.0
-(CDDL), a copy of it is provided in the "COPYING.CDDL" file included
-in the VirtualBox distribution, in which case the provisions of the
-CDDL are applicable instead of those of the GPL.
-
-You may elect to license modified versions of this file under the
-terms and conditions of either the GPL or the CDDL or both.
-
-SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
+SPDX-License-Identifier: GPL-3.0-only
 """
 
 import argparse
