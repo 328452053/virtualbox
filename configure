@@ -1151,14 +1151,17 @@ check_sdl()
       fail
     fi
   else
-    if which_wrapper sdl-config > /dev/null; then
-      FLGSDL=`sdl-config --cflags`
-      INCSDL=`strip_I "$FLGSDL"`
-      LIBSDL=`sdl-config --libs`
-      LIBSDLMAIN="-lSDLmain"
-      FLDSDL=
-      foundsdl=1
+    if which_wrapper sdl2-config > /dev/null; then
+      SDLCONFIG=sdl2-config
+    elif which_wrapper sdl-config > /dev/null; then
+      SDLCONFIG=sdl-config
     fi
+    FLGSDL=`$SDLCONFIG --cflags`
+    INCSDL=`strip_I "$FLGSDL"`
+    LIBSDL=`$SDLCONFIG --libs`
+    LIBSDLMAIN="-lSDLmain"
+    FLDSDL=
+    foundsdl=1
   fi
   [ "$OS" = "linux" -o "$OS" = "darwin" -o "$OS" = "solaris" ] && LIBSDLMAIN=""
   if [ -n "$foundsdl" ]; then
