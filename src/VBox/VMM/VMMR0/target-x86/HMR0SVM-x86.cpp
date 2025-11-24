@@ -1,4 +1,4 @@
-/* $Id: HMR0SVM-x86.cpp 111854 2025-11-24 15:59:46Z alexander.eichner@oracle.com $ */
+/* $Id: HMR0SVM-x86.cpp 111855 2025-11-24 16:21:14Z knut.osmundsen@oracle.com $ */
 /** @file
  * HM SVM (AMD-V) - Host Context Ring-0.
  */
@@ -8985,7 +8985,7 @@ HMSVM_EXIT_DECL hmR0SvmExitBusLock(PVMCPUCC pVCpu, PSVMTRANSIENT pSvmTransient)
     else
     {
         HMSVM_CPUMCTX_IMPORT_STATE(pVCpu, HMSVM_CPUMCTX_EXTRN_ALL);
-        VBOXVMM_XCPT_DF(pVCpu, &pVCpu->cpum.GstCtx);
+        VBOXVMM_SVM_BUS_LOCK_THRESHOLD(pVCpu, &pVCpu->cpum.GstCtx);
 
         if (DBGF_IS_EVENT_ENABLED(pVM, DBGFEVENT_SVM_BUS_LOCK_THRESHOLD))
         {
