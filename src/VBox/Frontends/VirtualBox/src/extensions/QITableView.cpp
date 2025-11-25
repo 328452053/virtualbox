@@ -1,4 +1,4 @@
-/* $Id: QITableView.cpp 111658 2025-11-12 11:32:50Z sergey.dubov@oracle.com $ */
+/* $Id: QITableView.cpp 111863 2025-11-25 11:14:55Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: QITableView class implementation.
  */
@@ -59,24 +59,89 @@ public:
     {}
 
     /** Returns the parent. */
-    virtual QAccessibleInterface *parent() const RT_OVERRIDE;
+    virtual QAccessibleInterface *parent() const RT_OVERRIDE
+    {
+        /* Make sure cell still alive: */
+        AssertPtrReturn(cell(), 0);
+
+        /* Return the parent: */
+        return QAccessible::queryAccessibleInterface(cell()->row());
+    }
 
     /** Returns the number of children. */
-    virtual int childCount() const RT_OVERRIDE { return 0; }
+    virtual int childCount() const RT_OVERRIDE
+    {
+        return 0;
+    }
+
     /** Returns the child with the passed @a iIndex. */
-    virtual QAccessibleInterface *child(int /* iIndex */) const RT_OVERRIDE { return 0; }
+    virtual QAccessibleInterface *child(int /* iIndex */) const RT_OVERRIDE
+    {
+        return 0;
+    }
+
     /** Returns the index of the passed @a pChild. */
-    virtual int indexOfChild(const QAccessibleInterface * /* pChild */) const RT_OVERRIDE { return -1; }
+    virtual int indexOfChild(const QAccessibleInterface * /* pChild */) const RT_OVERRIDE
+    {
+        return -1;
+    }
 
     /** Returns the rect. */
-    virtual QRect rect() const RT_OVERRIDE;
+    virtual QRect rect() const RT_OVERRIDE
+    {
+        /* Make sure cell still alive: */
+        AssertPtrReturn(cell(), QRect());
+        AssertPtrReturn(cell()->row(), QRect());
+        AssertPtrReturn(cell()->row()->table(), QRect());
+
+        /* Calculate local item coordinates: */
+        const int iIndexInParent = parent()->indexOfChild(this);
+        const int iParentIndexInParent = parent()->parent()->indexOfChild(parent());
+        const int iX = cell()->row()->table()->columnViewportPosition(iIndexInParent);
+        const int iY = cell()->row()->table()->rowViewportPosition(iParentIndexInParent);
+        const int iWidth = cell()->row()->table()->columnWidth(iIndexInParent);
+        const int iHeight = cell()->row()->table()->rowHeight(iParentIndexInParent);
+
+        /* Map local item coordinates to global: */
+        const QPoint itemPosInScreen = cell()->row()->table()->viewport()->mapToGlobal(QPoint(iX, iY));
+
+        /* Return item rectangle: */
+        return QRect(itemPosInScreen, QSize(iWidth, iHeight));
+    }
+
     /** Returns a text for the passed @a enmTextRole. */
-    virtual QString text(QAccessible::Text enmTextRole) const RT_OVERRIDE;
+    virtual QString text(QAccessible::Text enmTextRole) const RT_OVERRIDE
+    {
+        /* Make sure cell still alive: */
+        AssertPtrReturn(cell(), QString());
+
+        /* Return a text for the passed enmTextRole: */
+        switch (enmTextRole)
+        {
+            case QAccessible::Name: return cell()->text();
+            default: break;
+        }
+
+        /* Null-string by default: */
+        return QString();
+    }
 
     /** Returns the role. */
-    virtual QAccessible::Role role() const RT_OVERRIDE;
+    virtual QAccessible::Role role() const RT_OVERRIDE
+    {
+        /* Cell by default: */
+        return QAccessible::Cell;
+    }
+
     /** Returns the state. */
-    virtual QAccessible::State state() const RT_OVERRIDE;
+    virtual QAccessible::State state() const RT_OVERRIDE
+    {
+        /* Make sure cell still alive: */
+        AssertPtrReturn(cell(), QAccessible::State());
+
+        /* Empty state by default: */
+        return QAccessible::State();
+    }
 
 private:
 
@@ -107,24 +172,106 @@ public:
     {}
 
     /** Returns the parent. */
-    virtual QAccessibleInterface *parent() const RT_OVERRIDE;
+    virtual QAccessibleInterface *parent() const RT_OVERRIDE
+    {
+        /* Make sure row still alive: */
+        AssertPtrReturn(row(), 0);
+
+        /* Return the parent: */
+        return QAccessible::queryAccessibleInterface(row()->table());
+    }
 
     /** Returns the number of children. */
-    virtual int childCount() const RT_OVERRIDE;
+    virtual int childCount() const RT_OVERRIDE
+    {
+        /* Make sure row still alive: */
+        AssertPtrReturn(row(), 0);
+
+        /* Return the number of children: */
+        return row()->childCount();
+    }
+
     /** Returns the child with the passed @a iIndex. */
-    virtual QAccessibleInterface *child(int iIndex) const RT_OVERRIDE;
+    virtual QAccessibleInterface *child(int iIndex) const RT_OVERRIDE
+    {
+        /* Make sure row still alive: */
+        AssertPtrReturn(row(), 0);
+        /* Make sure index is valid: */
+        AssertReturn(iIndex >= 0 && iIndex < childCount(), 0);
+
+        /* Return the child with the passed iIndex: */
+        return QAccessible::queryAccessibleInterface(row()->childItem(iIndex));
+    }
+
     /** Returns the index of the passed @a pChild. */
-    virtual int indexOfChild(const QAccessibleInterface *pChild) const RT_OVERRIDE;
+    virtual int indexOfChild(const QAccessibleInterface *pChild) const RT_OVERRIDE
+    {
+        /* Search for corresponding child: */
+        for (int i = 0; i < childCount(); ++i)
+            if (child(i) == pChild)
+                return i;
+
+        /* -1 by default: */
+        return -1;
+    }
 
     /** Returns the rect. */
-    virtual QRect rect() const RT_OVERRIDE;
+    virtual QRect rect() const RT_OVERRIDE
+    {
+        /* Make sure row still alive: */
+        AssertPtrReturn(row(), QRect());
+        AssertPtrReturn(row()->table(), QRect());
+
+        /* Calculate local item coordinates: */
+        const int iIndexInParent = parent()->indexOfChild(this);
+        const int iX = row()->table()->columnViewportPosition(0);
+        const int iY = row()->table()->rowViewportPosition(iIndexInParent);
+        int iWidth = 0;
+        int iHeight = 0;
+        for (int i = 0; i < childCount(); ++i)
+            iWidth += row()->table()->columnWidth(i);
+        iHeight += row()->table()->rowHeight(iIndexInParent);
+
+        /* Map local item coordinates to global: */
+        const QPoint itemPosInScreen = row()->table()->viewport()->mapToGlobal(QPoint(iX, iY));
+
+        /* Return item rectangle: */
+        return QRect(itemPosInScreen, QSize(iWidth, iHeight));
+    }
+
     /** Returns a text for the passed @a enmTextRole. */
-    virtual QString text(QAccessible::Text enmTextRole) const RT_OVERRIDE;
+    virtual QString text(QAccessible::Text enmTextRole) const RT_OVERRIDE
+    {
+        /* Make sure row still alive: */
+        AssertPtrReturn(row(), QString());
+
+        /* Return a text for the passed enmTextRole: */
+        switch (enmTextRole)
+        {
+            case QAccessible::Name: return childCount() > 0 && child(0) ? child(0)->text(enmTextRole) : QString();
+            default: break;
+        }
+
+        /* Null-string by default: */
+        return QString();
+    }
 
     /** Returns the role. */
-    virtual QAccessible::Role role() const RT_OVERRIDE;
+    virtual QAccessible::Role role() const RT_OVERRIDE
+    {
+        /* Row by default: */
+        return QAccessible::Row;
+    }
+
     /** Returns the state. */
-    virtual QAccessible::State state() const RT_OVERRIDE;
+    virtual QAccessible::State state() const RT_OVERRIDE
+    {
+        /* Make sure row still alive: */
+        AssertPtrReturn(row(), QAccessible::State());
+
+        /* Empty state by default: */
+        return QAccessible::State();
+    }
 
 private:
 
@@ -155,269 +302,92 @@ public:
     {}
 
     /** Returns the number of children. */
-    virtual int childCount() const RT_OVERRIDE;
+    virtual int childCount() const RT_OVERRIDE
+    {
+        /* Make sure table still alive: */
+        AssertPtrReturn(table(), 0);
+        /* Make sure model still alive: */
+        AssertPtrReturn(table()->model(), 0);
+
+        /* Return the number of children: */
+        return table()->model()->rowCount();
+    }
+
     /** Returns the child with the passed @a iIndex. */
-    virtual QAccessibleInterface *child(int iIndex) const RT_OVERRIDE;
+    virtual QAccessibleInterface *child(int iIndex) const RT_OVERRIDE
+    {
+        /* Make sure table still alive: */
+        QITableView *pTable = table();
+        AssertPtrReturn(pTable, 0);
+        /* Make sure model still alive: */
+        QAbstractItemModel *pModel = pTable->model();
+        AssertPtrReturn(pModel, 0);
+        /* Make sure index is valid: */
+        AssertReturn(iIndex >= 0, 0);
+
+        /* Real index might be different: */
+        int iRealRowIndex = iIndex;
+
+        // WORKAROUND:
+        // For a table-views Qt accessibility code has a hard-coded architecture which we do not like
+        // but have to live with, this architecture enumerates cells including header column and row,
+        // so Qt can try to address our interface with index which surely out of bounds by our laws.
+        // Let's assume that's exactly the case and try to enumerate cells including header column and row.
+        if (iRealRowIndex >= childCount())
+        {
+            // Split delimeter is overall column count, including vertical header:
+            const int iColumnCount = pModel->columnCount() + 1 /* v_header */;
+            // Real index is zero-based, incoming is 1-based:
+            const int iRealIndex = iIndex - 1;
+            // Real row index, excluding horizontal header:
+            iRealRowIndex = iRealIndex / iColumnCount - 1 /* h_header */;
+            // printf("Invalid index: %d, Actual index: %d\n", iIndex, iRealRowIndex);
+        }
+
+        /* Make sure index fits the bounds finally: */
+        if (iRealRowIndex >= childCount())
+            return 0;
+
+        /* Acquire child-index: */
+        const QModelIndex childIndex = pModel->index(iRealRowIndex, 0);
+        /* Check whether we have proxy model set or source one otherwise: */
+        const QSortFilterProxyModel *pProxyModel = qobject_cast<const QSortFilterProxyModel*>(pModel);
+        /* Acquire source-model child-index (can be the same as original if there is no proxy model): */
+        const QModelIndex sourceChildIndex = pProxyModel ? pProxyModel->mapToSource(childIndex) : childIndex;
+
+        /* Acquire row item: */
+        QITableViewRow *pRow = static_cast<QITableViewRow*>(sourceChildIndex.internalPointer());
+        /* Return row's accessibility interface: */
+        return QAccessible::queryAccessibleInterface(pRow);
+    }
+
     /** Returns the index of the passed @a pChild. */
-    virtual int indexOfChild(const QAccessibleInterface *pChild) const RT_OVERRIDE;
+    virtual int indexOfChild(const QAccessibleInterface *pChild) const RT_OVERRIDE
+    {
+        /* Search for corresponding child: */
+        for (int i = 0; i < childCount(); ++i)
+            if (child(i) == pChild)
+                return i;
+
+        /* -1 by default: */
+        return -1;
+    }
 
     /** Returns a text for the passed @a enmTextRole. */
-    virtual QString text(QAccessible::Text enmTextRole) const RT_OVERRIDE;
+    virtual QString text(QAccessible::Text /*enmTextRole*/) const RT_OVERRIDE
+    {
+        /* Make sure table still alive: */
+        AssertPtrReturn(table(), QString());
+
+        /* Return table whats-this: */
+        return table()->whatsThis();
+    }
 
 private:
 
     /** Returns corresponding QITableView. */
     QITableView *table() const { return qobject_cast<QITableView*>(widget()); }
 };
-
-
-/*********************************************************************************************************************************
-*   Class QIAccessibilityInterfaceForQITableViewCell implementation.                                                             *
-*********************************************************************************************************************************/
-
-QAccessibleInterface *QIAccessibilityInterfaceForQITableViewCell::parent() const
-{
-    /* Make sure cell still alive: */
-    AssertPtrReturn(cell(), 0);
-
-    /* Return the parent: */
-    return QAccessible::queryAccessibleInterface(cell()->row());
-}
-
-QRect QIAccessibilityInterfaceForQITableViewCell::rect() const
-{
-    /* Make sure cell still alive: */
-    AssertPtrReturn(cell(), QRect());
-    AssertPtrReturn(cell()->row(), QRect());
-    AssertPtrReturn(cell()->row()->table(), QRect());
-
-    /* Calculate local item coordinates: */
-    const int iIndexInParent = parent()->indexOfChild(this);
-    const int iParentIndexInParent = parent()->parent()->indexOfChild(parent());
-    const int iX = cell()->row()->table()->columnViewportPosition(iIndexInParent);
-    const int iY = cell()->row()->table()->rowViewportPosition(iParentIndexInParent);
-    const int iWidth = cell()->row()->table()->columnWidth(iIndexInParent);
-    const int iHeight = cell()->row()->table()->rowHeight(iParentIndexInParent);
-
-    /* Map local item coordinates to global: */
-    const QPoint itemPosInScreen = cell()->row()->table()->viewport()->mapToGlobal(QPoint(iX, iY));
-
-    /* Return item rectangle: */
-    return QRect(itemPosInScreen, QSize(iWidth, iHeight));
-}
-
-QString QIAccessibilityInterfaceForQITableViewCell::text(QAccessible::Text enmTextRole) const
-{
-    /* Make sure cell still alive: */
-    AssertPtrReturn(cell(), QString());
-
-    /* Return a text for the passed enmTextRole: */
-    switch (enmTextRole)
-    {
-        case QAccessible::Name: return cell()->text();
-        default: break;
-    }
-
-    /* Null-string by default: */
-    return QString();
-}
-
-QAccessible::Role QIAccessibilityInterfaceForQITableViewCell::role() const
-{
-    /* Cell by default: */
-    return QAccessible::Cell;
-}
-
-QAccessible::State QIAccessibilityInterfaceForQITableViewCell::state() const
-{
-    /* Make sure cell still alive: */
-    AssertPtrReturn(cell(), QAccessible::State());
-
-    /* Empty state by default: */
-    return QAccessible::State();
-}
-
-
-/*********************************************************************************************************************************
-*   Class QIAccessibilityInterfaceForQITableViewRow implementation.                                                              *
-*********************************************************************************************************************************/
-
-QAccessibleInterface *QIAccessibilityInterfaceForQITableViewRow::parent() const
-{
-    /* Make sure row still alive: */
-    AssertPtrReturn(row(), 0);
-
-    /* Return the parent: */
-    return QAccessible::queryAccessibleInterface(row()->table());
-}
-
-int QIAccessibilityInterfaceForQITableViewRow::childCount() const
-{
-    /* Make sure row still alive: */
-    AssertPtrReturn(row(), 0);
-
-    /* Return the number of children: */
-    return row()->childCount();
-}
-
-QAccessibleInterface *QIAccessibilityInterfaceForQITableViewRow::child(int iIndex) const
-{
-    /* Make sure row still alive: */
-    AssertPtrReturn(row(), 0);
-    /* Make sure index is valid: */
-    AssertReturn(iIndex >= 0 && iIndex < childCount(), 0);
-
-    /* Return the child with the passed iIndex: */
-    return QAccessible::queryAccessibleInterface(row()->childItem(iIndex));
-}
-
-int QIAccessibilityInterfaceForQITableViewRow::indexOfChild(const QAccessibleInterface *pChild) const
-{
-    /* Search for corresponding child: */
-    for (int i = 0; i < childCount(); ++i)
-        if (child(i) == pChild)
-            return i;
-
-    /* -1 by default: */
-    return -1;
-}
-
-QRect QIAccessibilityInterfaceForQITableViewRow::rect() const
-{
-    /* Make sure row still alive: */
-    AssertPtrReturn(row(), QRect());
-    AssertPtrReturn(row()->table(), QRect());
-
-    /* Calculate local item coordinates: */
-    const int iIndexInParent = parent()->indexOfChild(this);
-    const int iX = row()->table()->columnViewportPosition(0);
-    const int iY = row()->table()->rowViewportPosition(iIndexInParent);
-    int iWidth = 0;
-    int iHeight = 0;
-    for (int i = 0; i < childCount(); ++i)
-        iWidth += row()->table()->columnWidth(i);
-    iHeight += row()->table()->rowHeight(iIndexInParent);
-
-    /* Map local item coordinates to global: */
-    const QPoint itemPosInScreen = row()->table()->viewport()->mapToGlobal(QPoint(iX, iY));
-
-    /* Return item rectangle: */
-    return QRect(itemPosInScreen, QSize(iWidth, iHeight));
-}
-
-QString QIAccessibilityInterfaceForQITableViewRow::text(QAccessible::Text enmTextRole) const
-{
-    /* Make sure row still alive: */
-    AssertPtrReturn(row(), QString());
-
-    /* Return a text for the passed enmTextRole: */
-    switch (enmTextRole)
-    {
-        case QAccessible::Name: return childCount() > 0 && child(0) ? child(0)->text(enmTextRole) : QString();
-        default: break;
-    }
-
-    /* Null-string by default: */
-    return QString();
-}
-
-QAccessible::Role QIAccessibilityInterfaceForQITableViewRow::role() const
-{
-    /* Row by default: */
-    return QAccessible::Row;
-}
-
-QAccessible::State QIAccessibilityInterfaceForQITableViewRow::state() const
-{
-    /* Make sure row still alive: */
-    AssertPtrReturn(row(), QAccessible::State());
-
-    /* Empty state by default: */
-    return QAccessible::State();
-}
-
-
-/*********************************************************************************************************************************
-*   Class QIAccessibilityInterfaceForQITableView implementation.                                                                 *
-*********************************************************************************************************************************/
-
-int QIAccessibilityInterfaceForQITableView::childCount() const
-{
-    /* Make sure table still alive: */
-    AssertPtrReturn(table(), 0);
-    /* Make sure model still alive: */
-    AssertPtrReturn(table()->model(), 0);
-
-    /* Return the number of children: */
-    return table()->model()->rowCount();
-}
-
-QAccessibleInterface *QIAccessibilityInterfaceForQITableView::child(int iIndex) const
-{
-    /* Make sure table still alive: */
-    QITableView *pTable = table();
-    AssertPtrReturn(pTable, 0);
-    /* Make sure model still alive: */
-    QAbstractItemModel *pModel = pTable->model();
-    AssertPtrReturn(pModel, 0);
-    /* Make sure index is valid: */
-    AssertReturn(iIndex >= 0, 0);
-
-    /* Real index might be different: */
-    int iRealRowIndex = iIndex;
-
-    // WORKAROUND:
-    // For a table-views Qt accessibility code has a hard-coded architecture which we do not like
-    // but have to live with, this architecture enumerates cells including header column and row,
-    // so Qt can try to address our interface with index which surely out of bounds by our laws.
-    // Let's assume that's exactly the case and try to enumerate cells including header column and row.
-    if (iRealRowIndex >= childCount())
-    {
-        // Split delimeter is overall column count, including vertical header:
-        const int iColumnCount = pModel->columnCount() + 1 /* v_header */;
-        // Real index is zero-based, incoming is 1-based:
-        const int iRealIndex = iIndex - 1;
-        // Real row index, excluding horizontal header:
-        iRealRowIndex = iRealIndex / iColumnCount - 1 /* h_header */;
-        // printf("Invalid index: %d, Actual index: %d\n", iIndex, iRealRowIndex);
-    }
-
-    /* Make sure index fits the bounds finally: */
-    if (iRealRowIndex >= childCount())
-        return 0;
-
-    /* Acquire child-index: */
-    const QModelIndex childIndex = pModel->index(iRealRowIndex, 0);
-    /* Check whether we have proxy model set or source one otherwise: */
-    const QSortFilterProxyModel *pProxyModel = qobject_cast<const QSortFilterProxyModel*>(pModel);
-    /* Acquire source-model child-index (can be the same as original if there is no proxy model): */
-    const QModelIndex sourceChildIndex = pProxyModel ? pProxyModel->mapToSource(childIndex) : childIndex;
-
-    /* Acquire row item: */
-    QITableViewRow *pRow = static_cast<QITableViewRow*>(sourceChildIndex.internalPointer());
-    /* Return row's accessibility interface: */
-    return QAccessible::queryAccessibleInterface(pRow);
-}
-
-int QIAccessibilityInterfaceForQITableView::indexOfChild(const QAccessibleInterface *pChild) const
-{
-    /* Search for corresponding child: */
-    for (int i = 0; i < childCount(); ++i)
-        if (child(i) == pChild)
-            return i;
-
-    /* -1 by default: */
-    return -1;
-}
-
-QString QIAccessibilityInterfaceForQITableView::text(QAccessible::Text /* enmTextRole */) const
-{
-    /* Make sure table still alive: */
-    AssertPtrReturn(table(), QString());
-
-    /* Return table whats-this: */
-    return table()->whatsThis();
-}
 
 
 /*********************************************************************************************************************************
