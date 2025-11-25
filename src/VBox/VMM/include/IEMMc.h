@@ -1,4 +1,4 @@
-/* $Id: IEMMc.h 111138 2025-09-27 02:26:39Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMMc.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - IEM_MC_XXX, common.
  */
@@ -1253,11 +1253,11 @@
         uint16_t     const uCsBefore   = pVCpu->cpum.GstCtx.cs.Sel; \
         uint64_t     const uRipBefore  = pVCpu->cpum.GstCtx.rip; \
         uint32_t     const fEflBefore  = pVCpu->cpum.GstCtx.eflags.u; \
-        uint32_t     const fExecBefore = pVCpu->iem.s.fExec; \
+        uint32_t     const fExecBefore = ICORE(pVCpu).fExec; \
         VBOXSTRICTRC const rcStrictHlp = a_CallExpr; \
         if (rcStrictHlp == VINF_SUCCESS) \
         { \
-            uint64_t const fRipMask = (pVCpu->iem.s.fExec & IEM_F_MODE_X86_CPUMODE_MASK) == IEMMODE_64BIT ? UINT64_MAX : UINT32_MAX; \
+            uint64_t const fRipMask = (ICORE(pVCpu).fExec & IEM_F_MODE_X86_CPUMODE_MASK) == IEMMODE_64BIT ? UINT64_MAX : UINT32_MAX; \
             AssertMsg(   ((a_fFlags) & IEM_CIMPL_F_BRANCH_ANY) \
                       || (   ((uRipBefore + cbInstr) & fRipMask) == pVCpu->cpum.GstCtx.rip \
                           && uCsBefore  == pVCpu->cpum.GstCtx.cs.Sel) \
@@ -1278,7 +1278,7 @@
                           ("EFL=%#RX32 -> %#RX32\n", fEflBefore, pVCpu->cpum.GstCtx.eflags.u)); \
             if (!((a_fFlags) & IEM_CIMPL_F_MODE)) \
             { \
-                uint32_t fExecRecalc = iemCalcExecFlags(pVCpu) | (pVCpu->iem.s.fExec & IEM_F_USER_OPTS); \
+                uint32_t fExecRecalc = iemCalcExecFlags(pVCpu) | (ICORE(pVCpu).fExec & IEM_F_USER_OPTS); \
                 AssertMsg(   fExecBefore == fExecRecalc \
                              /* in case ES, DS or SS was external initially (happens alot with HM): */ \
                           || (   fExecBefore == (fExecRecalc & ~IEM_F_MODE_X86_FLAT_OR_PRE_386_MASK) \

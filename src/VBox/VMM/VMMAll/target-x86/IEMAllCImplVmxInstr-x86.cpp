@@ -1,4 +1,4 @@
-/* $Id: IEMAllCImplVmxInstr-x86.cpp 111511 2025-10-28 15:05:30Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: IEMAllCImplVmxInstr-x86.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - VT-x instruction implementation (x86 target).
  */
@@ -87,8 +87,8 @@
 #  define IEM_MODRM_GET_U8(a_pVCpu, a_bModRm, a_offModRm) \
     do \
     { \
-        Assert((a_offModRm) < (a_pVCpu)->iem.s.cbOpcode); \
-        (a_bModRm) = (a_pVCpu)->iem.s.abOpcode[(a_offModRm)]; \
+        Assert((a_offModRm) < ICORE(a_pVCpu).cbOpcode); \
+        (a_bModRm) = ICORE(a_pVCpu).abOpcode[(a_offModRm)]; \
     } while (0)
 
 #  define IEM_SIB_GET_U8(a_pVCpu, a_bSib, a_offSib)      IEM_MODRM_GET_U8(a_pVCpu, a_bSib, a_offSib)
@@ -96,52 +96,52 @@
 #  define IEM_DISP_GET_U16(a_pVCpu, a_u16Disp, a_offDisp) \
     do \
     { \
-        Assert((a_offDisp) + 1 < (a_pVCpu)->iem.s.cbOpcode); \
-        uint8_t const bTmpLo = (a_pVCpu)->iem.s.abOpcode[(a_offDisp)]; \
-        uint8_t const bTmpHi = (a_pVCpu)->iem.s.abOpcode[(a_offDisp) + 1]; \
+        Assert((a_offDisp) + 1 < ICORE(a_pVCpu).cbOpcode); \
+        uint8_t const bTmpLo = ICORE(a_pVCpu).abOpcode[(a_offDisp)]; \
+        uint8_t const bTmpHi = ICORE(a_pVCpu).abOpcode[(a_offDisp) + 1]; \
         (a_u16Disp) = RT_MAKE_U16(bTmpLo, bTmpHi); \
     } while (0)
 
 #  define IEM_DISP_GET_S8_SX_U16(a_pVCpu, a_u16Disp, a_offDisp) \
     do \
     { \
-        Assert((a_offDisp) < (a_pVCpu)->iem.s.cbOpcode); \
-        (a_u16Disp) = (int8_t)((a_pVCpu)->iem.s.abOpcode[(a_offDisp)]); \
+        Assert((a_offDisp) < ICORE(a_pVCpu).cbOpcode); \
+        (a_u16Disp) = (int8_t)(ICORE(a_pVCpu).abOpcode[(a_offDisp)]); \
     } while (0)
 
 #  define IEM_DISP_GET_U32(a_pVCpu, a_u32Disp, a_offDisp) \
     do \
     { \
-        Assert((a_offDisp) + 3 < (a_pVCpu)->iem.s.cbOpcode); \
-        uint8_t const bTmp0 = (a_pVCpu)->iem.s.abOpcode[(a_offDisp)]; \
-        uint8_t const bTmp1 = (a_pVCpu)->iem.s.abOpcode[(a_offDisp) + 1]; \
-        uint8_t const bTmp2 = (a_pVCpu)->iem.s.abOpcode[(a_offDisp) + 2]; \
-        uint8_t const bTmp3 = (a_pVCpu)->iem.s.abOpcode[(a_offDisp) + 3]; \
+        Assert((a_offDisp) + 3 < ICORE(a_pVCpu).cbOpcode); \
+        uint8_t const bTmp0 = ICORE(a_pVCpu).abOpcode[(a_offDisp)]; \
+        uint8_t const bTmp1 = ICORE(a_pVCpu).abOpcode[(a_offDisp) + 1]; \
+        uint8_t const bTmp2 = ICORE(a_pVCpu).abOpcode[(a_offDisp) + 2]; \
+        uint8_t const bTmp3 = ICORE(a_pVCpu).abOpcode[(a_offDisp) + 3]; \
         (a_u32Disp) = RT_MAKE_U32_FROM_U8(bTmp0, bTmp1, bTmp2, bTmp3); \
     } while (0)
 
 #  define IEM_DISP_GET_S8_SX_U32(a_pVCpu, a_u32Disp, a_offDisp) \
     do \
     { \
-        Assert((a_offDisp) + 1 < (a_pVCpu)->iem.s.cbOpcode); \
-        (a_u32Disp) = (int8_t)((a_pVCpu)->iem.s.abOpcode[(a_offDisp)]); \
+        Assert((a_offDisp) + 1 < ICORE(a_pVCpu).cbOpcode); \
+        (a_u32Disp) = (int8_t)(ICORE(a_pVCpu).abOpcode[(a_offDisp)]); \
     } while (0)
 
 #  define IEM_DISP_GET_S8_SX_U64(a_pVCpu, a_u64Disp, a_offDisp) \
     do \
     { \
-        Assert((a_offDisp) + 1 < (a_pVCpu)->iem.s.cbOpcode); \
-        (a_u64Disp) = (int8_t)((a_pVCpu)->iem.s.abOpcode[(a_offDisp)]); \
+        Assert((a_offDisp) + 1 < ICORE(a_pVCpu).cbOpcode); \
+        (a_u64Disp) = (int8_t)(ICORE(a_pVCpu).abOpcode[(a_offDisp)]); \
     } while (0)
 
 #  define IEM_DISP_GET_S32_SX_U64(a_pVCpu, a_u64Disp, a_offDisp) \
     do \
     { \
-        Assert((a_offDisp) + 3 < (a_pVCpu)->iem.s.cbOpcode); \
-        uint8_t const bTmp0 = (a_pVCpu)->iem.s.abOpcode[(a_offDisp)]; \
-        uint8_t const bTmp1 = (a_pVCpu)->iem.s.abOpcode[(a_offDisp) + 1]; \
-        uint8_t const bTmp2 = (a_pVCpu)->iem.s.abOpcode[(a_offDisp) + 2]; \
-        uint8_t const bTmp3 = (a_pVCpu)->iem.s.abOpcode[(a_offDisp) + 3]; \
+        Assert((a_offDisp) + 3 < ICORE(a_pVCpu).cbOpcode); \
+        uint8_t const bTmp0 = ICORE(a_pVCpu).abOpcode[(a_offDisp)]; \
+        uint8_t const bTmp1 = ICORE(a_pVCpu).abOpcode[(a_offDisp) + 1]; \
+        uint8_t const bTmp2 = ICORE(a_pVCpu).abOpcode[(a_offDisp) + 2]; \
+        uint8_t const bTmp3 = ICORE(a_pVCpu).abOpcode[(a_offDisp) + 3]; \
         (a_u64Disp) = (int32_t)RT_MAKE_U32_FROM_U8(bTmp0, bTmp1, bTmp2, bTmp3); \
     } while (0)
 # endif /* !IEM_WITH_CODE_TLB */
@@ -2142,7 +2142,7 @@ static uint32_t iemVmxGetExitInstrInfo(PVMCPUCC pVCpu, uint32_t uExitReason, VMX
      * Get and parse the ModR/M byte from our decoded opcodes.
      */
     uint8_t bRm;
-    uint8_t const offModRm = pVCpu->iem.s.offModRm;
+    uint8_t const offModRm = ICORE(pVCpu).offModRm;
     IEM_MODRM_GET_U8(pVCpu, bRm, offModRm);
     if ((bRm & X86_MODRM_MOD_MASK) == (3 << X86_MODRM_MOD_SHIFT))
     {
@@ -2156,19 +2156,19 @@ static uint32_t iemVmxGetExitInstrInfo(PVMCPUCC pVCpu, uint32_t uExitReason, VMX
         uint8_t idxReg2;
         if (!VMXINSTRID_IS_MODRM_PRIMARY_OP_W(uInstrId))
         {
-            idxReg1 = ((bRm >> X86_MODRM_REG_SHIFT) & X86_MODRM_REG_SMASK) | pVCpu->iem.s.uRexReg;
-            idxReg2 = (bRm & X86_MODRM_RM_MASK) | pVCpu->iem.s.uRexB;
+            idxReg1 = ((bRm >> X86_MODRM_REG_SHIFT) & X86_MODRM_REG_SMASK) | ICORE(pVCpu).uRexReg;
+            idxReg2 = (bRm & X86_MODRM_RM_MASK) | ICORE(pVCpu).uRexB;
         }
         else
         {
-            idxReg1 = (bRm & X86_MODRM_RM_MASK) | pVCpu->iem.s.uRexB;
-            idxReg2 = ((bRm >> X86_MODRM_REG_SHIFT) & X86_MODRM_REG_SMASK) | pVCpu->iem.s.uRexReg;
+            idxReg1 = (bRm & X86_MODRM_RM_MASK) | ICORE(pVCpu).uRexB;
+            idxReg2 = ((bRm >> X86_MODRM_REG_SHIFT) & X86_MODRM_REG_SMASK) | ICORE(pVCpu).uRexReg;
         }
         ExitInstrInfo.All.u2Scaling       = 0;
         ExitInstrInfo.All.iReg1           = idxReg1;
-        ExitInstrInfo.All.u3AddrSize      = pVCpu->iem.s.enmEffAddrMode;
+        ExitInstrInfo.All.u3AddrSize      = ICORE(pVCpu).enmEffAddrMode;
         ExitInstrInfo.All.fIsRegOperand   = 1;
-        ExitInstrInfo.All.uOperandSize    = pVCpu->iem.s.enmEffOpSize;
+        ExitInstrInfo.All.uOperandSize    = ICORE(pVCpu).enmEffOpSize;
         ExitInstrInfo.All.iSegReg         = 0;
         ExitInstrInfo.All.iIdxReg         = 0;
         ExitInstrInfo.All.fIdxRegInvalid  = 1;
@@ -2189,7 +2189,7 @@ static uint32_t iemVmxGetExitInstrInfo(PVMCPUCC pVCpu, uint32_t uExitReason, VMX
         bool     fIdxRegValid  = false;
         uint8_t  iBaseReg      = 0;
         uint8_t  iIdxReg       = 0;
-        if (pVCpu->iem.s.enmEffAddrMode == IEMMODE_16BIT)
+        if (ICORE(pVCpu).enmEffAddrMode == IEMMODE_16BIT)
         {
             /*
              * Parse the ModR/M, displacement for 16-bit addressing mode.
@@ -2235,7 +2235,7 @@ static uint32_t iemVmxGetExitInstrInfo(PVMCPUCC pVCpu, uint32_t uExitReason, VMX
             Assert(!uScale);                    /* There's no scaling/SIB byte for 16-bit addressing. */
             GCPtrDisp = (int16_t)u16Disp;       /* Sign-extend the displacement. */
         }
-        else if (pVCpu->iem.s.enmEffAddrMode == IEMMODE_32BIT)
+        else if (ICORE(pVCpu).enmEffAddrMode == IEMMODE_32BIT)
         {
             /*
              * Parse the ModR/M, SIB, displacement for 32-bit addressing mode.
@@ -2308,7 +2308,7 @@ static uint32_t iemVmxGetExitInstrInfo(PVMCPUCC pVCpu, uint32_t uExitReason, VMX
         }
         else
         {
-            Assert(pVCpu->iem.s.enmEffAddrMode == IEMMODE_64BIT);
+            Assert(ICORE(pVCpu).enmEffAddrMode == IEMMODE_64BIT);
 
             /*
              * Parse the ModR/M, SIB, displacement for 64-bit addressing mode.
@@ -2355,7 +2355,7 @@ static uint32_t iemVmxGetExitInstrInfo(PVMCPUCC pVCpu, uint32_t uExitReason, VMX
                     uScale = (bSib >> X86_SIB_SCALE_SHIFT) & X86_SIB_SCALE_SMASK;
 
                     /* Get the index. */
-                    iIdxReg = ((bSib >> X86_SIB_INDEX_SHIFT) & X86_SIB_INDEX_SMASK) | pVCpu->iem.s.uRexIndex;
+                    iIdxReg = ((bSib >> X86_SIB_INDEX_SHIFT) & X86_SIB_INDEX_SMASK) | ICORE(pVCpu).uRexIndex;
                     fIdxRegValid = RT_BOOL(iIdxReg != 4);   /* R12 -can- be used as an index register. */
 
                     /* Get the base. */
@@ -2371,11 +2371,11 @@ static uint32_t iemVmxGetExitInstrInfo(PVMCPUCC pVCpu, uint32_t uExitReason, VMX
                         else
                         {
                             /* Mod is non-zero implies an 8-bit/32-bit displacement (handled below) with RBP or R13 as base. */
-                            iBaseReg = pVCpu->iem.s.uRexB ? X86_GREG_x13 : X86_GREG_xBP;
+                            iBaseReg = ICORE(pVCpu).uRexB ? X86_GREG_x13 : X86_GREG_xBP;
                         }
                     }
                 }
-                iBaseReg |= pVCpu->iem.s.uRexB;
+                iBaseReg |= ICORE(pVCpu).uRexB;
 
                 /* Register + displacement. */
                 switch ((bRm >> X86_MODRM_MOD_SHIFT) & X86_MODRM_MOD_SMASK)
@@ -2403,21 +2403,21 @@ static uint32_t iemVmxGetExitInstrInfo(PVMCPUCC pVCpu, uint32_t uExitReason, VMX
         if (!VMXINSTRID_IS_MODRM_PRIMARY_OP_W(uInstrId))
         {
             idxReg2 = bRm & X86_MODRM_RM_MASK;
-            if (pVCpu->iem.s.enmEffAddrMode == IEMMODE_64BIT)
-                idxReg2 |= pVCpu->iem.s.uRexB;
+            if (ICORE(pVCpu).enmEffAddrMode == IEMMODE_64BIT)
+                idxReg2 |= ICORE(pVCpu).uRexB;
         }
         else
         {
             idxReg2 = (bRm >> X86_MODRM_REG_SHIFT) & X86_MODRM_REG_SMASK;
-            if (pVCpu->iem.s.enmEffAddrMode == IEMMODE_64BIT)
-                 idxReg2 |= pVCpu->iem.s.uRexReg;
+            if (ICORE(pVCpu).enmEffAddrMode == IEMMODE_64BIT)
+                 idxReg2 |= ICORE(pVCpu).uRexReg;
         }
         ExitInstrInfo.All.u2Scaling      = uScale;
         ExitInstrInfo.All.iReg1          = 0;   /* Not applicable for memory addressing. */
-        ExitInstrInfo.All.u3AddrSize     = pVCpu->iem.s.enmEffAddrMode;
+        ExitInstrInfo.All.u3AddrSize     = ICORE(pVCpu).enmEffAddrMode;
         ExitInstrInfo.All.fIsRegOperand  = 0;
-        ExitInstrInfo.All.uOperandSize   = pVCpu->iem.s.enmEffOpSize;
-        ExitInstrInfo.All.iSegReg        = pVCpu->iem.s.iEffSeg;
+        ExitInstrInfo.All.uOperandSize   = ICORE(pVCpu).enmEffOpSize;
+        ExitInstrInfo.All.iSegReg        = ICORE(pVCpu).iEffSeg;
         ExitInstrInfo.All.iIdxReg        = iIdxReg;
         ExitInstrInfo.All.fIdxRegInvalid = !fIdxRegValid;
         ExitInstrInfo.All.iBaseReg       = iBaseReg;
@@ -2497,7 +2497,7 @@ VBOXSTRICTRC iemVmxVmexit(PVMCPUCC pVCpu, uint32_t uExitReason, uint64_t u64Exit
     PVMXVVMCS const pVmcs = &pVCpu->cpum.GstCtx.hwvirt.vmx.Vmcs;
 
     /* Just count this as an exit and be done with that. */
-    pVCpu->iem.s.cPotentialExits++;
+    ICORE(pVCpu).cPotentialExits++;
 
     /*
      * Import all the guest-CPU state.
@@ -2817,7 +2817,7 @@ VBOXSTRICTRC iemVmxVmexitInstr(PVMCPUCC pVCpu, uint32_t uExitReason, uint8_t cbI
 VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitTripleFault(PVMCPUCC pVCpu)
 {
     VBOXSTRICTRC rcStrict = iemVmxVmexit(pVCpu, VMX_EXIT_TRIPLE_FAULT, 0 /* u64ExitQual */);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -2833,7 +2833,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitTripleFault(PVMCPUCC pVCpu)
 VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitStartupIpi(PVMCPUCC pVCpu, uint8_t uVector)
 {
     VBOXSTRICTRC rcStrict = iemVmxVmexit(pVCpu, VMX_EXIT_SIPI, uVector);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -2852,7 +2852,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitStartupIpi(PVMCPUCC pVCpu, uint8_t uV
 VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexit(PVMCPUCC pVCpu, uint32_t uExitReason, uint64_t u64ExitQual)
 {
     VBOXSTRICTRC rcStrict = iemVmxVmexit(pVCpu, uExitReason, u64ExitQual);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -2871,7 +2871,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexit(PVMCPUCC pVCpu, uint32_t uExitReason
 VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitInstrWithInfo(PVMCPUCC pVCpu, PCVMXVEXITINFO pExitInfo)
 {
     VBOXSTRICTRC rcStrict = iemVmxVmexitInstrWithInfo(pVCpu, pExitInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -2891,7 +2891,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitInstrWithInfo(PVMCPUCC pVCpu, PCVMXVE
 VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitInstr(PVMCPUCC pVCpu, uint32_t uExitReason, uint8_t cbInstr)
 {
     VBOXSTRICTRC rcStrict = iemVmxVmexitInstr(pVCpu, uExitReason, cbInstr);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -3557,7 +3557,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitTrapLike(PVMCPUCC pVCpu, PCVMXVEXITIN
 {
     Assert(pExitInfo);
     VBOXSTRICTRC rcStrict = iemVmxVmexitTrapLikeWithInfo(pVCpu, pExitInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -3599,7 +3599,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitTaskSwitch(PVMCPUCC pVCpu, PCVMXVEXIT
     Assert(pExitEventInfo);
     Assert(pExitInfo->uReason == VMX_EXIT_TASK_SWITCH);
     VBOXSTRICTRC rcStrict = iemVmxVmexitTaskSwitchWithInfo(pVCpu, pExitInfo, pExitEventInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -3637,7 +3637,7 @@ VBOXSTRICTRC iemVmxVmexitPreemptTimer(PVMCPUCC pVCpu) RT_NOEXCEPT
 VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitPreemptTimer(PVMCPUCC pVCpu)
 {
     VBOXSTRICTRC rcStrict = iemVmxVmexitPreemptTimer(pVCpu);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -3726,7 +3726,7 @@ static VBOXSTRICTRC iemVmxVmexitExtInt(PVMCPUCC pVCpu, uint8_t uVector, bool fIn
 VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitExtInt(PVMCPUCC pVCpu, uint8_t uVector, bool fIntPending)
 {
     VBOXSTRICTRC rcStrict = iemVmxVmexitExtInt(pVCpu, uVector, fIntPending);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -3804,7 +3804,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitXcptNmi(PVMCPUCC pVCpu)
                                                                                          X86_XCPT_NMI),
                                                                             0);
     VBOXSTRICTRC rcStrict = iemVmxVmexitEventWithInfo(pVCpu, &ExitInfo, &ExitEventInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -3826,7 +3826,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitXcpt(PVMCPUCC pVCpu, PCVMXVEXITINFO p
     Assert(pExitInfo);
     Assert(pExitEventInfo);
     VBOXSTRICTRC rcStrict = iemVmxVmexitEventWithInfo(pVCpu, pExitInfo, pExitEventInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -4005,7 +4005,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitEptMisconfig(PVMCPUCC pVCpu, RTGCPHYS
 
     iemInitExec(pVCpu, 0 /*fExecOpts*/);
     VBOXSTRICTRC rcStrict = iemVmxVmexitEptMisconfigWithInfo(pVCpu, GCPhysAddr, pExitEventInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -4126,7 +4126,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitEptViolation(PVMCPUCC pVCpu, PCVMXVEX
 
     iemInitExec(pVCpu, 0 /*fExecOpts*/);
     VBOXSTRICTRC rcStrict = iemVmxVmexitEptViolationWithInfo(pVCpu, pExitInfo, pExitEventInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -4232,7 +4232,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitApicAccess(PVMCPUCC pVCpu, PCVMXVEXIT
     Assert(pExitInfo);
     Assert(pExitEventInfo);
     VBOXSTRICTRC rcStrict = iemVmxVmexitApicAccessWithInfo(pVCpu, pExitInfo, pExitEventInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -4832,7 +4832,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVirtApicAccessMsr(PVMCPUCC pVCpu, uint32_t 
         rcStrict = iemVmxVirtApicAccessMsrWrite(pVCpu, idMsr, *pu64Value);
     else
         rcStrict = iemVmxVirtApicAccessMsrRead(pVCpu, idMsr, pu64Value);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 
 }
@@ -5175,7 +5175,7 @@ VBOXSTRICTRC iemVmxApicWriteEmulation(PVMCPUCC pVCpu) RT_NOEXCEPT
 VMM_INT_DECL(VBOXSTRICTRC) IEMExecVmxVmexitApicWrite(PVMCPUCC pVCpu)
 {
     VBOXSTRICTRC rcStrict = iemVmxApicWriteEmulation(pVCpu);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
 
@@ -8052,7 +8052,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmlaunchVmresume(PVMCPUCC pVCpu, uint8_
 
     iemInitExec(pVCpu, 0 /*fExecOpts*/);
     VBOXSTRICTRC rcStrict = iemVmxVmlaunchVmresume(pVCpu, cbInstr, uInstrId);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -8193,7 +8193,7 @@ static VBOXSTRICTRC iemVmxVmreadCommon(PVMCPUCC pVCpu, uint8_t cbInstr, uint64_t
         return iemRaiseGeneralProtectionFault0(pVCpu);
     }
 
-    pVCpu->iem.s.cPotentialExits++;
+    ICORE(pVCpu).cPotentialExits++;
 
     /* VMCS pointer in root mode. */
     if (   !IEM_VMX_IS_ROOT_MODE(pVCpu)
@@ -8383,7 +8383,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmread(PVMCPUCC pVCpu, PCVMXVEXITINFO p
         uint8_t const iEffSeg  = pExitInfo->InstrInfo.VmreadVmwrite.iSegReg;
         rcStrict = iemVmxVmreadMem(pVCpu, cbInstr, iEffSeg, GCPtrDst, u64FieldEnc, pExitInfo);
     }
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -8490,7 +8490,7 @@ static VBOXSTRICTRC iemVmxVmwrite(PVMCPUCC pVCpu, uint8_t cbInstr, uint8_t iEffS
         return iemRaiseGeneralProtectionFault0(pVCpu);
     }
 
-    pVCpu->iem.s.cPotentialExits++;
+    ICORE(pVCpu).cPotentialExits++;
 
     /* VMCS pointer in root mode. */
     if (   !IEM_VMX_IS_ROOT_MODE(pVCpu)
@@ -8619,7 +8619,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmwrite(PVMCPUCC pVCpu, PCVMXVEXITINFO 
                                ? iemGRegFetchU64(pVCpu, pExitInfo->InstrInfo.VmreadVmwrite.iReg2)
                                : iemGRegFetchU32(pVCpu, pExitInfo->InstrInfo.VmreadVmwrite.iReg2);
     VBOXSTRICTRC rcStrict = iemVmxVmwrite(pVCpu, cbInstr, iEffSeg, u64Val, u64FieldEnc, pExitInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -8771,7 +8771,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmclear(PVMCPUCC pVCpu, PCVMXVEXITINFO 
     uint8_t const cbInstr   = pExitInfo->cbInstr;
     RTGCPTR const GCPtrVmcs = pExitInfo->GCPtrEffAddr;
     VBOXSTRICTRC rcStrict = iemVmxVmclear(pVCpu, cbInstr, iEffSeg, GCPtrVmcs, pExitInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -8849,7 +8849,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmptrst(PVMCPUCC pVCpu, PCVMXVEXITINFO 
     uint8_t const cbInstr   = pExitInfo->cbInstr;
     RTGCPTR const GCPtrVmcs = pExitInfo->GCPtrEffAddr;
     VBOXSTRICTRC rcStrict = iemVmxVmptrst(pVCpu, cbInstr, iEffSeg, GCPtrVmcs, pExitInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -9060,7 +9060,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmptrld(PVMCPUCC pVCpu, PCVMXVEXITINFO 
     uint8_t const cbInstr   = pExitInfo->cbInstr;
     RTGCPTR const GCPtrVmcs = pExitInfo->GCPtrEffAddr;
     VBOXSTRICTRC rcStrict = iemVmxVmptrld(pVCpu, cbInstr, iEffSeg, GCPtrVmcs, pExitInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -9271,7 +9271,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedInvvpid(PVMCPUCC pVCpu, PCVMXVEXITINFO 
                                     ? iemGRegFetchU64(pVCpu, pExitInfo->InstrInfo.Inv.iReg2)
                                     : iemGRegFetchU32(pVCpu, pExitInfo->InstrInfo.Inv.iReg2);
     VBOXSTRICTRC rcStrict = iemVmxInvvpid(pVCpu, cbInstr, iEffSeg, GCPtrInvvpidDesc, u64InvvpidType, pExitInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -9432,7 +9432,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedInvept(PVMCPUCC pVCpu, PCVMXVEXITINFO p
                                     ? iemGRegFetchU64(pVCpu, pExitInfo->InstrInfo.Inv.iReg2)
                                     : iemGRegFetchU32(pVCpu, pExitInfo->InstrInfo.Inv.iReg2);
     VBOXSTRICTRC rcStrict = iemVmxInvept(pVCpu, cbInstr, iEffSeg, GCPtrInveptDesc, u64InveptType, pExitInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -9689,7 +9689,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmxon(PVMCPUCC pVCpu, PCVMXVEXITINFO pE
     uint8_t const cbInstr    = pExitInfo->cbInstr;
     RTGCPTR const GCPtrVmxon = pExitInfo->GCPtrEffAddr;
     VBOXSTRICTRC rcStrict = iemVmxVmxon(pVCpu, cbInstr, iEffSeg, GCPtrVmxon, pExitInfo);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -9756,7 +9756,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmxoff(PVMCPUCC pVCpu, uint8_t cbInstr)
 
     iemInitExec(pVCpu, 0 /*fExecOpts*/);
     VBOXSTRICTRC rcStrict = IEM_CIMPL_CALL_0(iemCImpl_vmxoff);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -10102,7 +10102,7 @@ DECLCALLBACK(VBOXSTRICTRC) iemVmxApicAccessPagePfHandler(PVMCC pVM, PVMCPUCC pVC
  */
 IEM_CIMPL_DEF_0(iemCImpl_vmcall)
 {
-    pVCpu->iem.s.cPotentialExits++;
+    ICORE(pVCpu).cPotentialExits++;
 
 #ifdef VBOX_WITH_NESTED_HWVIRT_VMX
     /* Nested-guest intercept. */

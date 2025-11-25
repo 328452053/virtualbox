@@ -1,4 +1,4 @@
-/* $Id: IEMOpHlp-x86.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMOpHlp-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Opcode Helpers.
  */
@@ -40,7 +40,7 @@
     do { \
         IEMOP_INC_STATS(a_Stats); \
         Log4(("decode - %04x:%RGv %s%s [#%u]\n", pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, \
-              pVCpu->iem.s.fPrefixes & IEM_OP_PRF_LOCK ? "lock " : "", a_szMnemonic, pVCpu->iem.s.cInstructions)); \
+              ICORE(pVCpu).fPrefixes & IEM_OP_PRF_LOCK ? "lock " : "", a_szMnemonic, pVCpu->iem.s.cInstructions)); \
     } while (0)
 
 # define IEMOP_MNEMONIC0EX(a_Stats, a_szMnemonic, a_Form, a_Upper, a_Lower, a_fDisHints, a_fIemHints) \
@@ -298,7 +298,7 @@
     do \
     { \
         if (IEM_IS_64BIT_CODE(pVCpu)) \
-            pVCpu->iem.s.enmEffOpSize = pVCpu->iem.s.enmDefOpSize = IEMMODE_64BIT; \
+            ICORE(pVCpu).enmEffOpSize = ICORE(pVCpu).enmDefOpSize = IEMMODE_64BIT; \
     } while (0)
 
 /** Only a REX prefix immediately preceding the first opcode byte takes
@@ -306,13 +306,13 @@
 #define IEMOP_HLP_CLEAR_REX_NOT_BEFORE_OPCODE(a_szPrf) \
     do \
     { \
-        if (RT_UNLIKELY(pVCpu->iem.s.fPrefixes & IEM_OP_PRF_REX)) \
+        if (RT_UNLIKELY(ICORE(pVCpu).fPrefixes & IEM_OP_PRF_REX)) \
         { \
-            Log5((a_szPrf ": Overriding REX prefix at %RX16! fPrefixes=%#x\n", pVCpu->cpum.GstCtx.rip, pVCpu->iem.s.fPrefixes)); \
-            pVCpu->iem.s.fPrefixes &= ~IEM_OP_PRF_REX_MASK; \
-            pVCpu->iem.s.uRexB     = 0; \
-            pVCpu->iem.s.uRexIndex = 0; \
-            pVCpu->iem.s.uRexReg   = 0; \
+            Log5((a_szPrf ": Overriding REX prefix at %RX16! fPrefixes=%#x\n", pVCpu->cpum.GstCtx.rip, ICORE(pVCpu).fPrefixes)); \
+            ICORE(pVCpu).fPrefixes &= ~IEM_OP_PRF_REX_MASK; \
+            ICORE(pVCpu).uRexB     = 0; \
+            ICORE(pVCpu).uRexIndex = 0; \
+            ICORE(pVCpu).uRexReg   = 0; \
             iemRecalEffOpSize(pVCpu); \
         } \
     } while (0)
@@ -322,7 +322,7 @@
     do \
     { \
         if (!IEM_IS_64BIT_CODE(pVCpu)) \
-            pVCpu->iem.s.fPrefixes &= ~IEM_OP_PRF_SIZE_REX_W; \
+            ICORE(pVCpu).fPrefixes &= ~IEM_OP_PRF_SIZE_REX_W; \
     } while (0)
 
 /**
@@ -349,7 +349,7 @@
 #define IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX() \
     do \
     { \
-        if (RT_LIKELY(!(pVCpu->iem.s.fPrefixes & IEM_OP_PRF_LOCK))) \
+        if (RT_LIKELY(!(ICORE(pVCpu).fPrefixes & IEM_OP_PRF_LOCK))) \
         { /* likely */ } \
         else \
             IEMOP_RAISE_INVALID_LOCK_PREFIX_RET(); \
@@ -362,7 +362,7 @@
 #define IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX_EX(a_fFeature) \
     do \
     { \
-        if (RT_LIKELY(   !(pVCpu->iem.s.fPrefixes & IEM_OP_PRF_LOCK) \
+        if (RT_LIKELY(   !(ICORE(pVCpu).fPrefixes & IEM_OP_PRF_LOCK) \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature)) \
         { /* likely */ } \
         else \
@@ -376,7 +376,7 @@
 #define IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX_EX_2_OR(a_fFeature1, a_fFeature2) \
     do \
     { \
-        if (RT_LIKELY(   !(pVCpu->iem.s.fPrefixes & IEM_OP_PRF_LOCK) \
+        if (RT_LIKELY(   !(ICORE(pVCpu).fPrefixes & IEM_OP_PRF_LOCK) \
                       && (   IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature1 \
                           || IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature2) )) \
         { /* likely */ } \
@@ -393,7 +393,7 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_EX(a_fFeature) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REX)) \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature)) \
@@ -410,10 +410,10 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_L0_EX(a_fFeature) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REX)) \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
-                      && pVCpu->iem.s.uVexLength == 0 \
+                      && ICORE(pVCpu).uVexLength == 0 \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature)) \
         { /* likely */ } \
         else \
@@ -428,10 +428,10 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_L0_EX_2(a_fFeature, a_fFeature2) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REX)) \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
-                      && pVCpu->iem.s.uVexLength == 0 \
+                      && ICORE(pVCpu).uVexLength == 0 \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature2)) \
         { /* likely */ } \
@@ -447,10 +447,10 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_L1_EX(a_fFeature) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REX)) \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
-                      && pVCpu->iem.s.uVexLength == 1 \
+                      && ICORE(pVCpu).uVexLength == 1 \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature)) \
         { /* likely */ } \
         else \
@@ -465,7 +465,7 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_W0_EX(a_fFeature) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REX \
                               | IEM_OP_PRF_SIZE_REX_W /*VEX.W*/)) \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
@@ -484,9 +484,9 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_NO_VVVV_EX(a_fFeature) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REX)) \
-                      && !pVCpu->iem.s.uVex3rdReg \
+                      && !ICORE(pVCpu).uVex3rdReg \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature )) \
         { /* likely */ } \
@@ -503,10 +503,10 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_W0_AND_NO_VVVV_EX(a_fFeature) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REX \
                               | IEM_OP_PRF_SIZE_REX_W /*VEX.W*/)) \
-                      && !pVCpu->iem.s.uVex3rdReg \
+                      && !ICORE(pVCpu).uVex3rdReg \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature )) \
         { /* likely */ } \
@@ -523,10 +523,10 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_L0_AND_NO_VVVV_EX(a_fFeature) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_REX)) \
-                      && pVCpu->iem.s.uVexLength == 0 \
-                      && pVCpu->iem.s.uVex3rdReg == 0 \
+                      && ICORE(pVCpu).uVexLength == 0 \
+                      && ICORE(pVCpu).uVex3rdReg == 0 \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature )) \
         { /* likely */ } \
@@ -543,10 +543,10 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_L0_AND_NO_VVVV_EX_2(a_fFeature, a_fFeature2) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_REX)) \
-                      && pVCpu->iem.s.uVexLength == 0 \
-                      && pVCpu->iem.s.uVex3rdReg == 0 \
+                      && ICORE(pVCpu).uVexLength == 0 \
+                      && ICORE(pVCpu).uVex3rdReg == 0 \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature2)) \
@@ -564,10 +564,10 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_L1_AND_NO_VVVV_EX(a_fFeature) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_REX)) \
-                      && pVCpu->iem.s.uVexLength == 1 \
-                      && pVCpu->iem.s.uVex3rdReg == 0 \
+                      && ICORE(pVCpu).uVexLength == 1 \
+                      && ICORE(pVCpu).uVex3rdReg == 0 \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature )) \
         { /* likely */ } \
@@ -584,10 +584,10 @@
 #define IEMOP_HLP_DONE_VEX_DECODING_L0_AND_W0_EX(a_fFeature) \
     do \
     { \
-        if (RT_LIKELY(   !(  pVCpu->iem.s.fPrefixes \
+        if (RT_LIKELY(   !(  ICORE(pVCpu).fPrefixes \
                            & (IEM_OP_PRF_LOCK | IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REPZ | IEM_OP_PRF_REPNZ | IEM_OP_PRF_REX \
                               | IEM_OP_PRF_SIZE_REX_W /*VEX.W*/)) \
-                      && pVCpu->iem.s.uVexLength == 0 \
+                      && ICORE(pVCpu).uVexLength == 0 \
                       && !IEM_IS_REAL_OR_V86_MODE(pVCpu) \
                       && IEM_GET_GUEST_CPU_FEATURES(pVCpu)->a_fFeature )) \
         { /* likely */ } \
@@ -599,7 +599,7 @@
 #define IEMOP_HLP_DECODED_NL_1(a_uDisOpNo, a_fIemOpFlags, a_uDisParam0, a_fDisOpType) \
     do \
     { \
-        if (RT_LIKELY(!(pVCpu->iem.s.fPrefixes & IEM_OP_PRF_LOCK))) \
+        if (RT_LIKELY(!(ICORE(pVCpu).fPrefixes & IEM_OP_PRF_LOCK))) \
         { /* likely */ } \
         else \
         { \
@@ -610,7 +610,7 @@
 #define IEMOP_HLP_DECODED_NL_2(a_uDisOpNo, a_fIemOpFlags, a_uDisParam0, a_uDisParam1, a_fDisOpType) \
     do \
     { \
-        if (RT_LIKELY(!(pVCpu->iem.s.fPrefixes & IEM_OP_PRF_LOCK))) \
+        if (RT_LIKELY(!(ICORE(pVCpu).fPrefixes & IEM_OP_PRF_LOCK))) \
         { /* likely */ } \
         else \
         { \
@@ -626,7 +626,7 @@
 #define IEMOP_HLP_DONE_DECODING_NO_LOCK_REPZ_OR_REPNZ_PREFIXES() \
     do \
     { \
-        if (RT_LIKELY(!(pVCpu->iem.s.fPrefixes & (IEM_OP_PRF_LOCK | IEM_OP_PRF_REPNZ | IEM_OP_PRF_REPZ)))) \
+        if (RT_LIKELY(!(ICORE(pVCpu).fPrefixes & (IEM_OP_PRF_LOCK | IEM_OP_PRF_REPNZ | IEM_OP_PRF_REPZ)))) \
         { /* likely */ } \
         else \
             IEMOP_RAISE_INVALID_OPCODE_RET(); \
@@ -639,7 +639,7 @@
 #define IEMOP_HLP_DONE_DECODING_NO_SIZE_OP_REPZ_OR_REPNZ_PREFIXES() \
     do \
     { \
-        if (RT_LIKELY(!(pVCpu->iem.s.fPrefixes & (IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REPNZ | IEM_OP_PRF_REPZ)))) \
+        if (RT_LIKELY(!(ICORE(pVCpu).fPrefixes & (IEM_OP_PRF_SIZE_OP | IEM_OP_PRF_REPNZ | IEM_OP_PRF_REPZ)))) \
         { /* likely */ } \
         else \
             IEMOP_RAISE_INVALID_OPCODE_RET(); \

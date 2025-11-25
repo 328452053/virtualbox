@@ -1,4 +1,4 @@
-/* $Id: IEMInlineDecode-armv8.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMInlineDecode-armv8.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inlined Decoding related Functions, x86 target.
  */
@@ -49,7 +49,7 @@ DECL_INLINE_THROW(uint32_t) iemOpcodeGetU32Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_MAY_
      * Check for hardware instruction breakpoints.
      * Note! Guest breakpoints are only checked after POP SS or MOV SS on AMD CPUs.
      */
-    if (RT_LIKELY(!(pVCpu->iem.s.fExec & IEM_F_PENDING_BRK_INSTR)))
+    if (RT_LIKELY(!(ICORE(pVCpu).fExec & IEM_F_PENDING_BRK_INSTR)))
     { /* likely */ }
     else
     {
@@ -72,15 +72,15 @@ DECL_INLINE_THROW(uint32_t) iemOpcodeGetU32Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_MAY_
      * Fetch the first opcode byte.
      */
 # ifdef IEM_WITH_CODE_TLB
-    uint8_t const *pbBuf = pVCpu->iem.s.pbInstrBuf;
+    uint8_t const *pbBuf = ICORE(pVCpu).pbInstrBuf;
     if (RT_LIKELY(pbBuf != NULL))
     {
-        uintptr_t const offBuf  = pVCpu->iem.s.offInstrNextByte;
+        uintptr_t const offBuf  = ICORE(pVCpu).offInstrNextByte;
         uintptr_t const offNext = offBuf + sizeof(uint32_t);
-        if (RT_LIKELY(offNext <= pVCpu->iem.s.cbInstrBufTotal))
+        if (RT_LIKELY(offNext <= ICORE(pVCpu).cbInstrBufTotal))
         {
             uint32_t const u32Ret = *(uint32_t const *)&pbBuf[offBuf];
-            pVCpu->iem.s.offInstrNextByte = offNext;
+            ICORE(pVCpu).offInstrNextByte = offNext;
 #  ifdef IEM_WITH_CODE_TLB_AND_OPCODE_BUF
             pVCpu->iem.s.au32Opcode[0] = u32Ret; /** @todo we have no opcode buffer offset on arm... */
 #  endif
@@ -89,11 +89,11 @@ DECL_INLINE_THROW(uint32_t) iemOpcodeGetU32Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_MAY_
     }
 
 # else /* !IEM_WITH_CODE_TLB */
-    uintptr_t offOpcode = pVCpu->iem.s.offOpcode; /** @todo no offOpcode on arm, so this doesn't compile... */
+    uintptr_t offOpcode = ICORE(pVCpu).offOpcode; /** @todo no offOpcode on arm, so this doesn't compile... */
     Assert(offOpcode & 3);
-    if (RT_LIKELY(offOpcode + sizeof(uint32_t) <= (uintptr_t)pVCpu->iem.s.cbOpcode))
+    if (RT_LIKELY(offOpcode + sizeof(uint32_t) <= (uintptr_t)ICORE(pVCpu).cbOpcode))
     {
-        pVCpu->iem.s.offOpcode = (uint8_t)offOpcode + sizeof(uint32_t);
+        ICORE(pVCpu).offOpcode = (uint8_t)offOpcode + sizeof(uint32_t);
         return pVCpu->iem.s.au32Opcode[offOpcode / sizeof(uint32_t)];
     }
 # endif

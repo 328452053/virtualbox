@@ -1,4 +1,4 @@
-/* $Id: IEMInternal.h 110847 2025-09-01 12:20:40Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMInternal.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Internal header file.
  */
@@ -174,15 +174,15 @@ RT_C_DECLS_BEGIN
 #ifdef IEM_WITH_THROW_CATCH
 # ifdef VBOX_WITH_IEM_NATIVE_RECOMPILER_LONGJMP
 #  define IEM_DO_LONGJMP(a_pVCpu, a_rc) do { \
-            if ((a_pVCpu)->iem.s.pvTbFramePointerR3) \
-                iemNativeTbLongJmp((a_pVCpu)->iem.s.pvTbFramePointerR3, (a_rc)); \
+            if (IRECM(a_pVCpu).pvTbFramePointerR3) \
+                iemNativeTbLongJmp(IRECM(a_pVCpu)pvTbFramePointerR3, (a_rc)); \
             throw int(a_rc); \
         } while (0)
 # else
 #  define IEM_DO_LONGJMP(a_pVCpu, a_rc) throw int(a_rc)
 # endif
 #else
-# define IEM_DO_LONGJMP(a_pVCpu, a_rc)  longjmp(*(a_pVCpu)->iem.s.CTX_SUFF(pJmpBuf), (a_rc))
+# define IEM_DO_LONGJMP(a_pVCpu, a_rc)  longjmp(*ICORE(a_pVCpu).CTX_SUFF(pJmpBuf), (a_rc))
 #endif
 
 /** For use with IEM function that may do a longjmp (when enabled).
@@ -326,21 +326,21 @@ typedef IEMINSTRSTATS *PIEMINSTRSTATS;
 /** Selects the right variant from a_aArray.
  * pVCpu is implicit in the caller context. */
 #define IEMTARGETCPU_EFL_BEHAVIOR_SELECT(a_aArray) \
-    (a_aArray[pVCpu->iem.s.aidxTargetCpuEflFlavour[1] & IEMTARGETCPU_EFL_BEHAVIOR_MASK])
+    (a_aArray[ICORE(pVCpu).aidxTargetCpuEflFlavour[1] & IEMTARGETCPU_EFL_BEHAVIOR_MASK])
 /** Variation of IEMTARGETCPU_EFL_BEHAVIOR_SELECT for when no native worker can
  * be used because the host CPU does not support the operation. */
 #define IEMTARGETCPU_EFL_BEHAVIOR_SELECT_NON_NATIVE(a_aArray) \
-    (a_aArray[pVCpu->iem.s.aidxTargetCpuEflFlavour[0] & IEMTARGETCPU_EFL_BEHAVIOR_MASK])
+    (a_aArray[ICORE(pVCpu).aidxTargetCpuEflFlavour[0] & IEMTARGETCPU_EFL_BEHAVIOR_MASK])
 /** Variation of IEMTARGETCPU_EFL_BEHAVIOR_SELECT for a two dimentional
  *  array paralleling IEMCPU::aidxTargetCpuEflFlavour and a single bit index
  *  into the two.
  * @sa IEM_SELECT_NATIVE_OR_FALLBACK */
 #if defined(RT_ARCH_X86) || defined(RT_ARCH_AMD64)
 # define IEMTARGETCPU_EFL_BEHAVIOR_SELECT_EX(a_aaArray, a_fNative) \
-    (a_aaArray[a_fNative][pVCpu->iem.s.aidxTargetCpuEflFlavour[a_fNative] & IEMTARGETCPU_EFL_BEHAVIOR_MASK])
+    (a_aaArray[a_fNative][ICORE(pVCpu).aidxTargetCpuEflFlavour[a_fNative] & IEMTARGETCPU_EFL_BEHAVIOR_MASK])
 #else
 # define IEMTARGETCPU_EFL_BEHAVIOR_SELECT_EX(a_aaArray, a_fNative) \
-    (a_aaArray[0][pVCpu->iem.s.aidxTargetCpuEflFlavour[0] & IEMTARGETCPU_EFL_BEHAVIOR_MASK])
+    (a_aaArray[0][ICORE(pVCpu).aidxTargetCpuEflFlavour[0] & IEMTARGETCPU_EFL_BEHAVIOR_MASK])
 #endif
 /** @} */
 
@@ -948,7 +948,7 @@ AssertCompile(IEMTLBE_F_PHYS_REV == ~(IEMTLB_PHYS_REV_INCR - 1U));
  *       FEAT_LVA3) when we see hardware supporting such.  */
 #ifdef VBOX_VMM_TARGET_ARMV8
 # if 0 /** @todo ARMv8: page size and TLB */
-# define IEMTLB_CALC_TAG_NO_REV(a_pVCpu, a_GCPtr)   ( (((a_GCPtr) << 16) >> (IEM_F_ARM_GET_TLB_PAGE_SHIFT(pVCpu->iem.s.fExec) + 16)) )
+# define IEMTLB_CALC_TAG_NO_REV(a_pVCpu, a_GCPtr)   ( (((a_GCPtr) << 16) >> (IEM_F_ARM_GET_TLB_PAGE_SHIFT(ICORE(pVCpu).fExec) + 16)) )
 # else
 # define IEMTLB_CALC_TAG_NO_REV(a_pVCpu, a_GCPtr)   ( (((a_GCPtr) << 16) >> (GUEST_MIN_PAGE_SHIFT + 16)) )
 # endif
@@ -2102,9 +2102,9 @@ typedef IEMTBCACHE *PIEMTBCACHE;
 
 
 /**
- * The per-CPU IEM state.
+ * The core per-CPU IEM state.
  */
-typedef struct IEMCPU
+typedef struct IEMCPUCORE
 {
     /** Info status code that needs to be propagated to the IEM caller.
      * This cannot be passed internally, as it would complicate all success
@@ -2383,29 +2383,8 @@ typedef struct IEMCPU
     /** The error code for the current exception / interrupt. */
     uint32_t                uCurXcptErr;
 
-    /** @name Statistics
-     * @{  */
-    /** The number of instructions we've executed. */
-    uint32_t                cInstructions;
     /** The number of potential exits. */
     uint32_t                cPotentialExits;
-    /** Counts the VERR_IEM_INSTR_NOT_IMPLEMENTED returns. */
-    uint32_t                cRetInstrNotImplemented;
-    /** Counts the VERR_IEM_ASPECT_NOT_IMPLEMENTED returns. */
-    uint32_t                cRetAspectNotImplemented;
-    /** Counts informational statuses returned (other than VINF_SUCCESS). */
-    uint32_t                cRetInfStatuses;
-    /** Counts other error statuses returned. */
-    uint32_t                cRetErrStatuses;
-    /** Number of times rcPassUp has been used. */
-    uint32_t                cRetPassUpStatus;
-    /** Number of times RZ left with instruction commit pending for ring-3. */
-    uint32_t                cPendingCommit;
-    /** Number of misaligned (host sense) atomic instruction accesses. */
-    uint32_t                cMisalignedAtomics;
-    /** Number of long jumps. */
-    uint32_t                cLongJumps;
-    /** @} */
 
     /** @name Target CPU information.
      * @{ */
@@ -2428,17 +2407,11 @@ typedef struct IEMCPU
     /** The CPU vendor. */
     CPUMCPUVENDOR           enmCpuVendor;
     /** @} */
-
-    /** Number of iemLogCurInstr() calls that should output FPU state. */
-    uint8_t                 cLogFpuCountdown;
-    /** Counts RDMSR \#GP(0) LogRel(). */
-    uint8_t                 cLogRelRdMsr;
-    /** Counts WRMSR \#GP(0) LogRel(). */
-    uint8_t                 cLogRelWrMsr;
-    /** Alignment padding. */
-    uint8_t                 abAlignment9[49];
+} IEMCPUCORE;
 
 
+typedef struct IEMCPURECOMP
+{
     /** @name Recompiled Exection
      * @{ */
     /** Pointer to the current translation block.
@@ -2568,8 +2541,58 @@ typedef struct IEMCPU
     bool                    afRecompilerStuff2[7];
     /** @} */
 
-    /** Dummy TLB entry used for accesses to pages with databreakpoints. */
-    IEMTLBENTRY             DataBreakpointTlbe;
+} IEMCPURECOMP;
+
+
+/**
+ * The per-CPU IEM state.
+ */
+typedef struct IEMCPU
+{
+    /** The ring-3 recompiler core. */
+    IEMCPUCORE              Core;
+#define IEM_CORE_MEMBER                                       iem.s.Core
+#define ICORE(a_pVCpu)                             (a_pVCpu)->iem.s.Core
+#define ICORE_OFFSETOF(a_Member)        RT_UOFFSETOF(VMCPUCC, iem.s.Core. a_Member)
+#define ICORE_STAT_OFFSETOF(a_Member)   RT_UOFFSETOF(VMCPUCC, iem.s. a_Member)
+
+    /** @name Statistics
+     * @{  */
+    /** The number of instructions we've executed. */
+    uint32_t                cInstructions;
+    /** Counts the VERR_IEM_INSTR_NOT_IMPLEMENTED returns. */
+    uint32_t                cRetInstrNotImplemented;
+    /** Counts the VERR_IEM_ASPECT_NOT_IMPLEMENTED returns. */
+    uint32_t                cRetAspectNotImplemented;
+    /** Counts informational statuses returned (other than VINF_SUCCESS). */
+    uint32_t                cRetInfStatuses;
+    /** Counts other error statuses returned. */
+    uint32_t                cRetErrStatuses;
+    /** Number of times rcPassUp has been used. */
+    uint32_t                cRetPassUpStatus;
+    /** Number of times RZ left with instruction commit pending for ring-3. */
+    uint32_t                cPendingCommit;
+    /** Number of misaligned (host sense) atomic instruction accesses. */
+    uint32_t                cMisalignedAtomics;
+    /** Number of long jumps. */
+    uint32_t                cLongJumps;
+    /** @} */
+
+    /** Number of iemLogCurInstr() calls that should output FPU state. */
+    uint8_t                 cLogFpuCountdown;
+    /** Counts RDMSR \#GP(0) LogRel(). */
+    uint8_t                 cLogRelRdMsr;
+    /** Counts WRMSR \#GP(0) LogRel(). */
+    uint8_t                 cLogRelWrMsr;
+    /** Alignment padding. */
+    uint8_t                 abAlignment9[49];
+
+    /** The ring-3 recompiler data. */
+    IEMCPURECOMP            Recomp;
+#define IEM_RECM_MEMBER                                       iem.s.Recomp
+#define IRECM(a_pVCpu)                             (a_pVCpu)->iem.s.Recomp
+#define IRECM_OFFSETOF(a_Member)        RT_UOFFSETOF(VMCPUCC, iem.s.Recomp. a_Member)
+#define IRECM_STAT_OFFSETOF(a_Member)   RT_UOFFSETOF(VMCPUCC, iem.s.Recomp. a_Member)
 
     /** Threaded TB statistics: Times TB execution was broken off before reaching the end. */
     STAMCOUNTER             StatTbThreadedExecBreaks;
@@ -2839,9 +2862,9 @@ typedef struct IEMCPU
     STAMCOUNTER             aStatAdHoc[8];
 
 #ifdef IEM_WITH_TLB_TRACE
-    /*uint64_t                au64Padding[0];*/
+    uint64_t                au64Padding[0+4];
 #else
-    uint64_t                au64Padding[2];
+    uint64_t                au64Padding[2+4];
 #endif
 
 #ifdef IEM_WITH_TLB_TRACE
@@ -2853,12 +2876,18 @@ typedef struct IEMCPU
     PIEMTLBTRACEENTRY       paTlbTraceEntries;
 #endif
 
-    /** Data TLB.
-     * @remarks Must be 64-byte aligned. */
-    IEMTLB                  DataTlb;
-    /** Instruction TLB.
-     * @remarks Must be 64-byte aligned. */
-    IEMTLB                  CodeTlb;
+    struct
+    {
+        /** Data TLB.
+         * @remarks Must be 64-byte aligned. */
+        IEMTLB              Data;
+        /** Instruction TLB.
+         * @remarks Must be 64-byte aligned. */
+        IEMTLB              Code;
+        /** Dummy TLB entry used for accesses to pages with databreakpoints. */
+        IEMTLBENTRY         DataBreakpointTlbe;
+    } Tlbs;
+#define ITLBS(a_pVCpu) (a_pVCpu)->iem.s.Tlbs
 
     /** Exception statistics. */
     STAMCOUNTER             aStatXcpts[32];
@@ -2878,30 +2907,31 @@ typedef struct IEMCPU
 #endif
 } IEMCPU;
 #ifdef IEM_WITH_CODE_TLB
-AssertCompileMemberOffset(IEMCPU, GCPhysInstrBuf, 0x20);
+AssertCompileMemberOffset(IEMCPU, Core.GCPhysInstrBuf, 0x20);
 #endif
 #if !defined(IEM_WITH_OPAQUE_DECODER_STATE) && defined(VBOX_VMM_TARGET_X86)
 # ifdef IEM_WITH_CODE_TLB
-AssertCompileMemberOffset(IEMCPU, enmEffOpSize, 0x36);
-AssertCompileMemberOffset(IEMCPU, abOpcode, 0x40);
+AssertCompileMemberOffset(IEMCPU, Core.enmEffOpSize, 0x36);
+AssertCompileMemberOffset(IEMCPU, Core.abOpcode, 0x40);
 # else
-AssertCompileMemberOffset(IEMCPU, enmEffOpSize, 0x13);
-AssertCompileMemberOffset(IEMCPU, abOpcode, 0x20);
+AssertCompileMemberOffset(IEMCPU, Core.enmEffOpSize, 0x13);
+AssertCompileMemberOffset(IEMCPU, Core.abOpcode, 0x20);
 # endif
 #elif defined(IEM_WITH_OPAQUE_DECODER_STATE) && defined(VBOX_VMM_TARGET_X86)
 # ifdef IEM_WITH_CODE_TLB
-AssertCompileMemberOffset(IEMCPU, abOpaqueDecoderPart2, 0x36);
+AssertCompileMemberOffset(IEMCPU, Core.abOpaqueDecoderPart2, 0x36);
 # else
-AssertCompileMemberOffset(IEMCPU, abOpaqueDecoderPart2, 0x13);
+AssertCompileMemberOffset(IEMCPU, Core.abOpaqueDecoderPart2, 0x13);
 # endif
 #endif
-AssertCompileMemberOffset(IEMCPU, cActiveMappings, 0x4f);
-AssertCompileMemberAlignment(IEMCPU, aMemMappings, 16);
-AssertCompileMemberAlignment(IEMCPU, aMemMappingLocks, 16);
-AssertCompileMemberAlignment(IEMCPU, aBounceBuffers, 64);
-AssertCompileMemberAlignment(IEMCPU, pCurTbR3, 64);
-AssertCompileMemberAlignment(IEMCPU, DataTlb, 64);
-AssertCompileMemberAlignment(IEMCPU, CodeTlb, 64);
+AssertCompileMemberOffset(IEMCPU, Core.cActiveMappings, 0x4f);
+AssertCompileMemberAlignment(IEMCPU, Core.aMemMappings, 16);
+AssertCompileMemberAlignment(IEMCPU, Core.aMemMappingLocks, 16);
+AssertCompileMemberAlignment(IEMCPU, Core.aBounceBuffers, 64);
+AssertCompileMemberAlignment(IEMCPU, Recomp, 64);
+AssertCompileMemberAlignment(IEMCPU, Tlbs, 64);
+AssertCompileMemberAlignment(IEMCPU, Tlbs.Data, 64);
+AssertCompileMemberAlignment(IEMCPU, Tlbs.Code, 64);
 
 /** Pointer to the per-CPU IEM state. */
 typedef IEMCPU *PIEMCPU;
@@ -3019,7 +3049,7 @@ typedef IEMCPU const *PCIEMCPU;
 #if IEM_CFG_TARGET_CPU != IEMTARGETCPU_DYNAMIC
 # define IEM_GET_TARGET_CPU(a_pVCpu)    (IEM_CFG_TARGET_CPU)
 #else
-# define IEM_GET_TARGET_CPU(a_pVCpu)    ((a_pVCpu)->iem.s.uTargetCpu)
+# define IEM_GET_TARGET_CPU(a_pVCpu)    (ICORE(a_pVCpu).uTargetCpu)
 #endif
 
 
@@ -3070,12 +3100,12 @@ typedef IEMCPU const *PCIEMCPU;
 #else  /* !IEM_WITH_THROW_CATCH */
 # define IEM_TRY_SETJMP(a_pVCpu, a_rcTarget) \
         jmp_buf  JmpBuf; \
-        jmp_buf * volatile pSavedJmpBuf = (a_pVCpu)->iem.s.CTX_SUFF(pJmpBuf); \
-        (a_pVCpu)->iem.s.CTX_SUFF(pJmpBuf) = &JmpBuf; \
+        jmp_buf * volatile pSavedJmpBuf = ICORE(a_pVCpu).CTX_SUFF(pJmpBuf); \
+        ICORE(a_pVCpu).CTX_SUFF(pJmpBuf) = &JmpBuf; \
         if ((rcStrict = setjmp(JmpBuf)) == 0)
 # define IEM_TRY_SETJMP_AGAIN(a_pVCpu, a_rcTarget) \
-        pSavedJmpBuf = (a_pVCpu)->iem.s.CTX_SUFF(pJmpBuf); \
-        (a_pVCpu)->iem.s.CTX_SUFF(pJmpBuf) = &JmpBuf; \
+        pSavedJmpBuf = ICORE(a_pVCpu).CTX_SUFF(pJmpBuf); \
+        ICORE(a_pVCpu).CTX_SUFF(pJmpBuf) = &JmpBuf; \
         if ((rcStrict = setjmp(JmpBuf)) == 0)
 # define IEM_CATCH_LONGJMP_BEGIN(a_pVCpu, a_rcTarget) \
         else \
@@ -3083,7 +3113,7 @@ typedef IEMCPU const *PCIEMCPU;
             ((void)0)
 # define IEM_CATCH_LONGJMP_END(a_pVCpu) \
         } \
-        (a_pVCpu)->iem.s.CTX_SUFF(pJmpBuf) = pSavedJmpBuf
+        ICORE(a_pVCpu).CTX_SUFF(pJmpBuf) = pSavedJmpBuf
 #endif /* !IEM_WITH_THROW_CATCH */
 
 

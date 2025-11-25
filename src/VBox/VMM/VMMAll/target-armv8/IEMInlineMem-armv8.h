@@ -1,4 +1,4 @@
-/* $Id: IEMInlineMem-armv8.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMInlineMem-armv8.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inlined Memory Functions, ARMv8 target.
  */
@@ -49,7 +49,7 @@
  */
 DECL_FORCE_INLINE(bool) iemMemAreAlignmentChecksEnabled(PVMCPUCC pVCpu) RT_NOEXCEPT
 {
-    return RT_BOOL(pVCpu->iem.s.fExec & IEM_F_ARM_A);
+    return RT_BOOL(ICORE(pVCpu).fExec & IEM_F_ARM_A);
 }
 
 
@@ -69,7 +69,7 @@ DECL_FORCE_INLINE(bool) iemMemAreAlignmentChecksEnabled(PVMCPUCC pVCpu) RT_NOEXC
 #if 1
 # define TMPL_MEM_CHECK_UNALIGNED_WITHIN_PAGE_OK(a_pVCpu, a_GCPtrEff, a_TmplMemType) \
     (   ((a_GCPtrEff) & GUEST_PAGE_OFFSET_MASK) <= GUEST_PAGE_SIZE - sizeof(a_TmplMemType) \
-     && !((a_pVCpu)->iem.s.fExec & IEM_F_ARM_A) )
+     && !(ICORE(a_pVCpu).fExec & IEM_F_ARM_A) )
 #else
 # define TMPL_MEM_CHECK_UNALIGNED_WITHIN_PAGE_OK(a_pVCpu, a_GCPtrEff, a_TmplMemType) 0
 #endif
@@ -84,13 +84,13 @@ DECL_FORCE_INLINE(bool) iemMemAreAlignmentChecksEnabled(PVMCPUCC pVCpu) RT_NOEXC
      * TLB lookup. \
      */ \
     uint64_t const      uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, (a_GCPtrMem)); \
-    PCIEMTLBENTRY const pTlbe     = IEMTLB_TAG_TO_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev); \
-    if (RT_LIKELY(pTlbe->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision))) \
+    PCIEMTLBENTRY const pTlbe     = IEMTLB_TAG_TO_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev); \
+    if (RT_LIKELY(pTlbe->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision))) \
     { \
         /* \
          * Check TLB page table level access flags. \
          */ \
-        uint64_t const fTlbeAcc            = (IEM_F_MODE_ARM_GET_EL(pVCpu->iem.s.fExec) > 0 ? a_fTlbePrivileged : a_fTlbeUser) \
+        uint64_t const fTlbeAcc            = (IEM_F_MODE_ARM_GET_EL(ICORE(pVCpu).fExec) > 0 ? a_fTlbePrivileged : a_fTlbeUser) \
                                            | a_fTlbeCommon \
                                            | IEMTLBE_F_PG_UNASSIGNED \
                                            | IEMTLBE_F_NO_MAPPINGR3 \
@@ -101,8 +101,8 @@ DECL_FORCE_INLINE(bool) iemMemAreAlignmentChecksEnabled(PVMCPUCC pVCpu) RT_NOEXC
                                            | IEMTLBE_F_S1_ASID \
                                            | IEMTLBE_F_S2_VMID; \
         uint64_t const uTlbPhysRevAndStuff = IEMARM_IS_POSITIVE_64BIT_ADDR(GCPtrMem) \
-                                           ? pVCpu->iem.s.DataTlb.uTlbPhysRevAndStuff0 \
-                                           : pVCpu->iem.s.DataTlb.uTlbPhysRevAndStuff1; \
+                                           ? ITLBS(pVCpu).Data.uTlbPhysRevAndStuff0 \
+                                           : ITLBS(pVCpu).Data.uTlbPhysRevAndStuff1; \
         if (RT_LIKELY(      (pTlbe->fFlagsAndPhysRev & fTlbeAcc) \
                          == (uTlbPhysRevAndStuff     & (IEMTLBE_F_PHYS_REV | IEMTLBE_F_REGIME_MASK | IEMTLBE_F_S2_VMID \
                                                         | IEMTLBE_F_NG     | IEMTLBE_F_S1_ASID)) \

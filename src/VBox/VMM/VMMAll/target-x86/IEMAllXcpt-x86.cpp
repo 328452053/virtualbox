@@ -1,4 +1,4 @@
-/* $Id: IEMAllXcpt-x86.cpp 111486 2025-10-24 07:23:14Z alexander.eichner@oracle.com $ */
+/* $Id: IEMAllXcpt-x86.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - x86 target, exceptions & interrupts.
  */
@@ -499,7 +499,7 @@ iemRaiseXcptOrIntInRealMode(PVMCPUCC      pVCpu,
     uint32_t fEfl = IEMMISC_GET_EFL(pVCpu);
 #if IEM_CFG_TARGET_CPU == IEMTARGETCPU_DYNAMIC
     AssertCompile(IEMTARGETCPU_8086 <= IEMTARGETCPU_186 && IEMTARGETCPU_V20 <= IEMTARGETCPU_186 && IEMTARGETCPU_286 > IEMTARGETCPU_186);
-    if (pVCpu->iem.s.uTargetCpu <= IEMTARGETCPU_186)
+    if (ICORE(pVCpu).uTargetCpu <= IEMTARGETCPU_186)
         fEfl |= UINT16_C(0xf000);
 #endif
     pu16Frame[2] = (uint16_t)fEfl;
@@ -1403,10 +1403,10 @@ iemTaskSwitch(PVMCPUCC        pVCpu,
     }
 
     /* Make sure the CPU mode is correct. */
-    uint32_t const fExecNew = iemCalcExecFlags(pVCpu) | (pVCpu->iem.s.fExec & IEM_F_USER_OPTS);
-    if (fExecNew != pVCpu->iem.s.fExec)
-        Log(("iemTaskSwitch: fExec %#x -> %#x (xor %#x)\n", pVCpu->iem.s.fExec, fExecNew, pVCpu->iem.s.fExec ^ fExecNew));
-    pVCpu->iem.s.fExec = fExecNew;
+    uint32_t const fExecNew = iemCalcExecFlags(pVCpu) | (ICORE(pVCpu).fExec & IEM_F_USER_OPTS);
+    if (fExecNew != ICORE(pVCpu).fExec)
+        Log(("iemTaskSwitch: fExec %#x -> %#x (xor %#x)\n", ICORE(pVCpu).fExec, fExecNew, ICORE(pVCpu).fExec ^ fExecNew));
+    ICORE(pVCpu).fExec = fExecNew;
 
     /** @todo Debug trap. */
     if (fIsNewTss386 && fNewDebugTrap)
@@ -1527,7 +1527,7 @@ iemRaiseXcptOrIntInProtMode(PVMCPUCC    pVCpu,
     Log(("iemRaiseXcptOrIntInProtMode: vec=%#x P=%u DPL=%u DT=%u:%u A=%u %04x:%04x%04x - from %04x:%08RX64 efl=%#x depth=%d\n",
          u8Vector, Idte.Gate.u1Present, Idte.Gate.u2Dpl, Idte.Gate.u1DescType, Idte.Gate.u4Type,
          Idte.Gate.u5ParmCount, Idte.Gate.u16Sel, Idte.Gate.u16OffsetHigh, Idte.Gate.u16OffsetLow,
-         pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, pVCpu->cpum.GstCtx.eflags.u, pVCpu->iem.s.cXcptRecursions));
+         pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, pVCpu->cpum.GstCtx.eflags.u, ICORE(pVCpu).cXcptRecursions));
 
     /*
      * Check the descriptor type, DPL and such.
@@ -1959,11 +1959,11 @@ iemRaiseXcptOrIntInProtMode(PVMCPUCC    pVCpu,
         iemRaiseXcptAdjustState(pVCpu, u8Vector);
 
     /* Make sure the execution flags are correct. */
-    uint32_t const fExecNew = iemCalcExecFlags(pVCpu) | (pVCpu->iem.s.fExec & IEM_F_USER_OPTS);
-    if (fExecNew != pVCpu->iem.s.fExec)
+    uint32_t const fExecNew = iemCalcExecFlags(pVCpu) | (ICORE(pVCpu).fExec & IEM_F_USER_OPTS);
+    if (fExecNew != ICORE(pVCpu).fExec)
         Log(("iemRaiseXcptOrIntInProtMode: fExec %#x -> %#x (xor %#x)\n",
-             pVCpu->iem.s.fExec, fExecNew, pVCpu->iem.s.fExec ^ fExecNew));
-    pVCpu->iem.s.fExec = fExecNew;
+             ICORE(pVCpu).fExec, fExecNew, ICORE(pVCpu).fExec ^ fExecNew));
+    ICORE(pVCpu).fExec = fExecNew;
     Assert(IEM_GET_CPL(pVCpu) == uNewCpl);
 
     /*
@@ -2293,7 +2293,7 @@ iemRaiseXcptOrInt(PVMCPUCC    pVCpu,
     /*
      * Flush prefetch buffer
      */
-    pVCpu->iem.s.cbOpcode = pVCpu->iem.s.offOpcode;
+    ICORE(pVCpu).cbOpcode = ICORE(pVCpu).offOpcode;
 #endif
 
     /*
@@ -2316,7 +2316,7 @@ iemRaiseXcptOrInt(PVMCPUCC    pVCpu,
     PVMCC const pVM = pVCpu->CTX_SUFF(pVM);
 #ifdef DBGFTRACE_ENABLED
     RTTraceBufAddMsgF(pVM->CTX_SUFF(hTraceBuf), "Xcpt/%u: %02x %u %x %x %llx %04x:%04llx %04x:%04llx",
-                      pVCpu->iem.s.cXcptRecursions, u8Vector, cbInstr, fFlags, uErr, uCr2,
+                      ICORE(pVCpu).cXcptRecursions, u8Vector, cbInstr, fFlags, uErr, uCr2,
                       pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, pVCpu->cpum.GstCtx.ss.Sel, pVCpu->cpum.GstCtx.rsp);
 #endif
 
@@ -2390,18 +2390,18 @@ iemRaiseXcptOrInt(PVMCPUCC    pVCpu,
     /*
      * Do recursion accounting.
      */
-    uint8_t const  uPrevXcpt = pVCpu->iem.s.uCurXcpt;
-    uint32_t const fPrevXcpt = pVCpu->iem.s.fCurXcpt;
-    if (pVCpu->iem.s.cXcptRecursions == 0)
+    uint8_t const  uPrevXcpt = ICORE(pVCpu).uCurXcpt;
+    uint32_t const fPrevXcpt = ICORE(pVCpu).fCurXcpt;
+    if (ICORE(pVCpu).cXcptRecursions == 0)
         Log(("iemRaiseXcptOrInt: %#x at %04x:%RGv cbInstr=%#x fFlags=%#x uErr=%#x uCr2=%llx\n",
              u8Vector, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, cbInstr, fFlags, uErr, uCr2));
     else
     {
         Log(("iemRaiseXcptOrInt: %#x at %04x:%RGv cbInstr=%#x fFlags=%#x uErr=%#x uCr2=%llx; prev=%#x depth=%d flags=%#x\n",
-             u8Vector, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, cbInstr, fFlags, uErr, uCr2, pVCpu->iem.s.uCurXcpt,
-             pVCpu->iem.s.cXcptRecursions + 1, fPrevXcpt));
+             u8Vector, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, cbInstr, fFlags, uErr, uCr2, ICORE(pVCpu).uCurXcpt,
+             ICORE(pVCpu).cXcptRecursions + 1, fPrevXcpt));
 
-        if (pVCpu->iem.s.cXcptRecursions >= 4)
+        if (ICORE(pVCpu).cXcptRecursions >= 4)
         {
 #ifdef DEBUG_bird
             AssertFailed();
@@ -2474,11 +2474,11 @@ iemRaiseXcptOrInt(PVMCPUCC    pVCpu,
         }
     }
 
-    pVCpu->iem.s.cXcptRecursions++;
-    pVCpu->iem.s.uCurXcpt    = u8Vector;
-    pVCpu->iem.s.fCurXcpt    = fFlags;
-    pVCpu->iem.s.uCurXcptErr = uErr;
-    pVCpu->iem.s.uCurXcptCr2 = uCr2;
+    ICORE(pVCpu).cXcptRecursions++;
+    ICORE(pVCpu).uCurXcpt    = u8Vector;
+    ICORE(pVCpu).fCurXcpt    = fFlags;
+    ICORE(pVCpu).uCurXcptErr = uErr;
+    ICORE(pVCpu).uCurXcptCr2 = uCr2;
 
     /*
      * Extensive logging.
@@ -2591,12 +2591,12 @@ iemRaiseXcptOrInt(PVMCPUCC    pVCpu,
     /*
      * Unwind.
      */
-    pVCpu->iem.s.cXcptRecursions--;
-    pVCpu->iem.s.uCurXcpt = uPrevXcpt;
-    pVCpu->iem.s.fCurXcpt = fPrevXcpt;
+    ICORE(pVCpu).cXcptRecursions--;
+    ICORE(pVCpu).uCurXcpt = uPrevXcpt;
+    ICORE(pVCpu).fCurXcpt = fPrevXcpt;
     Log(("iemRaiseXcptOrInt: returns %Rrc (vec=%#x); cs:rip=%04x:%RGv ss:rsp=%04x:%RGv cpl=%u depth=%d\n",
          VBOXSTRICTRC_VAL(rcStrict), u8Vector, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, pVCpu->cpum.GstCtx.ss.Sel,
-         pVCpu->cpum.GstCtx.esp, IEM_GET_CPL(pVCpu), pVCpu->iem.s.cXcptRecursions + 1));
+         pVCpu->cpum.GstCtx.esp, IEM_GET_CPL(pVCpu), ICORE(pVCpu).cXcptRecursions + 1));
     return rcStrict;
 }
 
@@ -3018,17 +3018,17 @@ IEM_CIMPL_DEF_0(iemCImplRaiseInvalidOpcode)
  */
 VMM_INT_DECL(bool) IEMGetCurrentXcpt(PVMCPUCC pVCpu, uint8_t *puVector, uint32_t *pfFlags, uint32_t *puErr, uint64_t *puCr2)
 {
-    bool const fRaisingXcpt = pVCpu->iem.s.cXcptRecursions > 0;
+    bool const fRaisingXcpt = ICORE(pVCpu).cXcptRecursions > 0;
     if (fRaisingXcpt)
     {
         if (puVector)
-            *puVector = pVCpu->iem.s.uCurXcpt;
+            *puVector = ICORE(pVCpu).uCurXcpt;
         if (pfFlags)
-            *pfFlags = pVCpu->iem.s.fCurXcpt;
+            *pfFlags = ICORE(pVCpu).fCurXcpt;
         if (puErr)
-            *puErr = pVCpu->iem.s.uCurXcptErr;
+            *puErr = ICORE(pVCpu).uCurXcptErr;
         if (puCr2)
-            *puCr2 = pVCpu->iem.s.uCurXcptCr2;
+            *puCr2 = ICORE(pVCpu).uCurXcptCr2;
     }
     return fRaisingXcpt;
 }

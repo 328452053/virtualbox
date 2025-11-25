@@ -1,4 +1,4 @@
-/* $Id: IEMAllN8veRecompBltIn.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllN8veRecompBltIn.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Native Recompiler, Emitters for Built-In Threaded Functions.
  */
@@ -78,11 +78,11 @@ IEM_DECL_NATIVE_HLP_DEF(void, iemNativeHlpMemCodeNewPageTlbMiss,(PVMCPUCC pVCpu)
 #ifdef IEM_WITH_TLB_STATISTICS
     STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatNativeCodeTlbMissesNewPage);
 #endif
-    pVCpu->iem.s.pbInstrBuf       = NULL;
-    pVCpu->iem.s.offCurInstrStart = GUEST_PAGE_SIZE;
-    pVCpu->iem.s.offInstrNextByte = GUEST_PAGE_SIZE;
+    ICORE(pVCpu).pbInstrBuf       = NULL;
+    ICORE(pVCpu).offCurInstrStart = GUEST_PAGE_SIZE;
+    ICORE(pVCpu).offInstrNextByte = GUEST_PAGE_SIZE;
     iemOpcodeFetchBytesJmp(pVCpu, 0, NULL);
-    if (pVCpu->iem.s.pbInstrBuf)
+    if (ICORE(pVCpu).pbInstrBuf)
     { /* likely */ }
     else
     {
@@ -100,12 +100,12 @@ IEM_DECL_NATIVE_HLP_DEF(RTGCPHYS, iemNativeHlpMemCodeNewPageTlbMissWithOff,(PVMC
 #ifdef IEM_WITH_TLB_STATISTICS
     STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatNativeCodeTlbMissesNewPageWithOffset);
 #endif
-    pVCpu->iem.s.pbInstrBuf       = NULL;
-    pVCpu->iem.s.offCurInstrStart = GUEST_PAGE_SIZE - offInstr;
-    pVCpu->iem.s.offInstrNextByte = GUEST_PAGE_SIZE;
+    ICORE(pVCpu).pbInstrBuf       = NULL;
+    ICORE(pVCpu).offCurInstrStart = GUEST_PAGE_SIZE - offInstr;
+    ICORE(pVCpu).offInstrNextByte = GUEST_PAGE_SIZE;
     iemOpcodeFetchBytesJmp(pVCpu, 0, NULL);
-    AssertMsg(pVCpu->iem.s.pbInstrBuf, ("cs:rip=%04x:%08RX64\n", pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip));
-    return pVCpu->iem.s.pbInstrBuf ? pVCpu->iem.s.GCPhysInstrBuf : NIL_RTGCPHYS;
+    AssertMsg(ICORE(pVCpu).pbInstrBuf, ("cs:rip=%04x:%08RX64\n", pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip));
+    return ICORE(pVCpu).pbInstrBuf ? ICORE(pVCpu).GCPhysInstrBuf : NIL_RTGCPHYS;
 }
 
 
@@ -228,16 +228,16 @@ DECL_FORCE_INLINE_THROW(uint32_t) iemNativeRecompFunc_BltIn_CheckTimersAndIrqsCo
 # ifdef RT_ARCH_AMD64
         /* dec  [rbx + cTbsTillNextTimerPoll] */
         pCodeBuf[off++] = 0xff;
-        off = iemNativeEmitGprByVCpuDisp(pCodeBuf, off, 1, RT_UOFFSETOF(VMCPU, iem.s.cTbsTillNextTimerPoll));
+        off = iemNativeEmitGprByVCpuDisp(pCodeBuf, off, 1, IRECM_STAT_OFFSETOF(cTbsTillNextTimerPoll));
 
         /* jz   ReturnBreakFF */
         off = iemNativeEmitTbExitJccEx<kIemNativeLabelType_ReturnBreakFF>(pReNative, pCodeBuf, off, kIemNativeInstrCond_e);
 
 # elif defined(RT_ARCH_ARM64)
-        AssertCompile(RTASSERT_OFFSET_OF(VMCPU, iem.s.cTbsTillNextTimerPoll) < _4K * sizeof(uint32_t));
-        off = iemNativeEmitLoadGprFromVCpuU32Ex(pCodeBuf, off, idxTmpReg1, RT_UOFFSETOF(VMCPU, iem.s.cTbsTillNextTimerPoll));
+        AssertCompile(RTASSERT_OFFSET_OF(VMCPU, IEM_RECM_MEMBER.cTbsTillNextTimerPoll) < _4K * sizeof(uint32_t));
+        off = iemNativeEmitLoadGprFromVCpuU32Ex(pCodeBuf, off, idxTmpReg1, IRECM_STAT_OFFSETOF(cTbsTillNextTimerPoll));
         pCodeBuf[off++] = Armv8A64MkInstrSubUImm12(idxTmpReg1, idxTmpReg1, 1, false /*f64Bit*/);
-        off = iemNativeEmitStoreGprToVCpuU32Ex(pCodeBuf, off, idxTmpReg1, RT_UOFFSETOF(VMCPU, iem.s.cTbsTillNextTimerPoll));
+        off = iemNativeEmitStoreGprToVCpuU32Ex(pCodeBuf, off, idxTmpReg1, IRECM_STAT_OFFSETOF(cTbsTillNextTimerPoll));
 
         /* cbz reg1, ReturnBreakFF */
         off = iemNativeEmitTbExitIfGprIsZeroEx<kIemNativeLabelType_ReturnBreakFF>(pReNative, pCodeBuf, off,
@@ -481,7 +481,7 @@ IEM_DECL_IEMNATIVERECOMPFUNC_DEF(iemNativeRecompFunc_BltIn_CheckMode)
     uint32_t const fExpectedExec = (uint32_t)pCallEntry->auParams[0];
     uint8_t const  idxTmpReg     = iemNativeRegAllocTmp(pReNative, &off);
 
-    off = iemNativeEmitLoadGprFromVCpuU32(pReNative, off, idxTmpReg, RT_UOFFSETOF(VMCPUCC, iem.s.fExec));
+    off = iemNativeEmitLoadGprFromVCpuU32(pReNative, off, idxTmpReg, ICORE_OFFSETOF(fExec));
     off = iemNativeEmitAndGpr32ByImm(pReNative, off, idxTmpReg, IEMTB_F_KEY_MASK);
     off = iemNativeEmitTbExitIfGpr32NotEqualImm<kIemNativeLabelType_ReturnBreak>(pReNative, off, idxTmpReg,
                                                                                  fExpectedExec & IEMTB_F_KEY_MASK);
@@ -507,7 +507,7 @@ IEM_DECL_IEMNATIVELIVENESSFUNC_DEF(iemNativeLivenessFunc_BltIn_CheckMode)
  *        needs some tracking. */
 #ifdef IEMNATIVE_WITH_INSTRUCTION_COUNTING
 # define BODY_SET_CUR_INSTR() \
-    off = iemNativeEmitStoreImmToVCpuU8(pReNative, off, pCallEntry->idxInstr, RT_UOFFSETOF(VMCPUCC, iem.s.idxTbCurInstr))
+    off = iemNativeEmitStoreImmToVCpuU8(pReNative, off, pCallEntry->idxInstr, IRECM_OFFSETOF(idxTbCurInstr))
 #else
 # define BODY_SET_CUR_INSTR() ((void)0)
 #endif
@@ -836,7 +836,7 @@ iemNativeEmitBltInCheckOpcodes(PIEMRECOMPILERSTATE pReNative, uint32_t off, PCIE
                                                             | RT_BIT_32(X86_GREG_xSI)
                                                             | RT_BIT_32(X86_GREG_xDI))
                                                          & ~IEMNATIVE_REG_FIXED_MASK); /* pick reg not requiring rex prefix */
-        off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegTmp, RT_UOFFSETOF(VMCPUCC, iem.s.pbInstrBuf));
+        off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegTmp, ICORE_OFFSETOF(pbInstrBuf));
         if (offPage >= 128 - cbLeft)
         {
             off = iemNativeEmitAddGprImm(pReNative, off, idxRegTmp, offPage & ~(uint16_t)3);
@@ -877,7 +877,7 @@ iemNativeEmitBltInCheckOpcodes(PIEMRECOMPILERSTATE pReNative, uint32_t off, PCIE
     {
         /* RDI = &pbInstrBuf[offPage] */
         uint8_t const idxRegDi = iemNativeRegAllocTmpEx(pReNative, &off, RT_BIT_32(X86_GREG_xDI));
-        off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegDi, RT_UOFFSETOF(VMCPU, iem.s.pbInstrBuf));
+        off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegDi, ICORE_OFFSETOF(pbInstrBuf));
         if (offPage != 0)
             off = iemNativeEmitAddGprImm(pReNative, off, idxRegDi, offPage);
 
@@ -946,7 +946,7 @@ iemNativeEmitBltInCheckOpcodes(PIEMRECOMPILERSTATE pReNative, uint32_t off, PCIE
 #elif defined(RT_ARCH_ARM64)
     /* We need pbInstrBuf in a register, whatever we do. */
     uint8_t const idxRegSrc1Ptr = iemNativeRegAllocTmp(pReNative, &off);
-    off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegSrc1Ptr, RT_UOFFSETOF(VMCPU, iem.s.pbInstrBuf));
+    off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegSrc1Ptr, ICORE_OFFSETOF(pbInstrBuf));
 
     /* We also need at least one more register for holding bytes & words we
        load via pbInstrBuf. */
@@ -1268,7 +1268,7 @@ iemNativeEmitBltInCheckPcAfterBranch(PIEMRECOMPILERSTATE pReNative, uint32_t off
 
 #ifdef VBOX_STRICT
     /* Do assertions before idxRegTmp contains anything. */
-    Assert(RT_SIZEOFMEMB(VMCPUCC, iem.s.cbInstrBufTotal) == sizeof(uint16_t));
+    Assert(RT_SIZEOFMEMB(VMCPUCC, IEM_CORE_MEMBER.cbInstrBufTotal) == sizeof(uint16_t));
 # ifdef RT_ARCH_AMD64
     {
         uint8_t * const pbCodeBuf = iemNativeInstrBufEnsure(pReNative, off, 8+2+1 + 11+2+1);
@@ -1288,11 +1288,11 @@ iemNativeEmitBltInCheckPcAfterBranch(PIEMRECOMPILERSTATE pReNative, uint32_t off
 
         }
 
-        /* Assert(!(pVCpu->iem.s.GCPhysInstrBuf & X86_PAGE_OFFSET_MASK)); - done later by the non-x86 code */
+        /* Assert(!(ICORE(pVCpu).GCPhysInstrBuf & X86_PAGE_OFFSET_MASK)); - done later by the non-x86 code */
         /* test r/m64, imm32 */
         pbCodeBuf[off++] = X86_OP_REX_W;
         pbCodeBuf[off++] = 0xf7;
-        off = iemNativeEmitGprByVCpuDisp(pbCodeBuf, off, 0, RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf));
+        off = iemNativeEmitGprByVCpuDisp(pbCodeBuf, off, 0, ICORE_OFFSETOF(GCPhysInstrBuf));
         pbCodeBuf[off++] = RT_BYTE1(X86_PAGE_OFFSET_MASK);
         pbCodeBuf[off++] = RT_BYTE2(X86_PAGE_OFFSET_MASK);
         pbCodeBuf[off++] = RT_BYTE3(X86_PAGE_OFFSET_MASK);
@@ -1324,7 +1324,7 @@ iemNativeEmitBltInCheckPcAfterBranch(PIEMRECOMPILERSTATE pReNative, uint32_t off
 #endif /* VBOX_STRICT */
 
     /* 1+2. Calculate 'off' first (into idxRegTmp). */
-    off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegTmp, RT_UOFFSETOF(VMCPUCC, iem.s.uInstrBufPc));
+    off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegTmp, ICORE_OFFSETOF(uInstrBufPc));
     if (IEM_F_MODE_X86_IS_FLAT(pReNative->fExec))
     {
 #ifdef RT_ARCH_ARM64
@@ -1361,18 +1361,18 @@ iemNativeEmitBltInCheckPcAfterBranch(PIEMRECOMPILERSTATE pReNative, uint32_t off
     uint8_t * const pbCodeBuf = iemNativeInstrBufEnsure(pReNative, off, 7);
     pbCodeBuf[off++] = idxRegTmp < 8 ? X86_OP_REX_W : X86_OP_REX_W | X86_OP_REX_R;
     pbCodeBuf[off++] = 0x03; /* add r64, r/m64 */
-    off = iemNativeEmitGprByVCpuDisp(pbCodeBuf, off, idxRegTmp, RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf));
+    off = iemNativeEmitGprByVCpuDisp(pbCodeBuf, off, idxRegTmp, ICORE_OFFSETOF(GCPhysInstrBuf));
     IEMNATIVE_ASSERT_INSTR_BUF_ENSURE(pReNative, off);
 
 #elif defined(RT_ARCH_ARM64)
     uint8_t const idxRegTmp2 = iemNativeRegAllocTmp(pReNative, &off);
 
-    off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegTmp2, RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf));
+    off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegTmp2, ICORE_OFFSETOF(GCPhysInstrBuf));
     uint32_t *pu32CodeBuf = iemNativeInstrBufEnsure(pReNative, off, 1);
     pu32CodeBuf[off++] = Armv8A64MkInstrAddReg(idxRegTmp, idxRegTmp, idxRegTmp2);
     IEMNATIVE_ASSERT_INSTR_BUF_ENSURE(pReNative, off);
 
-# ifdef VBOX_STRICT /* Assert(!(pVCpu->iem.s.GCPhysInstrBuf & X86_PAGE_OFFSET_MASK)); */
+# ifdef VBOX_STRICT /* Assert(!(ICORE(pVCpu).GCPhysInstrBuf & X86_PAGE_OFFSET_MASK)); */
     off = iemNativeEmitAndGpr32ByImm(pReNative, off, idxRegTmp2, X86_PAGE_OFFSET_MASK, true /*fSetFlags*/);
     off = iemNativeEmitJzToFixed(pReNative, off, off + 2 /* correct for ARM64 */);
     off = iemNativeEmitBrk(pReNative, off, 0x2005);
@@ -1581,7 +1581,7 @@ iemNativeEmitBltLoadTlbAfterBranch(PIEMRECOMPILERSTATE pReNative, uint32_t off, 
 
 #ifdef VBOX_STRICT
     /* Do assertions before idxRegTmp contains anything. */
-    Assert(RT_SIZEOFMEMB(VMCPUCC, iem.s.cbInstrBufTotal) == sizeof(uint16_t));
+    Assert(RT_SIZEOFMEMB(VMCPUCC, IEM_CORE_MEMBER.cbInstrBufTotal) == sizeof(uint16_t));
 # ifdef RT_ARCH_AMD64
     {
         uint8_t * const pbCodeBuf = iemNativeInstrBufEnsure(pReNative, off, 8+2+1 + 11+2+1);
@@ -1601,11 +1601,11 @@ iemNativeEmitBltLoadTlbAfterBranch(PIEMRECOMPILERSTATE pReNative, uint32_t off, 
 
         }
 
-        /* Assert(!(pVCpu->iem.s.GCPhysInstrBuf & X86_PAGE_OFFSET_MASK)); - done later by the non-x86 code */
+        /* Assert(!(ICORE(pVCpu).GCPhysInstrBuf & X86_PAGE_OFFSET_MASK)); - done later by the non-x86 code */
         /* test r/m64, imm32 */
         pbCodeBuf[off++] = X86_OP_REX_W;
         pbCodeBuf[off++] = 0xf7;
-        off = iemNativeEmitGprByVCpuDisp(pbCodeBuf, off, 0, RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf));
+        off = iemNativeEmitGprByVCpuDisp(pbCodeBuf, off, 0, ICORE_OFFSETOF(GCPhysInstrBuf));
         pbCodeBuf[off++] = RT_BYTE1(X86_PAGE_OFFSET_MASK);
         pbCodeBuf[off++] = RT_BYTE2(X86_PAGE_OFFSET_MASK);
         pbCodeBuf[off++] = RT_BYTE3(X86_PAGE_OFFSET_MASK);
@@ -1644,7 +1644,7 @@ iemNativeEmitBltLoadTlbAfterBranch(PIEMRECOMPILERSTATE pReNative, uint32_t off, 
     uint32_t const offLabelRedoChecks = off;
 
     /* 1+2. Calculate 'off' first (into idxRegTmp). */
-    off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegTmp, RT_UOFFSETOF(VMCPUCC, iem.s.uInstrBufPc));
+    off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegTmp, ICORE_OFFSETOF(uInstrBufPc));
     if (IEM_F_MODE_X86_IS_FLAT(pReNative->fExec))
     {
 #ifdef RT_ARCH_ARM64
@@ -1681,17 +1681,17 @@ iemNativeEmitBltLoadTlbAfterBranch(PIEMRECOMPILERSTATE pReNative, uint32_t off, 
     uint8_t * const pbCodeBuf = iemNativeInstrBufEnsure(pReNative, off, 7);
     pbCodeBuf[off++] = idxRegTmp < 8 ? X86_OP_REX_W : X86_OP_REX_W | X86_OP_REX_R;
     pbCodeBuf[off++] = 0x03; /* add r64, r/m64 */
-    off = iemNativeEmitGprByVCpuDisp(pbCodeBuf, off, idxRegTmp, RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf));
+    off = iemNativeEmitGprByVCpuDisp(pbCodeBuf, off, idxRegTmp, ICORE_OFFSETOF(GCPhysInstrBuf));
     IEMNATIVE_ASSERT_INSTR_BUF_ENSURE(pReNative, off);
 
 #elif defined(RT_ARCH_ARM64)
 
-    off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegTmp2, RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf));
+    off = iemNativeEmitLoadGprFromVCpuU64(pReNative, off, idxRegTmp2, ICORE_OFFSETOF(GCPhysInstrBuf));
     uint32_t *pu32CodeBuf = iemNativeInstrBufEnsure(pReNative, off, 1);
     pu32CodeBuf[off++] = Armv8A64MkInstrAddReg(idxRegTmp, idxRegTmp, idxRegTmp2);
     IEMNATIVE_ASSERT_INSTR_BUF_ENSURE(pReNative, off);
 
-# ifdef VBOX_STRICT /* Assert(!(pVCpu->iem.s.GCPhysInstrBuf & X86_PAGE_OFFSET_MASK)); */
+# ifdef VBOX_STRICT /* Assert(!(ICORE(pVCpu).GCPhysInstrBuf & X86_PAGE_OFFSET_MASK)); */
     off = iemNativeEmitAndGpr32ByImm(pReNative, off, idxRegTmp2, X86_PAGE_OFFSET_MASK, true /*fSetFlags*/);
     off = iemNativeEmitJzToFixed(pReNative, off, off + 2 /* correct for ARM64 */);
     off = iemNativeEmitBrk(pReNative, off, 0x2005);
@@ -2399,7 +2399,7 @@ IEM_DECL_IEMNATIVERECOMPFUNC_DEF(iemNativeRecompFunc_BltIn_CheckCsLimAndOpcodesO
     BODY_FLUSH_PENDING_WRITES();
     BODY_CHECK_CS_LIM(cbInstr);
     BODY_LOAD_TLB_FOR_NEW_PAGE(pTb, 0, idxRange, cbInstr);
-    //Assert(pVCpu->iem.s.offCurInstrStart == 0);
+    //Assert(ICORE(pVCpu).offCurInstrStart == 0);
     BODY_CHECK_OPCODES(pTb, idxRange, 0, cbInstr);
     return off;
 }
@@ -2431,7 +2431,7 @@ IEM_DECL_IEMNATIVERECOMPFUNC_DEF(iemNativeRecompFunc_BltIn_CheckOpcodesOnNewPage
     BODY_SET_CUR_INSTR();
     BODY_FLUSH_PENDING_WRITES();
     BODY_LOAD_TLB_FOR_NEW_PAGE(pTb, 0, idxRange, cbInstr);
-    //Assert(pVCpu->iem.s.offCurInstrStart == 0);
+    //Assert(ICORE(pVCpu).offCurInstrStart == 0);
     BODY_CHECK_OPCODES(pTb, idxRange, 0, cbInstr);
     return off;
 }
@@ -2464,7 +2464,7 @@ IEM_DECL_IEMNATIVERECOMPFUNC_DEF(iemNativeRecompFunc_BltIn_CheckOpcodesOnNewPage
     BODY_FLUSH_PENDING_WRITES();
     BODY_CONSIDER_CS_LIM_CHECKING(pTb, cbInstr);
     BODY_LOAD_TLB_FOR_NEW_PAGE(pTb, 0, idxRange, cbInstr);
-    //Assert(pVCpu->iem.s.offCurInstrStart == 0);
+    //Assert(ICORE(pVCpu).offCurInstrStart == 0);
     BODY_CHECK_OPCODES(pTb, idxRange, 0, cbInstr);
     return off;
 }

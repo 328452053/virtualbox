@@ -1,4 +1,4 @@
-/* $Id: IEMMc-x86.h 110741 2025-08-15 22:48:13Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMMc-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - IEM_MC_XXX, x86 target.
  */
@@ -45,7 +45,7 @@
 
 #undef  IEM_MC_REL_JMP_S8_AND_FINISH
 #define IEM_MC_REL_JMP_S8_AND_FINISH(a_i8) \
-    return iemRegRipRelativeJumpS8AndFinishClearingRF(pVCpu, IEM_GET_INSTR_LEN(pVCpu), (a_i8), pVCpu->iem.s.enmEffOpSize)
+    return iemRegRipRelativeJumpS8AndFinishClearingRF(pVCpu, IEM_GET_INSTR_LEN(pVCpu), (a_i8), ICORE(pVCpu).enmEffOpSize)
 
 /** @note X86: only usable in 16-bit op size mode.  */
 #undef  IEM_MC_REL_JMP_S16_AND_FINISH
@@ -54,7 +54,7 @@
 
 #undef  IEM_MC_REL_JMP_S32_AND_FINISH
 #define IEM_MC_REL_JMP_S32_AND_FINISH(a_i32) \
-    return iemRegRipRelativeJumpS32AndFinishClearingRF(pVCpu, IEM_GET_INSTR_LEN(pVCpu), (a_i32), pVCpu->iem.s.enmEffOpSize)
+    return iemRegRipRelativeJumpS32AndFinishClearingRF(pVCpu, IEM_GET_INSTR_LEN(pVCpu), (a_i32), ICORE(pVCpu).enmEffOpSize)
 
 #undef  IEM_MC_IND_JMP_U16_AND_FINISH
 #define IEM_MC_IND_JMP_U16_AND_FINISH(a_u16NewIP) \
@@ -97,7 +97,7 @@
 /** Fetches the near return address from the stack, sets RIP and RSP (may trigger
  * \#GP or \#SS), finishes the instruction and returns. */
 #define IEM_MC_RETN_AND_FINISH(a_cbPopArgs) \
-    return iemRegRipNearReturnAndFinishClearingRF((pVCpu), IEM_GET_INSTR_LEN(pVCpu), (a_cbPopArgs), pVCpu->iem.s.enmEffOpSize)
+    return iemRegRipNearReturnAndFinishClearingRF((pVCpu), IEM_GET_INSTR_LEN(pVCpu), (a_cbPopArgs), ICORE(pVCpu).enmEffOpSize)
 
 
 #define IEM_MC_RAISE_DIVIDE_ERROR_IF_LOCAL_IS_ZERO(a_uVar) \

@@ -1,4 +1,4 @@
-/* $Id: IEMInline-armv8.h 111713 2025-11-13 15:27:35Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMInline-armv8.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inlined Functions, ARMv8 target.
  */
@@ -309,7 +309,7 @@ DECL_FORCE_INLINE(uint32_t) iemCalcExecFlags(PVMCPUCC pVCpu) RT_NOEXCEPT
  */
 DECL_FORCE_INLINE(void) iemRecalcExecModeAndSpIdxAndAcFlags(PVMCPUCC pVCpu)
 {
-    pVCpu->iem.s.fExec = (pVCpu->iem.s.fExec & ~(IEM_F_MODE_MASK | IEM_F_ARM_A | IEM_F_ARM_AA))
+    ICORE(pVCpu).fExec = (ICORE(pVCpu).fExec & ~(IEM_F_MODE_MASK | IEM_F_ARM_A | IEM_F_ARM_AA))
                        | iemCalcExecModeAndSpIdxAndAcFlagsAndS1PgSize(pVCpu);
 }
 
@@ -323,7 +323,7 @@ DECL_FORCE_INLINE(void) iemRecalcExecModeAndSpIdxAndAcFlags(PVMCPUCC pVCpu)
  */
 DECL_FORCE_INLINE(void) iemRecalcExecDbgFlags(PVMCPUCC pVCpu)
 {
-    pVCpu->iem.s.fExec = (pVCpu->iem.s.fExec & ~(IEM_F_PENDING_BRK_MASK | IEM_F_ARM_SOFTWARE_STEP))
+    ICORE(pVCpu).fExec = (ICORE(pVCpu).fExec & ~(IEM_F_PENDING_BRK_MASK | IEM_F_ARM_SOFTWARE_STEP))
                        | iemCalcExecDbgFlags(pVCpu);
 }
 
@@ -347,7 +347,7 @@ DECL_FORCE_INLINE(uint8_t) iemGRegFetchU8(PVMCPUCC pVCpu, uint8_t iReg, bool fSp
 {
     Assert(iReg < 32);
     return iReg < 31 ? (uint8_t)pVCpu->cpum.GstCtx.aGRegs[iReg].w
-          : fSp      ? (uint8_t)pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(pVCpu->iem.s.fExec)].u32
+          : fSp      ? (uint8_t)pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(ICORE(pVCpu).fExec)].u32
           : UINT8_C(0);
 }
 
@@ -364,7 +364,7 @@ DECL_FORCE_INLINE(uint16_t) iemGRegFetchU16(PVMCPUCC pVCpu, uint8_t iReg, bool f
 {
     Assert(iReg < 32);
     return iReg < 31 ? (uint16_t)pVCpu->cpum.GstCtx.aGRegs[iReg].w
-          : fSp      ? (uint16_t)pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(pVCpu->iem.s.fExec)].u32
+          : fSp      ? (uint16_t)pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(ICORE(pVCpu).fExec)].u32
           : UINT16_C(0);
 }
 
@@ -381,7 +381,7 @@ DECL_FORCE_INLINE(uint32_t) iemGRegFetchU32(PVMCPUCC pVCpu, uint8_t iReg, bool f
 {
     Assert(iReg < 32);
     return iReg < 31 ? pVCpu->cpum.GstCtx.aGRegs[iReg].w
-          : fSp      ? pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(pVCpu->iem.s.fExec)].u32
+          : fSp      ? pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(ICORE(pVCpu).fExec)].u32
           : UINT32_C(0);
 }
 
@@ -398,7 +398,7 @@ DECL_FORCE_INLINE(uint64_t) iemGRegFetchU64(PVMCPUCC pVCpu, uint8_t iReg, bool f
 {
     Assert(iReg < 32);
     return iReg < 31 ? pVCpu->cpum.GstCtx.aGRegs[iReg].x
-          : fSp      ? pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(pVCpu->iem.s.fExec)].u64
+          : fSp      ? pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(ICORE(pVCpu).fExec)].u64
           : UINT64_C(0);
 }
 
@@ -419,8 +419,8 @@ DECL_FORCE_INLINE_THROW(uint64_t) iemGRegFetchU64WithSpAlignCheck(PVMCPUCC pVCpu
         uRet = pVCpu->cpum.GstCtx.aGRegs[iReg].x;
     else
     {
-        uRet = pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(pVCpu->iem.s.fExec)].u64;
-        if (RT_LIKELY(!(uRet & 15) || !(pVCpu->iem.s.fExec & IEM_F_ARM_SA)))
+        uRet = pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(ICORE(pVCpu).fExec)].u64;
+        if (RT_LIKELY(!(uRet & 15) || !(ICORE(pVCpu).fExec & IEM_F_ARM_SA)))
         { /* likely */ }
         else
             iemRaiseSpAlignmentCheck(pVCpu);
@@ -444,7 +444,7 @@ DECL_FORCE_INLINE(void) iemGRegStoreU8(PVMCPUCC pVCpu, uint8_t iReg, uint8_t uVa
     if (iReg < 31)
         pVCpu->cpum.GstCtx.aGRegs[iReg].x = uValue;
     else if (fSp)
-        pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(pVCpu->iem.s.fExec)].u64 = uValue;
+        pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(ICORE(pVCpu).fExec)].u64 = uValue;
 }
 
 
@@ -463,7 +463,7 @@ DECL_FORCE_INLINE(void) iemGRegStoreU16(PVMCPUCC pVCpu, uint8_t iReg, uint16_t u
     if (iReg < 31)
         pVCpu->cpum.GstCtx.aGRegs[iReg].x = uValue;
     else if (fSp)
-        pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(pVCpu->iem.s.fExec)].u64 = uValue;
+        pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(ICORE(pVCpu).fExec)].u64 = uValue;
 }
 
 
@@ -482,7 +482,7 @@ DECL_FORCE_INLINE(void) iemGRegStoreU32(PVMCPUCC pVCpu, uint8_t iReg, uint32_t u
     if (iReg < 31)
         pVCpu->cpum.GstCtx.aGRegs[iReg].x = uValue;
     else if (fSp)
-        pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(pVCpu->iem.s.fExec)].u64 = uValue;
+        pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(ICORE(pVCpu).fExec)].u64 = uValue;
 }
 
 
@@ -500,7 +500,7 @@ DECL_FORCE_INLINE(void) iemGRegStoreU64(PVMCPUCC pVCpu, uint8_t iReg, uint64_t u
     if (iReg < 31)
         pVCpu->cpum.GstCtx.aGRegs[iReg].x = uValue;
     else if (fSp)
-        pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(pVCpu->iem.s.fExec)].u64 = uValue;
+        pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(ICORE(pVCpu).fExec)].u64 = uValue;
 }
 
 
@@ -511,7 +511,7 @@ DECL_FORCE_INLINE(void) iemGRegStoreU64(PVMCPUCC pVCpu, uint8_t iReg, uint64_t u
  */
 DECL_FORCE_INLINE(RTGCPTR) iemRegGetSp(PCVMCPU pVCpu) RT_NOEXCEPT
 {
-    return pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(pVCpu->iem.s.fExec)].u64;
+    return pVCpu->cpum.GstCtx.aSpReg[IEM_F_ARM_GET_SP_IDX(ICORE(pVCpu).fExec)].u64;
 }
 
 
@@ -529,14 +529,14 @@ DECL_FORCE_INLINE(RTGCPTR) iemRegGetSp(PCVMCPU pVCpu) RT_NOEXCEPT
  */
 DECL_FORCE_INLINE(void) iemRegPcInc(PVMCPUCC pVCpu, bool f32Bit = true) RT_NOEXCEPT
 {
-    if (!(pVCpu->iem.s.fExec & IEM_F_MODE_ARM_32BIT))
+    if (!(ICORE(pVCpu).fExec & IEM_F_MODE_ARM_32BIT))
     {
         Assert(f32Bit);
         pVCpu->cpum.GstCtx.Pc.u64 = pVCpu->cpum.GstCtx.Pc.u64 + 4;
     }
     else
     {
-        Assert(f32Bit || (pVCpu->iem.s.fExec & IEM_F_MODE_ARM_T32));
+        Assert(f32Bit || (ICORE(pVCpu).fExec & IEM_F_MODE_ARM_T32));
         pVCpu->cpum.GstCtx.Pc.u64 = pVCpu->cpum.GstCtx.Pc.u32 + (f32Bit ? 4 : 2);
     }
 }
@@ -589,7 +589,7 @@ DECL_FORCE_INLINE(void) iemRegPcT32Inc(PVMCPUCC pVCpu, bool f32Bit = false) RT_N
  */
 DECL_FORCE_INLINE(void) iemRegPcAdd(PVMCPUCC pVCpu, int32_t offAddend) RT_NOEXCEPT
 {
-    if (!(pVCpu->iem.s.fExec & IEM_F_MODE_ARM_32BIT))
+    if (!(ICORE(pVCpu).fExec & IEM_F_MODE_ARM_32BIT))
         pVCpu->cpum.GstCtx.Pc.u64 = pVCpu->cpum.GstCtx.Pc.u64 + offAddend;
     else
         pVCpu->cpum.GstCtx.Pc.u64 = (uint32_t)(pVCpu->cpum.GstCtx.Pc.u32 + offAddend);
@@ -678,7 +678,7 @@ static VBOXSTRICTRC iemFinishInstructionWithSoftwareStep(PVMCPUCC pVCpu, int rcN
     if (!(pVCpu->cpum.GstCtx.fPState & ARMV8_SPSR_EL2_AARCH64_D))
     {
         uint8_t const bDebugEl = iemGetDebugExceptionLevel(pVCpu);
-        uint8_t const bCurEl   = IEM_F_MODE_ARM_GET_EL(pVCpu->iem.s.fExec);
+        uint8_t const bCurEl   = IEM_F_MODE_ARM_GET_EL(ICORE(pVCpu).fExec);
         if (   bCurEl < bDebugEl
             || (   bCurEl == bDebugEl
                 && (pVCpu->cpum.GstCtx.Mdscr.u64 & ARMV8_MDSCR_EL1_AARCH64_KDE)) )
@@ -705,7 +705,7 @@ DECL_FORCE_INLINE(VBOXSTRICTRC) iemRegFinishClearingFlags(PVMCPUCC pVCpu, int rc
     /*
      * We assume that most of the time nothing actually needs doing here.
      */
-    if (RT_LIKELY(!(pVCpu->iem.s.fExec & IEM_F_ARM_SOFTWARE_STEP)))
+    if (RT_LIKELY(!(ICORE(pVCpu).fExec & IEM_F_ARM_SOFTWARE_STEP)))
         return rcNormal;
     return iemFinishInstructionWithSoftwareStep(pVCpu, rcNormal);
 }
@@ -794,7 +794,7 @@ DECL_FORCE_INLINE(VBOXSTRICTRC) iemRegPcT32IncAndFinishingClearingFlags(PVMCPUCC
 DECL_FORCE_INLINE(VBOXSTRICTRC) iemRegFinishNoFlags(PVMCPUCC pVCpu, int rcNormal) RT_NOEXCEPT
 {
     Assert(!(pVCpu->cpum.GstCtx.Mdscr.u64 & ARMV8_MDSCR_EL1_AARCH64_SS));
-    Assert(!(pVCpu->iem.s.fExec & IEM_F_ARM_SOFTWARE_STEP));
+    Assert(!(ICORE(pVCpu).fExec & IEM_F_ARM_SOFTWARE_STEP));
 
     RT_NOREF(pVCpu);
     return rcNormal;

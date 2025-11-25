@@ -1,4 +1,4 @@
-/* $Id: IEMN8veRecompilerTlbLookup.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMN8veRecompilerTlbLookup.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Native Recompiler TLB Lookup Code Emitter.
  */
@@ -334,7 +334,7 @@ iemNativeEmitTlbLookup(PIEMRECOMPILERSTATE pReNative, uint32_t off, IEMNATIVEEMI
                        uint8_t offDisp = 0)
 {
     Assert(!pTlbState->fSkip);
-    uint32_t const   offVCpuTlb = a_fDataTlb ? RT_UOFFSETOF(VMCPUCC, iem.s.DataTlb) : RT_UOFFSETOF(VMCPUCC, iem.s.CodeTlb);
+    uint32_t const   offVCpuTlb = a_fDataTlb ? RT_UOFFSETOF(VMCPUCC, iem.s.Tlbs.Data) : RT_UOFFSETOF(VMCPUCC, iem.s.Tlbs.Code);
 # if defined(RT_ARCH_AMD64)
     uint8_t * const  pCodeBuf   = iemNativeInstrBufEnsure(pReNative, off, 512);
 # elif defined(RT_ARCH_ARM64)
@@ -461,7 +461,7 @@ iemNativeEmitTlbLookup(PIEMRECOMPILERSTATE pReNative, uint32_t off, IEMNATIVEEMI
         /* reg1 = reg1 & ~IEMTLB_REVISION_MASK; */
         off = iemNativeEmitShiftGprLeftEx(pCodeBuf, off, pTlbState->idxReg1, 16 + GUEST_PAGE_SHIFT);
         off = iemNativeEmitShiftGprRightEx(pCodeBuf, off, pTlbState->idxReg1, 16 + GUEST_PAGE_SHIFT);
-        /* or  reg1, [qword pVCpu->iem.s.DataTlb.uTlbRevisionGlobal/uTlbRevision] */
+        /* or  reg1, [qword ITLBS(pVCpu).Data.uTlbRevisionGlobal/uTlbRevision] */
         pCodeBuf[off++] = pTlbState->idxReg1 < 8 ? X86_OP_REX_W : X86_OP_REX_W | X86_OP_REX_R;
         pCodeBuf[off++] = 0x0b; /* OR r64,r/m64 */
         off = iemNativeEmitGprByVCpuDisp(pCodeBuf, off, pTlbState->idxReg1,
@@ -860,7 +860,7 @@ iemNativeEmitTlbLookup(PIEMRECOMPILERSTATE pReNative, uint32_t off, IEMNATIVEEMI
         off = iemNativeEmitGpr32EqGprShiftRightImmEx(pCodeBuf, off, pTlbState->idxReg1, idxRegFlatPtr, GUEST_PAGE_SHIFT);
     }
 
-    /* or  reg1, [qword pVCpu->iem.s.DataTlb.uTlbRevision] */
+    /* or  reg1, [qword ITLBS(pVCpu).Data.uTlbRevision] */
 # if defined(RT_ARCH_AMD64)
     pCodeBuf[off++] = pTlbState->idxReg1 < 8 ? X86_OP_REX_W : X86_OP_REX_W | X86_OP_REX_R;
     pCodeBuf[off++] = 0x0b; /* OR r64,r/m64 */
@@ -877,7 +877,7 @@ iemNativeEmitTlbLookup(PIEMRECOMPILERSTATE pReNative, uint32_t off, IEMNATIVEEMI
     AssertCompileAdjacentMembers(IEMTLB, uTlbRevision, uTlbPhysRev);
     AssertCompileAdjacentMembers(IEMTLB, uTlbPhysRev, uTlbRevisionGlobal);
     AssertCompile(RTASSERT_OFFSET_OF(IEMTLB, uTlbPhysRev) < RTASSERT_OFFSET_OF(IEMTLB, aEntries));
-    AssertCompile(RTASSERT_OFFSET_OF(VMCPUCC, iem.s.DataTlb.aEntries) < _64K);
+    AssertCompile(RTASSERT_OFFSET_OF(VMCPUCC, iem.s.Tlbs.Data.aEntries) < _64K);
     uint32_t const offEntries = offVCpuTlb + RT_UOFFSETOF(IEMTLB, aEntries) + (fEvenFirst ? 0 : sizeof(IEMTLBENTRY));
     if (offEntries < _64K)
     {
@@ -886,16 +886,16 @@ iemNativeEmitTlbLookup(PIEMRECOMPILERSTATE pReNative, uint32_t off, IEMNATIVEEMI
     }
     else
     {
-        AssertCompileMemberAlignment(VMCPUCC, iem.s.CodeTlb.aEntries, 32);
+        AssertCompileMemberAlignment(VMCPUCC, iem.s.Tlbs.Code.aEntries, 32);
         AssertCompileMemberAlignment(IEMTLB, aEntries, 32);
         AssertCompileSizeAlignment(IEMTLBENTRY, 32);
 #   if IEMTLB_ENTRY_COUNT <= 16384 /*?*/
-        AssertCompile(RTASSERT_OFFSET_OF(VMCPUCC, iem.s.CodeTlb.aEntries) < _64K*32U);
+        AssertCompile(RTASSERT_OFFSET_OF(VMCPUCC, iem.s.Tlbs.Code.aEntries) < _64K*32U);
         pCodeBuf[off++] = Armv8A64MkInstrMovZ(pTlbState->idxReg4, offEntries >> 5);
         pCodeBuf[off++] = Armv8A64MkInstrAddReg(pTlbState->idxReg4, IEMNATIVE_REG_FIXED_PVMCPU, pTlbState->idxReg4,
                                                 true /*64Bit*/, false /*fSetFlags*/, 5 /*cShift*/, kArmv8A64InstrShift_Lsl);
 #   else
-        AssertCompile(RTASSERT_OFFSET_OF(VMCPUCC, iem.s.CodeTlb.aEntries) >= _64K*32U);
+        AssertCompile(RTASSERT_OFFSET_OF(VMCPUCC, iem.s.Tlbs.Code.aEntries) >= _64K*32U);
         pCodeBuf[off++] = Armv8A64MkInstrMovZ(pTlbState->idxReg4, offEntries & UINT16_MAX);
         pCodeBuf[off++] = Armv8A64MkInstrMovK(pTlbState->idxReg4, offEntries >> 16, 1);
         pCodeBuf[off++] = Armv8A64MkInstrAddReg(pTlbState->idxReg4, IEMNATIVE_REG_FIXED_PVMCPU, pTlbState->idxReg4);
@@ -936,7 +936,7 @@ iemNativeEmitTlbLookup(PIEMRECOMPILERSTATE pReNative, uint32_t off, IEMNATIVEEMI
     /* shl   reg2, 6 ; reg2 *= sizeof(IEMTLBENTRY) * 2 */
     AssertCompileSize(IEMTLBENTRY, 32);
     off = iemNativeEmitShiftGprLeftEx(pCodeBuf, off, pTlbState->idxReg2, 6);
-    /* lea   reg2, [&pVCpu->iem.s.DataTlb.aEntries[!fEvenFirst] + reg2] */
+    /* lea   reg2, [&ITLBS(pVCpu).Data.aEntries[!fEvenFirst] + reg2] */
     AssertCompile(IEMNATIVE_REG_FIXED_PVMCPU < 8);
     pCodeBuf[off++] = pTlbState->idxReg2 < 8 ? X86_OP_REX_W : X86_OP_REX_W | X86_OP_REX_X | X86_OP_REX_R;
     pCodeBuf[off++] = 0x8d;
@@ -952,10 +952,10 @@ iemNativeEmitTlbLookup(PIEMRECOMPILERSTATE pReNative, uint32_t off, IEMNATIVEEMI
     AssertCompileSize(IEMTLBENTRY, 32);
     pCodeBuf[off++] = Armv8A64MkInstrUbfiz(pTlbState->idxReg2, pTlbState->idxReg1, 6, IEMTLB_ENTRY_COUNT_AS_POWER_OF_TWO);
 #  ifdef IEMNATIVE_WITH_TLB_LOOKUP_LOAD_STORE_PAIR
-    /* reg2 += &pVCpu->iem.s.[Data|Code]Tlb.aEntries[!fEvenFirst] */
+    /* reg2 += &pVCpu->iem.s.Tlbs.[Data|Code].aEntries[!fEvenFirst] */
     pCodeBuf[off++] = Armv8A64MkInstrAddReg(pTlbState->idxReg2, pTlbState->idxReg2, pTlbState->idxReg4);
 #  else
-    /* reg2 += offsetof(VMCPUCC, iem.s.DataTlb.aEntries[!fEvenFirst]) */
+    /* reg2 += offsetof(VMCPUCC, iem.s.Tlbs.Data.aEntries[!fEvenFirst]) */
     off = iemNativeEmitAddGprImmEx(pCodeBuf, off, pTlbState->idxReg2, offTlbEntriesAdjusted, pTlbState->idxReg3 /*iGprTmp*/);
     /* reg2 += pVCpu */
     off = iemNativeEmitAddTwoGprsEx(pCodeBuf, off, pTlbState->idxReg2, IEMNATIVE_REG_FIXED_PVMCPU);
@@ -1020,7 +1020,7 @@ iemNativeEmitTlbLookup(PIEMRECOMPILERSTATE pReNative, uint32_t off, IEMNATIVEEMI
     off = iemNativeEmitGprByGprDisp(pCodeBuf, off, pTlbState->idxReg1,
                                     pTlbState->idxReg2, RT_UOFFSETOF(IEMTLBENTRY, fFlagsAndPhysRev));
 
-    /* cmp reg1, [pVCpu->iem.s.DataTlb.uTlbPhysRev] */
+    /* cmp reg1, [ITLBS(pVCpu).Data.uTlbPhysRev] */
     pCodeBuf[off++] = X86_OP_REX_W | (pTlbState->idxReg1 < 8 ? 0 : X86_OP_REX_R);
     pCodeBuf[off++] = 0x3b;
     off = iemNativeEmitGprByGprDisp(pCodeBuf, off, pTlbState->idxReg1, IEMNATIVE_REG_FIXED_PVMCPU,
@@ -1125,48 +1125,48 @@ iemNativeEmitTlbLookup(PIEMRECOMPILERSTATE pReNative, uint32_t off, IEMNATIVEEMI
 #  endif
         /* Set pbInstrBuf first since we've got it loaded already. */
         off = iemNativeEmitStoreGprToVCpuU64Ex(pCodeBuf, off, pTlbState->idxReg1,
-                                               RT_UOFFSETOF(VMCPUCC, iem.s.pbInstrBuf), idxReg3);
+                                               ICORE_OFFSETOF(pbInstrBuf), idxReg3);
         /* Set uInstrBufPc to (FlatPC & ~GUEST_PAGE_OFFSET_MASK). */
         off = iemNativeEmitGprEqGprAndImmEx(pCodeBuf, off, pTlbState->idxReg1, idxRegFlatPtr, ~(RTGCPTR)GUEST_PAGE_OFFSET_MASK);
         off = iemNativeEmitStoreGprToVCpuU64Ex(pCodeBuf, off, pTlbState->idxReg1,
-                                               RT_UOFFSETOF(VMCPUCC, iem.s.uInstrBufPc), idxReg3);
+                                               ICORE_OFFSETOF(uInstrBufPc), idxReg3);
         /* Set cbInstrBufTotal to GUEST_PAGE_SIZE. */ /** @todo this is a simplifications. Calc right size using CS.LIM and EIP? */
-        off = iemNativeEmitStoreImmToVCpuU16Ex(pCodeBuf, off, GUEST_PAGE_SIZE, RT_UOFFSETOF(VMCPUCC, iem.s.cbInstrBufTotal),
+        off = iemNativeEmitStoreImmToVCpuU16Ex(pCodeBuf, off, GUEST_PAGE_SIZE, ICORE_OFFSETOF(cbInstrBufTotal),
                                                pTlbState->idxReg1, idxReg3);
         /* Now set GCPhysInstrBuf last as we'll be returning it in idxRegMemResult. */
 #  if defined(RT_ARCH_ARM64) && defined(IEMNATIVE_WITH_TLB_LOOKUP_LOAD_STORE_PAIR)
         off = iemNativeEmitStoreGprToVCpuU64Ex(pCodeBuf, off, pTlbState->idxReg4,
-                                               RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf), idxReg3);
+                                               ICORE_OFFSETOF(GCPhysInstrBuf), idxReg3);
 #  else
         off = iemNativeEmitLoadGprByGprU64Ex(pCodeBuf, off, pTlbState->idxReg1,
                                              pTlbState->idxReg2, RT_UOFFSETOF(IEMTLBENTRY, GCPhys));
         off = iemNativeEmitStoreGprToVCpuU64Ex(pCodeBuf, off, pTlbState->idxReg1,
-                                               RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf), idxReg3);
+                                               ICORE_OFFSETOF(GCPhysInstrBuf), idxReg3);
 #  endif
 # else
         /* ARM64: Same as above but using STP. This ASSUMES that we can trash
                   the 6 bytes following iem.s.cbInstrBufTotal! */
-        AssertCompileMemberAlignment(VMCPUCC, iem.s.pbInstrBuf, 16);
-        AssertCompileAdjacentMembers(VMCPUCC, iem.s.pbInstrBuf, iem.s.uInstrBufPc);
-        AssertCompile(RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf) < 512);
+        AssertCompileMemberAlignment(VMCPUCC, IEM_CORE_MEMBER.pbInstrBuf, 16);
+        AssertCompileAdjacentMembers(VMCPUCC, IEM_CORE_MEMBER.pbInstrBuf, IEM_CORE_MEMBER.uInstrBufPc);
+        AssertCompile(ICORE_OFFSETOF(GCPhysInstrBuf) < 512);
         /* idxReg1 = reg2->pbMappingR3 (see previous LDP) */
         /* idxReg3 = FlatPC & ~GUEST_PAGE_OFFSET_MASK. */
         off = iemNativeEmitGprEqGprAndImmEx(pCodeBuf, off, pTlbState->idxReg3, idxRegFlatPtr, ~(RTGCPTR)GUEST_PAGE_OFFSET_MASK);
         pCodeBuf[off++] = Armv8A64MkInstrStPairGpr(pTlbState->idxReg1, pTlbState->idxReg3,
-                                                   IEMNATIVE_REG_FIXED_PVMCPU, RT_UOFFSETOF(VMCPUCC, iem.s.pbInstrBuf) / 8);
+                                                   IEMNATIVE_REG_FIXED_PVMCPU, ICORE_OFFSETOF(pbInstrBuf) / 8);
 
-        AssertCompileMemberAlignment(VMCPUCC, iem.s.GCPhysInstrBuf, 16);
-        AssertCompileAdjacentMembers(VMCPUCC, iem.s.GCPhysInstrBuf, iem.s.cbInstrBufTotal);
-        AssertCompile(RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf) < 512);
+        AssertCompileMemberAlignment(VMCPUCC, IEM_CORE_MEMBER.GCPhysInstrBuf, 16);
+        AssertCompileAdjacentMembers(VMCPUCC, IEM_CORE_MEMBER.GCPhysInstrBuf, IEM_CORE_MEMBER.cbInstrBufTotal);
+        AssertCompile(ICORE_OFFSETOF(GCPhysInstrBuf) < 512);
 #  ifndef IEM_WITH_OPAQUE_DECODER_STATE
-        AssertCompileAdjacentMembers(VMCPUCC, iem.s.cbInstrBufTotal, iem.s.offCurInstrStart);
-        AssertCompileAdjacentMembers(VMCPUCC, iem.s.offCurInstrStart, iem.s.fPrefixes);       /* these two will be set to ~0. */
+        AssertCompileAdjacentMembers(VMCPUCC, IEM_CORE_MEMBER.cbInstrBufTotal, IEM_CORE_MEMBER.offCurInstrStart);
+        AssertCompileAdjacentMembers(VMCPUCC, IEM_CORE_MEMBER.offCurInstrStart, IEM_CORE_MEMBER.fPrefixes); /* these two will be set to ~0. */
 #  endif
         /* idxReg4 = reg2->GCPhys (see previous LDP) */
         /* idxReg3 = GUEST_PAGE_SIZE | UINT64_C(0xffffffffffff0000) */
         pCodeBuf[off++] = Armv8A64MkInstrMovN(pTlbState->idxReg3, ~GUEST_PAGE_SIZE & 0xffff);
         pCodeBuf[off++] = Armv8A64MkInstrStPairGpr(pTlbState->idxReg4, pTlbState->idxReg3,
-                                                   IEMNATIVE_REG_FIXED_PVMCPU, RT_UOFFSETOF(VMCPUCC, iem.s.GCPhysInstrBuf) / 8);
+                                                   IEMNATIVE_REG_FIXED_PVMCPU, ICORE_OFFSETOF(GCPhysInstrBuf) / 8);
 # endif
         if (!a_fNoReturn) /* (We skip this for iemNativeEmitBltLoadTlbAfterBranch.) */
         {

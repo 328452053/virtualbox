@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id: IEMAllThrdPython.py 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: IEMAllThrdPython.py 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $
 # pylint: disable=invalid-name
 
 """
@@ -31,7 +31,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 
 SPDX-License-Identifier: GPL-3.0-only
 """
-__version__ = "$Revision: 110684 $"
+__version__ = "$Revision: 111870 $"
 
 # Standard python imports.
 import copy;
@@ -113,7 +113,7 @@ g_kdIemFieldToType = {
     'cbOpcode':             ( None, ),
     'offOpcode':            ( None, ),
     'offModRm':             ( None, ),
-    # Okay ones.
+    # Okay ones - ICORE:
     'fPrefixes':            ( 'uint32_t', ),
     'uRexReg':              ( 'uint8_t', ),
     'uRexB':                ( 'uint8_t', ),
@@ -127,6 +127,7 @@ g_kdIemFieldToType = {
     'uVex3rdReg':           ( 'uint8_t', ),
     'uVexLength':           ( 'uint8_t', ),
     'fEvexStuff':           ( 'uint8_t', ),
+    # Okay ones - IRECM:
     'uFpuOpcode':           ( 'uint16_t', ),
 };
 
@@ -778,14 +779,16 @@ class ThreadedFunctionVariation(object):
                 return 'int64_t';
             if sRef in ('iReg', 'iFixedReg', 'iGReg', 'iSegReg', 'iSrcReg', 'iDstReg', 'iCrReg'):
                 return 'uint8_t';
-        elif ch0 == 'p':
-            if sRef.find('-') < 0:
-                return 'uintptr_t';
-            if sRef.startswith('pVCpu->iem.s.'):
-                sField = sRef[len('pVCpu->iem.s.') : ];
+        elif ch0 == 'I':
+            if (   sRef.startswith('ICORE(pVCpu).')
+                or sRef.startswith('IRECM(pVCpu).')):
+                sField = sRef[ len('ICORE(pVCpu).') : ];
                 if sField in g_kdIemFieldToType:
                     if g_kdIemFieldToType[sField][0]:
                         return g_kdIemFieldToType[sField][0];
+        elif ch0 == 'p':
+            if sRef.find('-') < 0:
+                return 'uintptr_t';
         elif ch0 == 'G' and sRef.startswith('GCPtr'):
             return 'uint64_t';
         elif ch0 == 'e':
@@ -875,7 +878,7 @@ class ThreadedFunctionVariation(object):
                 self.raiseProblem('Unexpected reference: %s (asBits=%s)' % (sRegRef, asBits));
             sOrgExpr = asBits[0] + '_EX8(pVCpu, ' + asBits[2] + ')';
         else:
-            sOrgExpr = '((%s) < 4 || (pVCpu->iem.s.fPrefixes & (IEM_OP_PRF_REX | IEM_OP_PRF_VEX)) ? (%s) : (%s) + 12)' \
+            sOrgExpr = '((%s) < 4 || (ICORE(pVCpu).fPrefixes & (IEM_OP_PRF_REX | IEM_OP_PRF_VEX)) ? (%s) : (%s) + 12)' \
                      % (sRegRef, sRegRef, sRegRef,);
 
         if sRegRef.find('IEM_GET_MODRM_RM') >= 0:    sStdRef = 'bRmRm8Ex';
@@ -1119,7 +1122,7 @@ class ThreadedFunctionVariation(object):
                         oNewStmt.asParams.append(self.dParamRefs['cbInstr'][0].sNewName);
                     if (    oNewStmt.sName in ('IEM_MC_REL_JMP_S8_AND_FINISH', 'IEM_MC_RETN_AND_FINISH', )
                         and self.sVariation not in self.kdVariationsOnlyPre386):
-                        oNewStmt.asParams.append(self.dParamRefs['pVCpu->iem.s.enmEffOpSize'][0].sNewName);
+                        oNewStmt.asParams.append(self.dParamRefs['ICORE(pVCpu).enmEffOpSize'][0].sNewName);
                     if   self.sVariation in self.kdVariationsOnly64NoFlags:
                         if (  self.sVariation not in self.kdVariationsWithSamePgConditional
                             or oNewStmt.sName not in self.kdRelJmpMcWithFlatOrSamePageVariations):
@@ -1347,7 +1350,7 @@ class ThreadedFunctionVariation(object):
 
             if (    oStmt.sName in ('IEM_MC_REL_JMP_S8_AND_FINISH', 'IEM_MC_RETN_AND_FINISH', )
                 and self.sVariation not in self.kdVariationsOnlyPre386):
-                self.aoParamRefs.append(ThreadedParamRef('pVCpu->iem.s.enmEffOpSize', 'IEMMODE', oStmt));
+                self.aoParamRefs.append(ThreadedParamRef('ICORE(pVCpu).enmEffOpSize', 'IEMMODE', oStmt));
 
             if oStmt.sName == 'IEM_MC_CALC_RM_EFF_ADDR':
                 # This is being pretty presumptive about bRm always being the RM byte...
@@ -1425,20 +1428,27 @@ class ThreadedFunctionVariation(object):
                             offParam += 1;
                             while offParam < len(sParam):
                                 ch = sParam[offParam];
-                                if not ch.isalnum() and ch != '_' and ch != '.':
-                                    if ch != '-' or sParam[offParam + 1] != '>':
-                                        # Special hack for the 'CTX_SUFF(pVM)' bit in pVCpu->CTX_SUFF(pVM)->xxxx:
-                                        if (    ch == '('
-                                            and sParam[offStart : offParam + len('(pVM)->')] == 'pVCpu->CTX_SUFF(pVM)->'):
-                                            offParam += len('(pVM)->') - 1;
-                                        else:
-                                            break;
+                                if ch.isalnum() or ch == '_' or ch == '.':
                                     offParam += 1;
-                                offParam += 1;
+                                elif ch == '-' and sParam[offParam + 1] == '>': # '->'
+                                    offParam += 2;
+                                elif ch == '(':
+                                    # Special hack for the 'CTX_SUFF(pVM)' bit in pVCpu->CTX_SUFF(pVM)->xxxx:
+                                    if sParam[offStart : offParam + len('(pVM)->')] == 'pVCpu->CTX_SUFF(pVM)->':
+                                        offParam                 += len('(pVM)->');
+                                    # Special hack for ICORE(pVCpu) and ICORE(a_pVCpu).
+                                    elif sParam[offStart : offParam + len('(pVCpu).')] in ('ICORE(pVCpu).', 'IRECM(pVCpu).'):
+                                        offParam                   += len('(pVCpu).');
+                                    elif sParam[offStart : offParam + len('(a_pVCpu).')] in ('ICORE(a_pVCpu).','IRECM(a_pVCpu).'):
+                                        offParam                   += len('(a_pVCpu).');
+                                    else:
+                                        break;
+                                else:
+                                    break;
                             sRef = sParam[offStart : offParam];
 
                             # For register references, we pass the full register indexes instead as macros
-                            # like IEM_GET_MODRM_REG implicitly references pVCpu->iem.s.uRexReg and the
+                            # like IEM_GET_MODRM_REG implicitly references ICORE(pVCpu).uRexReg and the
                             # threaded function will be more efficient if we just pass the register index
                             # as a 4-bit param.
                             if (   sRef.startswith('IEM_GET_MODRM')
@@ -1627,7 +1637,7 @@ class ThreadedFunctionVariation(object):
         #if (   'IEM_CIMPL_F_MODE'   in self.oParent.dsCImplFlags
         #    or 'IEM_CIMPL_F_XCPT'   in self.oParent.dsCImplFlags
         #    or 'IEM_CIMPL_F_VMEXIT' in self.oParent.dsCImplFlags):
-        #    aoStmts.append(iai.McCppCall('IEM_MC2_EMIT_CALL_1', ( 'kIemThreadedFunc_BltIn_CheckMode', 'pVCpu->iem.s.fExec', ),
+        #    aoStmts.append(iai.McCppCall('IEM_MC2_EMIT_CALL_1', ( 'kIemThreadedFunc_BltIn_CheckMode', 'ICORE(pVCpu).fExec', ),
         #                                 cchIndent = cchIndent));
 
         sCImplFlags = ' | '.join(self.oParent.dsCImplFlags.keys());
@@ -1652,11 +1662,11 @@ class ThreadedFunctionVariation(object):
                                             % ((' | '.join(asTbBranchedFlags)).replace('IEM_CIMPL_F_BRANCH', 'IEMBRANCHED_F'),),
                                             cchIndent = cchIndent)); # Inline fn saves ~2 seconds for gcc 13/dbg (1m13s vs 1m15s).
         if asEndTbFlags:
-            aoStmts.append(iai.McCppGeneric('pVCpu->iem.s.fEndTb = true; /* %s */' % (','.join(asEndTbFlags),),
+            aoStmts.append(iai.McCppGeneric('IRECM(pVCpu).fEndTb = true; /* %s */' % (','.join(asEndTbFlags),),
                                             cchIndent = cchIndent));
 
         if 'IEM_CIMPL_F_CHECK_IRQ_AFTER' in self.oParent.dsCImplFlags:
-            aoStmts.append(iai.McCppGeneric('pVCpu->iem.s.cInstrTillIrqCheck = 0;', cchIndent = cchIndent));
+            aoStmts.append(iai.McCppGeneric('IRECM(pVCpu).cInstrTillIrqCheck = 0;', cchIndent = cchIndent));
 
         return aoStmts;
 
@@ -2488,17 +2498,17 @@ class ThreadedFunction(object):
         # This ASSUMES that (IEM_F_MODE_X86_FLAT_OR_PRE_386_MASK | IEM_F_MODE_X86_CPUMODE_MASK) == 7!
         #
         fSimple = True;
-        sSwitchValue  = '(pVCpu->iem.s.fExec & (IEM_F_MODE_X86_CPUMODE_MASK | IEM_F_MODE_X86_FLAT_OR_PRE_386_MASK))';
+        sSwitchValue  = '(ICORE(pVCpu).fExec & (IEM_F_MODE_X86_CPUMODE_MASK | IEM_F_MODE_X86_FLAT_OR_PRE_386_MASK))';
         if dByVari.keys() & self.kdVariationsWithNeedForPrefixCheck.keys():
-            sSwitchValue += ' | (pVCpu->iem.s.enmEffAddrMode == (pVCpu->iem.s.fExec & IEM_F_MODE_X86_CPUMODE_MASK) ? 0 : 8)';
+            sSwitchValue += ' | (ICORE(pVCpu).enmEffAddrMode == (ICORE(pVCpu).fExec & IEM_F_MODE_X86_CPUMODE_MASK) ? 0 : 8)';
             # Accesses via FS and GS and CS goes thru non-FLAT functions. (CS
             # is not writable in 32-bit mode (at least), thus the penalty mode
             # for any accesses via it (simpler this way).)
-            sSwitchValue += ' | (pVCpu->iem.s.iEffSeg < X86_SREG_FS && pVCpu->iem.s.iEffSeg != X86_SREG_CS ? 0 : 16)';
+            sSwitchValue += ' | (ICORE(pVCpu).iEffSeg < X86_SREG_FS && ICORE(pVCpu).iEffSeg != X86_SREG_CS ? 0 : 16)';
             fSimple       = False;                                              # threaded functions.
         if dByVari.keys() & ThreadedFunctionVariation.kdVariationsWithEflagsCheckingAndClearing:
-            sSwitchValue += ' | ((pVCpu->iem.s.fTbPrevInstr & (IEM_CIMPL_F_RFLAGS | IEM_CIMPL_F_INHIBIT_SHADOW)) || ' \
-                          + '(pVCpu->iem.s.fExec & IEM_F_PENDING_BRK_MASK) ? 32 : 0)';
+            sSwitchValue += ' | ((IRECM(pVCpu).fTbPrevInstr & (IEM_CIMPL_F_RFLAGS | IEM_CIMPL_F_INHIBIT_SHADOW)) || ' \
+                          + '(ICORE(pVCpu).fExec & IEM_F_PENDING_BRK_MASK) ? 32 : 0)';
 
         #
         # Generate the case statements.
@@ -2791,7 +2801,7 @@ class ThreadedFunction(object):
 
         if len(self.oMcBlock.aoStmts) == 1:
             # IEM_MC_DEFER_TO_CIMPL_X_RET - need to wrap in {} to make it safe to insert into random code.
-            sCode = ' ' * cchIndent + 'pVCpu->iem.s.fTbCurInstr = ';
+            sCode = ' ' * cchIndent + 'IRECM(pVCpu).fTbCurInstr = ';
             if self.dsCImplFlags:
                 sCode += ' | '.join(sorted(self.dsCImplFlags.keys())) + ';\n';
             else:
@@ -2949,7 +2959,7 @@ class IEMThreadedGenerator(object):
         """
         return [
             '/*',
-            ' * Autogenerated by $Id: IEMAllThrdPython.py 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ ',
+            ' * Autogenerated by $Id: IEMAllThrdPython.py 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ ',
             ' * Do not edit!',
             ' */',
             '',
@@ -3692,8 +3702,8 @@ class IEMThreadedGenerator(object):
                         sModified = oThreadedFunction.generateInputCode().strip();
                         assert (   sModified.startswith('IEM_MC_BEGIN')
                                 or (sModified.find('IEM_MC_DEFER_TO_CIMPL_') > 0 and sModified.strip().startswith('{\n'))
-                                or sModified.startswith('pVCpu->iem.s.fEndTb = true')
-                                or sModified.startswith('pVCpu->iem.s.fTbCurInstr = ')
+                                or sModified.startswith('IRECM(pVCpu).fEndTb = true')
+                                or sModified.startswith('IRECM(pVCpu).fTbCurInstr = ')
                                 ), 'sModified="%s"' % (sModified,);
                         oOut.write(sModified);
 

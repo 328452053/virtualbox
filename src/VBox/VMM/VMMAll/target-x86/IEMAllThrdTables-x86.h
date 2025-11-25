@@ -1,4 +1,4 @@
-/* $Id: IEMAllThrdTables-x86.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllThrdTables-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Instruction Decoding and Threaded Recompilation, Instruction Tables, x86 target.
  */
@@ -122,7 +122,7 @@
 #undef IEM_MC_BEGIN
 #define IEM_MC_BEGIN(a_fMcFlags, a_fCImplFlags) \
     { \
-        pVCpu->iem.s.fTbCurInstr = (a_fCImplFlags) /*| ((a_fMcFlags) << 20*/
+        IRECM(pVCpu).fTbCurInstr = (a_fCImplFlags) /*| ((a_fMcFlags) << 20*/
 
 /*
  * Override IEM_MC_CALC_RM_EFF_ADDR to use iemOpHlpCalcRmEffAddrJmpEx and produce uEffAddrInfo.
@@ -146,26 +146,26 @@
  */
 #undef IEM_MC_REL_JMP_S8_AND_FINISH
 #define IEM_MC_REL_JMP_S8_AND_FINISH(a_i8) do { \
-        Assert(pVCpu->iem.s.fTbBranched != 0); \
+        Assert(IRECM(pVCpu).fTbBranched != 0); \
         if ((a_i8) == 0) \
-            pVCpu->iem.s.fTbBranched |= IEMBRANCHED_F_ZERO; \
-        return iemRegRipRelativeJumpS8AndFinishClearingRF(pVCpu, IEM_GET_INSTR_LEN(pVCpu), (a_i8), pVCpu->iem.s.enmEffOpSize); \
+            IRECM(pVCpu).fTbBranched |= IEMBRANCHED_F_ZERO; \
+        return iemRegRipRelativeJumpS8AndFinishClearingRF(pVCpu, IEM_GET_INSTR_LEN(pVCpu), (a_i8), ICORE(pVCpu).enmEffOpSize); \
     } while (0)
 
 #undef IEM_MC_REL_JMP_S16_AND_FINISH
 #define IEM_MC_REL_JMP_S16_AND_FINISH(a_i16) do { \
-        Assert(pVCpu->iem.s.fTbBranched != 0); \
+        Assert(IRECM(pVCpu).fTbBranched != 0); \
         if ((a_i16) == 0) \
-            pVCpu->iem.s.fTbBranched |= IEMBRANCHED_F_ZERO; \
+            IRECM(pVCpu).fTbBranched |= IEMBRANCHED_F_ZERO; \
         return iemRegRipRelativeJumpS16AndFinishClearingRF(pVCpu, IEM_GET_INSTR_LEN(pVCpu), (a_i16)); \
     } while (0)
 
 #undef IEM_MC_REL_JMP_S32_AND_FINISH
 #define IEM_MC_REL_JMP_S32_AND_FINISH(a_i32) do { \
-        Assert(pVCpu->iem.s.fTbBranched != 0); \
+        Assert(IRECM(pVCpu).fTbBranched != 0); \
         if ((a_i32) == 0) \
-            pVCpu->iem.s.fTbBranched |= IEMBRANCHED_F_ZERO; \
-        return iemRegRipRelativeJumpS32AndFinishClearingRF(pVCpu, IEM_GET_INSTR_LEN(pVCpu), (a_i32), pVCpu->iem.s.enmEffOpSize); \
+            IRECM(pVCpu).fTbBranched |= IEMBRANCHED_F_ZERO; \
+        return iemRegRipRelativeJumpS32AndFinishClearingRF(pVCpu, IEM_GET_INSTR_LEN(pVCpu), (a_i32), ICORE(pVCpu).enmEffOpSize); \
     } while (0)
 
 
@@ -187,10 +187,10 @@ DECL_FORCE_INLINE(int) iemThreadedCompileBackAtFirstInstruction(PVMCPU pVCpu, PI
  */
 #define IEM_MC2_BEGIN_EMIT_CALLS(a_fCheckIrqBefore) \
     { \
-        PIEMTB const  pTb = pVCpu->iem.s.pCurTbR3; \
+        PIEMTB const  pTb = IRECM(pVCpu).pCurTbR3; \
         uint8_t const cbInstrMc2 = IEM_GET_INSTR_LEN(pVCpu); \
-        AssertMsg(pVCpu->iem.s.offOpcode == cbInstrMc2, \
-                  ("%u vs %u (%04x:%08RX64)\n", pVCpu->iem.s.offOpcode, cbInstrMc2, \
+        AssertMsg(ICORE(pVCpu).offOpcode == cbInstrMc2, \
+                  ("%u vs %u (%04x:%08RX64)\n", ICORE(pVCpu).offOpcode, cbInstrMc2, \
                   pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip)); \
         \
         /* If we need to check for IRQs before the instruction, we do that before \
@@ -208,9 +208,9 @@ DECL_FORCE_INLINE(int) iemThreadedCompileBackAtFirstInstruction(PVMCPU pVCpu, PI
         /* No page crossing, right? */ \
         uint16_t const offOpcodeMc2 = pTb->cbOpcodes; \
         uint8_t const  idxRangeMc2  = pTb->cRanges - 1; \
-        if (   !pVCpu->iem.s.fTbCrossedPage \
-            && !pVCpu->iem.s.fTbCheckOpcodes \
-            && !pVCpu->iem.s.fTbBranched \
+        if (   !IRECM(pVCpu).fTbCrossedPage \
+            && !IRECM(pVCpu).fTbCheckOpcodes \
+            && !IRECM(pVCpu).fTbBranched \
             && !(pTb->fFlags & IEMTB_F_X86_CS_LIM_CHECKS)) \
         { \
             /* Break/loop if we're back to the first instruction in the TB again. */ \
@@ -220,10 +220,10 @@ DECL_FORCE_INLINE(int) iemThreadedCompileBackAtFirstInstruction(PVMCPU pVCpu, PI
                 || offOpcodeMc2 == 0) \
             { \
                 /** @todo Custom copy function, given range is 1 thru 15 bytes. */ \
-                memcpy(&pTb->pabOpcodes[offOpcodeMc2], pVCpu->iem.s.abOpcode, pVCpu->iem.s.offOpcode); \
-                pTb->cbOpcodes                       = offOpcodeMc2 + pVCpu->iem.s.offOpcode; \
+                memcpy(&pTb->pabOpcodes[offOpcodeMc2], ICORE(pVCpu).abOpcode, ICORE(pVCpu).offOpcode); \
+                pTb->cbOpcodes                       = offOpcodeMc2 + ICORE(pVCpu).offOpcode; \
                 pTb->aRanges[idxRangeMc2].cbOpcodes += cbInstrMc2; \
-                Assert(pTb->cbOpcodes <= pVCpu->iem.s.cbOpcodesAllocated); \
+                Assert(pTb->cbOpcodes <= IRECM(pVCpu).cbOpcodesAllocated); \
             } \
             else \
                 return iemThreadedCompileBackAtFirstInstruction(pVCpu, pTb); \
@@ -403,13 +403,13 @@ iemThreadedRecompilerMcDeferToCImpl0(PVMCPUCC pVCpu, uint32_t fFlags, uint64_t f
 {
     LogFlow(("CImpl0: %04x:%08RX64 LB %#x: %#x %#RX64 %p\n",
              pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, IEM_GET_INSTR_LEN(pVCpu), fFlags, fGstShwFlush, pfnCImpl));
-    pVCpu->iem.s.fTbCurInstr = fFlags;
+    IRECM(pVCpu).fTbCurInstr = fFlags;
 
     IEM_MC2_BEGIN_EMIT_CALLS(fFlags & IEM_CIMPL_F_CHECK_IRQ_BEFORE);
     IEM_MC2_EMIT_CALL_3(kIemThreadedFunc_BltIn_DeferToCImpl0, (uintptr_t)pfnCImpl, IEM_GET_INSTR_LEN(pVCpu), fGstShwFlush);
     if (   (fFlags & (IEM_CIMPL_F_MODE | IEM_CIMPL_F_VMEXIT))
         && !(fFlags & (IEM_CIMPL_F_END_TB | IEM_CIMPL_F_BRANCH_FAR)))
-        IEM_MC2_EMIT_CALL_1(kIemThreadedFunc_BltIn_CheckMode, pVCpu->iem.s.fExec);
+        IEM_MC2_EMIT_CALL_1(kIemThreadedFunc_BltIn_CheckMode, ICORE(pVCpu).fExec);
     IEM_MC2_END_EMIT_CALLS(fFlags);
 
     /*
@@ -423,12 +423,12 @@ iemThreadedRecompilerMcDeferToCImpl0(PVMCPUCC pVCpu, uint32_t fFlags, uint64_t f
     AssertCompile(IEM_CIMPL_F_BRANCH_FAR         == IEMBRANCHED_F_FAR);
 
     if (fFlags & (IEM_CIMPL_F_END_TB | IEM_CIMPL_F_BRANCH_FAR))
-        pVCpu->iem.s.fEndTb = true;
+        IRECM(pVCpu).fEndTb = true;
     else if (fFlags & IEM_CIMPL_F_BRANCH_ANY)
-        pVCpu->iem.s.fTbBranched = fFlags & (IEM_CIMPL_F_BRANCH_ANY | IEM_CIMPL_F_BRANCH_FAR | IEM_CIMPL_F_BRANCH_CONDITIONAL);
+        IRECM(pVCpu).fTbBranched = fFlags & (IEM_CIMPL_F_BRANCH_ANY | IEM_CIMPL_F_BRANCH_FAR | IEM_CIMPL_F_BRANCH_CONDITIONAL);
 
     if (fFlags & IEM_CIMPL_F_CHECK_IRQ_BEFORE)
-        pVCpu->iem.s.cInstrTillIrqCheck = 0;
+        IRECM(pVCpu).cInstrTillIrqCheck = 0;
 
     return pfnCImpl(pVCpu, IEM_GET_INSTR_LEN(pVCpu));
 }
@@ -439,9 +439,9 @@ iemThreadedRecompilerMcDeferToCImpl0(PVMCPUCC pVCpu, uint32_t fFlags, uint64_t f
  */
 DECL_FORCE_INLINE(void) iemThreadedSetBranched(PVMCPUCC pVCpu, uint8_t fTbBranched)
 {
-    pVCpu->iem.s.fTbBranched          = fTbBranched;
-    //pVCpu->iem.s.GCPhysTbBranchSrcBuf = pVCpu->iem.s.GCPhysInstrBuf;
-    //pVCpu->iem.s.GCVirtTbBranchSrcBuf = pVCpu->iem.s.uInstrBufPc;
+    IRECM(pVCpu).fTbBranched          = fTbBranched;
+    //IRECM(pVCpu).GCPhysTbBranchSrcBuf = ICORE(pVCpu).GCPhysInstrBuf;
+    //IRECM(pVCpu).GCVirtTbBranchSrcBuf = ICORE(pVCpu).uInstrBufPc;
 }
 
 

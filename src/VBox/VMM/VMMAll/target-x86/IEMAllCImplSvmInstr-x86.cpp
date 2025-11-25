@@ -1,4 +1,4 @@
-/* $Id: IEMAllCImplSvmInstr-x86.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllCImplSvmInstr-x86.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - AMD-V (Secure Virtual Machine) instruction implementation (x86 target).
  */
@@ -410,7 +410,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecSvmVmexit(PVMCPUCC pVCpu, uint64_t uExitCode, 
 {
     IEM_CTX_ASSERT(pVCpu, IEM_CPUMCTX_EXTRN_SVM_VMEXIT_MASK);
     VBOXSTRICTRC rcStrict = iemSvmVmexit(pVCpu, uExitCode, uExitInfo1, uExitInfo2);
-    if (pVCpu->iem.s.cActiveMappings)
+    if (ICORE(pVCpu).cActiveMappings)
         iemMemRollback(pVCpu);
     return iemExecStatusCodeFiddling(pVCpu, rcStrict);
 }
@@ -1006,17 +1006,17 @@ VBOXSTRICTRC iemHandleSvmEventIntercept(PVMCPUCC pVCpu, uint8_t cbInstr, uint8_t
         {
             PSVMVMCBCTRL  pVmcbCtrl = &pVCpu->cpum.GstCtx.hwvirt.svm.Vmcb.ctrl;
 # ifdef IEM_WITH_CODE_TLB
-            uint8_t const *pbInstrBuf = pVCpu->iem.s.pbInstrBuf;
-            uint8_t const  cbInstrBuf = pVCpu->iem.s.cbInstrBuf;
+            uint8_t const *pbInstrBuf = ICORE(pVCpu).pbInstrBuf;
+            uint8_t const  cbInstrBuf = ICORE(pVCpu).cbInstrBuf;
             pVmcbCtrl->cbInstrFetched = RT_MIN(cbInstrBuf, SVM_CTRL_GUEST_INSTR_BYTES_MAX);
             if (   pbInstrBuf
                 && cbInstrBuf > 0)
                 memcpy(&pVmcbCtrl->abInstr[0], pbInstrBuf, pVmcbCtrl->cbInstrFetched);
 # else
-            uint8_t const cbOpcode    = pVCpu->iem.s.cbOpcode;
+            uint8_t const cbOpcode    = ICORE(pVCpu).cbOpcode;
             pVmcbCtrl->cbInstrFetched = RT_MIN(cbOpcode, SVM_CTRL_GUEST_INSTR_BYTES_MAX);
             if (cbOpcode > 0)
-                memcpy(&pVmcbCtrl->abInstr[0], &pVCpu->iem.s.abOpcode[0], pVmcbCtrl->cbInstrFetched);
+                memcpy(&pVmcbCtrl->abInstr[0], &ICORE(pVCpu).abOpcode[0], pVmcbCtrl->cbInstrFetched);
 # endif
         }
         if (u8Vector == X86_XCPT_BR)
@@ -1209,7 +1209,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmrun(PVMCPUCC pVCpu, uint8_t cbInstr)
 
     iemInitExec(pVCpu, 0 /*fExecOpts*/);
     VBOXSTRICTRC rcStrict = IEM_CIMPL_CALL_0(iemCImpl_vmrun);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -1246,7 +1246,7 @@ IEM_CIMPL_DEF_0(iemCImpl_vmload)
                                                     sizeof(SVMVMCBSTATESAVE));
     if (rcStrict == VINF_SUCCESS)
     {
-        LogFlow(("vmload: Loading VMCB at %#RGp enmEffAddrMode=%d\n", GCPhysVmcb, pVCpu->iem.s.enmEffAddrMode));
+        LogFlow(("vmload: Loading VMCB at %#RGp enmEffAddrMode=%d\n", GCPhysVmcb, ICORE(pVCpu).enmEffAddrMode));
         HMSVM_SEG_REG_COPY_FROM_VMCB(IEM_GET_CTX(pVCpu), &VmcbNstGst, FS, fs);
         HMSVM_SEG_REG_COPY_FROM_VMCB(IEM_GET_CTX(pVCpu), &VmcbNstGst, GS, gs);
         HMSVM_SEG_REG_COPY_FROM_VMCB(IEM_GET_CTX(pVCpu), &VmcbNstGst, TR, tr);
@@ -1283,7 +1283,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmload(PVMCPUCC pVCpu, uint8_t cbInstr)
 
     iemInitExec(pVCpu, 0 /*fExecOpts*/);
     VBOXSTRICTRC rcStrict = IEM_CIMPL_CALL_0(iemCImpl_vmload);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -1320,7 +1320,7 @@ IEM_CIMPL_DEF_0(iemCImpl_vmsave)
                                                     sizeof(SVMVMCBSTATESAVE));
     if (rcStrict == VINF_SUCCESS)
     {
-        LogFlow(("vmsave: Saving VMCB at %#RGp enmEffAddrMode=%d\n", GCPhysVmcb, pVCpu->iem.s.enmEffAddrMode));
+        LogFlow(("vmsave: Saving VMCB at %#RGp enmEffAddrMode=%d\n", GCPhysVmcb, ICORE(pVCpu).enmEffAddrMode));
         IEM_CTX_IMPORT_RET(pVCpu, CPUMCTX_EXTRN_FS | CPUMCTX_EXTRN_GS | CPUMCTX_EXTRN_TR | CPUMCTX_EXTRN_LDTR
                                 | CPUMCTX_EXTRN_KERNEL_GS_BASE | CPUMCTX_EXTRN_SYSCALL_MSRS | CPUMCTX_EXTRN_SYSENTER_MSRS);
 
@@ -1363,7 +1363,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmsave(PVMCPUCC pVCpu, uint8_t cbInstr)
 
     iemInitExec(pVCpu, 0 /*fExecOpts*/);
     VBOXSTRICTRC rcStrict = IEM_CIMPL_CALL_0(iemCImpl_vmsave);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -1411,7 +1411,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedClgi(PVMCPUCC pVCpu, uint8_t cbInstr)
 
     iemInitExec(pVCpu, 0 /*fExecOpts*/);
     VBOXSTRICTRC rcStrict = IEM_CIMPL_CALL_0(iemCImpl_clgi);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -1459,7 +1459,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedStgi(PVMCPUCC pVCpu, uint8_t cbInstr)
 
     iemInitExec(pVCpu, 0 /*fExecOpts*/);
     VBOXSTRICTRC rcStrict = IEM_CIMPL_CALL_0(iemCImpl_stgi);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 
@@ -1504,7 +1504,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedInvlpga(PVMCPUCC pVCpu, uint8_t cbInstr
 
     iemInitExec(pVCpu, 0 /*fExecOpts*/);
     VBOXSTRICTRC rcStrict = IEM_CIMPL_CALL_0(iemCImpl_invlpga);
-    Assert(!pVCpu->iem.s.cActiveMappings);
+    Assert(!ICORE(pVCpu).cActiveMappings);
     return iemUninitExecAndFiddleStatusAndMaybeReenter(pVCpu, rcStrict);
 }
 

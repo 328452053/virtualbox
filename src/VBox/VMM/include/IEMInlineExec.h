@@ -1,4 +1,4 @@
-/* $Id: IEMInlineExec.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMInlineExec.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inline Exec/Decoder routines.
  */
@@ -86,10 +86,10 @@ DECLINLINE(void) iemInitExec(PVMCPUCC pVCpu, uint32_t fExecOpts) RT_NOEXCEPT
     IEM_CTX_ASSERT(pVCpu, IEM_CPUMCTX_EXTRN_EXEC_DECODED_NO_MEM_MASK);
     Assert(!VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_IEM));
 
-    pVCpu->iem.s.rcPassUp           = VINF_SUCCESS;
-    pVCpu->iem.s.fExec              = iemCalcExecFlags(pVCpu) | fExecOpts;
-    pVCpu->iem.s.cActiveMappings    = 0;
-    pVCpu->iem.s.iNextMapping       = 0;
+    ICORE(pVCpu).rcPassUp           = VINF_SUCCESS;
+    ICORE(pVCpu).fExec              = iemCalcExecFlags(pVCpu) | fExecOpts;
+    ICORE(pVCpu).cActiveMappings    = 0;
+    ICORE(pVCpu).iNextMapping       = 0;
 
 #  ifdef VBOX_STRICT
     iemInitExecTargetStrict(pVCpu);
@@ -110,13 +110,13 @@ DECLINLINE(void) iemInitExec(PVMCPUCC pVCpu, uint32_t fExecOpts) RT_NOEXCEPT
  */
 DECLINLINE(void) iemReInitExec(PVMCPUCC pVCpu, uint8_t cbInstr) RT_NOEXCEPT
 {
-    pVCpu->iem.s.fExec = iemCalcExecFlags(pVCpu) | (pVCpu->iem.s.fExec & IEM_F_USER_OPTS);
+    ICORE(pVCpu).fExec = iemCalcExecFlags(pVCpu) | (ICORE(pVCpu).fExec & IEM_F_USER_OPTS);
 #   ifdef VBOX_VMM_TARGET_X86
     iemOpcodeFlushHeavy(pVCpu, cbInstr);
 #   elif !defined(IEM_WITH_CODE_TLB)
-    pVCpu->iem.s.cbOpcode = cbInstr;
+    ICORE(pVCpu).cbOpcode = cbInstr;
 #   else
-    pVCpu->iem.s.cbInstrBufTotal = 0;
+    ICORE(pVCpu).cbInstrBufTotal = 0;
     RT_NOREF(cbInstr);
 #   endif
 }
@@ -137,7 +137,7 @@ DECLINLINE(void) iemUninitExec(PVMCPUCC pVCpu) RT_NOEXCEPT
 #  ifdef IEM_WITH_CODE_TLB
     NOREF(pVCpu);
 #  else
-    pVCpu->iem.s.cbOpcode = 0;
+    ICORE(pVCpu).cbOpcode = 0;
 #  endif
 # else
     NOREF(pVCpu);

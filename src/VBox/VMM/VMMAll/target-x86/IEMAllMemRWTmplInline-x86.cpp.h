@@ -1,4 +1,4 @@
-/* $Id: IEMAllMemRWTmplInline-x86.cpp.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllMemRWTmplInline-x86.cpp.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inlined R/W Memory Functions Template, x86 target.
  */
@@ -108,9 +108,9 @@ RT_CONCAT3(iemMemFetchData,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, uint8_t iSegReg
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -119,13 +119,13 @@ RT_CONCAT3(iemMemFetchData,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, uint8_t iSegReg
             uint64_t const fNoUser = (IEM_GET_CPL(pVCpu) + 1) & IEMTLBE_F_PT_NO_USER;
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_PG_UNASSIGNED | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_NO_MAPPINGR3  | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Fetch and return the data.
                  */
 # ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 # endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -167,9 +167,9 @@ DECL_INLINE_THROW(TMPL_MEM_TYPE)
 RT_CONCAT3(iemMemFlatFetchData,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GCPtrMem) IEM_NOEXCEPT_MAY_LONGJMP
 #endif
 {
-    AssertMsg(   (pVCpu->iem.s.fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_64BIT
-              || (pVCpu->iem.s.fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_32BIT_PROT_FLAT
-              || (pVCpu->iem.s.fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_32BIT_FLAT, ("%#x\n", pVCpu->iem.s.fExec));
+    AssertMsg(   (ICORE(pVCpu).fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_64BIT
+              || (ICORE(pVCpu).fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_32BIT_PROT_FLAT
+              || (ICORE(pVCpu).fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_32BIT_FLAT, ("%#x\n", ICORE(pVCpu).fExec));
 #if defined(IEM_WITH_DATA_TLB) && defined(IN_RING3) && !defined(TMPL_MEM_NO_INLINE)
     /*
      * Check that it doesn't cross a page boundrary.
@@ -182,9 +182,9 @@ RT_CONCAT3(iemMemFlatFetchData,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GCP
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -193,13 +193,13 @@ RT_CONCAT3(iemMemFlatFetchData,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GCP
             uint64_t const fNoUser = (IEM_GET_CPL(pVCpu) + 1) & IEMTLBE_F_PT_NO_USER;
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_PG_UNASSIGNED | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_NO_MAPPINGR3  | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Fetch and return the dword
                  */
 # ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 # endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -260,9 +260,9 @@ RT_CONCAT3(iemMemStoreData,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, uint8_t iSegReg
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -272,13 +272,13 @@ RT_CONCAT3(iemMemStoreData,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, uint8_t iSegReg
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_PG_UNASSIGNED | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY   | IEMTLBE_F_PT_NO_WRITE
                                                          | IEMTLBE_F_NO_MAPPINGR3   | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Store the value and return.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -319,9 +319,9 @@ RT_CONCAT3(iemMemFlatStoreData,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GCP
                                                     TMPL_MEM_TYPE uValue) IEM_NOEXCEPT_MAY_LONGJMP
 # endif
 {
-    AssertMsg(   (pVCpu->iem.s.fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_64BIT
-              || (pVCpu->iem.s.fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_32BIT_PROT_FLAT
-              || (pVCpu->iem.s.fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_32BIT_FLAT, ("%#x\n", pVCpu->iem.s.fExec));
+    AssertMsg(   (ICORE(pVCpu).fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_64BIT
+              || (ICORE(pVCpu).fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_32BIT_PROT_FLAT
+              || (ICORE(pVCpu).fExec & IEM_F_MODE_MASK) == IEM_F_MODE_X86_32BIT_FLAT, ("%#x\n", ICORE(pVCpu).fExec));
 # if defined(IEM_WITH_DATA_TLB) && defined(IN_RING3) && !defined(TMPL_MEM_NO_INLINE)
     /*
      * Check that it doesn't cross a page boundrary.
@@ -334,9 +334,9 @@ RT_CONCAT3(iemMemFlatStoreData,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GCP
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -346,13 +346,13 @@ RT_CONCAT3(iemMemFlatStoreData,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GCP
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_PG_UNASSIGNED | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY   | IEMTLBE_F_PT_NO_WRITE
                                                          | IEMTLBE_F_NO_MAPPINGR3   | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Store the value and return.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -410,9 +410,9 @@ RT_CONCAT3(iemMemMapData,TMPL_MEM_FN_SUFF,RwJmp)(PVMCPUCC pVCpu, uint8_t *pbUnma
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -423,13 +423,13 @@ RT_CONCAT3(iemMemMapData,TMPL_MEM_FN_SUFF,RwJmp)(PVMCPUCC pVCpu, uint8_t *pbUnma
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE   | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY   | IEMTLBE_F_PT_NO_WRITE
                                                          | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Return the address.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -470,9 +470,9 @@ RT_CONCAT3(iemMemFlatMapData,TMPL_MEM_FN_SUFF,RwJmp)(PVMCPUCC pVCpu, uint8_t *pb
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -483,13 +483,13 @@ RT_CONCAT3(iemMemFlatMapData,TMPL_MEM_FN_SUFF,RwJmp)(PVMCPUCC pVCpu, uint8_t *pb
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE   | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY   | IEMTLBE_F_PT_NO_WRITE
                                                          | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Return the address.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -532,9 +532,9 @@ RT_CONCAT3(iemMemMapData,TMPL_MEM_FN_SUFF,AtJmp)(PVMCPUCC pVCpu, uint8_t *pbUnma
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -545,13 +545,13 @@ RT_CONCAT3(iemMemMapData,TMPL_MEM_FN_SUFF,AtJmp)(PVMCPUCC pVCpu, uint8_t *pbUnma
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE   | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY   | IEMTLBE_F_PT_NO_WRITE
                                                          | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Return the address.
                  */
 #   ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #   endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -592,9 +592,9 @@ RT_CONCAT3(iemMemFlatMapData,TMPL_MEM_FN_SUFF,AtJmp)(PVMCPUCC pVCpu, uint8_t *pb
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -605,13 +605,13 @@ RT_CONCAT3(iemMemFlatMapData,TMPL_MEM_FN_SUFF,AtJmp)(PVMCPUCC pVCpu, uint8_t *pb
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE   | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY   | IEMTLBE_F_PT_NO_WRITE
                                                          | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Return the address.
                  */
 #   ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #   endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -652,9 +652,9 @@ RT_CONCAT3(iemMemMapData,TMPL_MEM_FN_SUFF,WoJmp)(PVMCPUCC pVCpu, uint8_t *pbUnma
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -665,13 +665,13 @@ RT_CONCAT3(iemMemMapData,TMPL_MEM_FN_SUFF,WoJmp)(PVMCPUCC pVCpu, uint8_t *pbUnma
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY   | IEMTLBE_F_PT_NO_WRITE
                                                          | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Return the address.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -710,9 +710,9 @@ RT_CONCAT3(iemMemFlatMapData,TMPL_MEM_FN_SUFF,WoJmp)(PVMCPUCC pVCpu, uint8_t *pb
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -723,13 +723,13 @@ RT_CONCAT3(iemMemFlatMapData,TMPL_MEM_FN_SUFF,WoJmp)(PVMCPUCC pVCpu, uint8_t *pb
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY
                                                          | IEMTLBE_F_PT_NO_WRITE    | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Return the address.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -769,9 +769,9 @@ RT_CONCAT3(iemMemMapData,TMPL_MEM_FN_SUFF,RoJmp)(PVMCPUCC pVCpu, uint8_t *pbUnma
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -781,13 +781,13 @@ RT_CONCAT3(iemMemMapData,TMPL_MEM_FN_SUFF,RoJmp)(PVMCPUCC pVCpu, uint8_t *pbUnma
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_NO_MAPPINGR3
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Return the address.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -826,9 +826,9 @@ RT_CONCAT3(iemMemFlatMapData,TMPL_MEM_FN_SUFF,RoJmp)(PVMCPUCC pVCpu, uint8_t *pb
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -838,13 +838,13 @@ RT_CONCAT3(iemMemFlatMapData,TMPL_MEM_FN_SUFF,RoJmp)(PVMCPUCC pVCpu, uint8_t *pb
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_NO_MAPPINGR3
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Return the address.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -896,9 +896,9 @@ RT_CONCAT3(iemMemStoreStack,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GCPtrM
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -909,13 +909,13 @@ RT_CONCAT3(iemMemStoreStack,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GCPtrM
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY
                                                          | IEMTLBE_F_PT_NO_WRITE    | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the store and return.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -960,9 +960,9 @@ RT_CONCAT3(iemMemStoreStack,TMPL_MEM_FN_SUFF,SRegJmp)(PVMCPUCC pVCpu, RTGCPTR GC
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -973,13 +973,13 @@ RT_CONCAT3(iemMemStoreStack,TMPL_MEM_FN_SUFF,SRegJmp)(PVMCPUCC pVCpu, RTGCPTR GC
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY
                                                          | IEMTLBE_F_PT_NO_WRITE    | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the push and return.
                  */
 #   ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #   endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1024,9 +1024,9 @@ RT_CONCAT3(iemMemFlatStoreStack,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GC
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1037,13 +1037,13 @@ RT_CONCAT3(iemMemFlatStoreStack,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GC
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY
                                                          | IEMTLBE_F_PT_NO_WRITE    | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the push and return.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1084,9 +1084,9 @@ RT_CONCAT3(iemMemFlatStoreStack,TMPL_MEM_FN_SUFF,SRegJmp)(PVMCPUCC pVCpu, RTGCPT
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1097,13 +1097,13 @@ RT_CONCAT3(iemMemFlatStoreStack,TMPL_MEM_FN_SUFF,SRegJmp)(PVMCPUCC pVCpu, RTGCPT
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY
                                                          | IEMTLBE_F_PT_NO_WRITE    | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the push and return.
                  */
 #   ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #   endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1144,9 +1144,9 @@ RT_CONCAT3(iemMemFetchStack,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GCPtrM
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1156,13 +1156,13 @@ RT_CONCAT3(iemMemFetchStack,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GCPtrM
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_NO_MAPPINGR3
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the pop.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1199,9 +1199,9 @@ RT_CONCAT3(iemMemFlatFetchStack,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GC
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1211,13 +1211,13 @@ RT_CONCAT3(iemMemFlatFetchStack,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, RTGCPTR GC
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_NO_MAPPINGR3
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the pop.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1258,9 +1258,9 @@ RT_CONCAT3(iemMemStackPush,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, TMPL_MEM_TYPE u
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1271,13 +1271,13 @@ RT_CONCAT3(iemMemStackPush,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, TMPL_MEM_TYPE u
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY
                                                          | IEMTLBE_F_PT_NO_WRITE    | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the push and return.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1322,9 +1322,9 @@ RT_CONCAT3(iemMemStackPopGReg,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, uint8_t iGRe
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1334,13 +1334,13 @@ RT_CONCAT3(iemMemStackPopGReg,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, uint8_t iGRe
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_NO_MAPPINGR3
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the pop.
                  */
 #  ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #  endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1400,9 +1400,9 @@ RT_CONCAT3(iemMemStackPush,TMPL_MEM_FN_SUFF,SRegJmp)(PVMCPUCC pVCpu, TMPL_MEM_TY
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrEff);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1413,13 +1413,13 @@ RT_CONCAT3(iemMemStackPush,TMPL_MEM_FN_SUFF,SRegJmp)(PVMCPUCC pVCpu, TMPL_MEM_TY
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY
                                                          | IEMTLBE_F_PT_NO_WRITE    | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the push and return.
                  */
 #   ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #   endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1483,9 +1483,9 @@ RT_CONCAT3(iemMemFlat32StackPush,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, TMPL_MEM_
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, (RTGCPTR)uNewEsp); /* Doesn't work w/o casting to RTGCPTR (win /3 hangs). */
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1496,13 +1496,13 @@ RT_CONCAT3(iemMemFlat32StackPush,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, TMPL_MEM_
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY
                                                          | IEMTLBE_F_PT_NO_WRITE    | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the push and return.
                  */
 #   ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #   endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1543,9 +1543,9 @@ RT_CONCAT3(iemMemFlat32StackPopGReg,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, uint8_
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, (RTGCPTR)uOldEsp); /* Cast is required! 2023-08-11 */
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1555,13 +1555,13 @@ RT_CONCAT3(iemMemFlat32StackPopGReg,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, uint8_
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_NO_MAPPINGR3
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the pop and update the register values.
                  */
 #   ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #   endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1618,9 +1618,9 @@ RT_CONCAT3(iemMemFlat32StackPush,TMPL_MEM_FN_SUFF,SRegJmp)(PVMCPUCC pVCpu, TMPL_
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, (RTGCPTR)uNewEsp); /* Doesn't work w/o casting to RTGCPTR (win /3 hangs). */
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1631,13 +1631,13 @@ RT_CONCAT3(iemMemFlat32StackPush,TMPL_MEM_FN_SUFF,SRegJmp)(PVMCPUCC pVCpu, TMPL_
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY
                                                          | IEMTLBE_F_PT_NO_WRITE    | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the push and return.
                  */
 #   ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #   endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1697,9 +1697,9 @@ RT_CONCAT3(iemMemFlat64StackPush,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, TMPL_MEM_
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, uNewRsp);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1710,13 +1710,13 @@ RT_CONCAT3(iemMemFlat64StackPush,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, TMPL_MEM_
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_WRITE
                                                          | IEMTLBE_F_PT_NO_ACCESSED | IEMTLBE_F_PT_NO_DIRTY
                                                          | IEMTLBE_F_PT_NO_WRITE    | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the push and return.
                  */
 #   ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #   endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));
@@ -1757,9 +1757,9 @@ RT_CONCAT3(iemMemFlat64StackPopGReg,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, uint8_
          * TLB lookup.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, uOldRsp);
-        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+        PCIEMTLBENTRY  pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+        if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                      || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
         {
             /*
              * Check TLB page table level access flags.
@@ -1769,13 +1769,13 @@ RT_CONCAT3(iemMemFlat64StackPopGReg,TMPL_MEM_FN_SUFF,Jmp)(PVMCPUCC pVCpu, uint8_
             if (RT_LIKELY(   (pTlbe->fFlagsAndPhysRev & (  IEMTLBE_F_PHYS_REV       | IEMTLBE_F_NO_MAPPINGR3
                                                          | IEMTLBE_F_PG_UNASSIGNED  | IEMTLBE_F_PG_NO_READ
                                                          | IEMTLBE_F_PT_NO_ACCESSED | fNoUser))
-                          == pVCpu->iem.s.DataTlb.uTlbPhysRev))
+                          == ITLBS(pVCpu).Data.uTlbPhysRev))
             {
                 /*
                  * Do the push and return.
                  */
 #   ifdef IEM_WITH_TLB_STATISTICS
-                pVCpu->iem.s.DataTlb.cTlbInlineCodeHits++;
+                ITLBS(pVCpu).Data.cTlbInlineCodeHits++;
 #   endif
                 Assert(pTlbe->pbMappingR3); /* (Only ever cleared by the owning EMT.) */
                 Assert(!((uintptr_t)pTlbe->pbMappingR3 & GUEST_PAGE_OFFSET_MASK));

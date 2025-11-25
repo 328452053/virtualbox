@@ -1,4 +1,4 @@
-/* $Id: IEMAllOpcodeFetch-x86.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllOpcodeFetch-x86.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - All Contexts.
  */
@@ -155,12 +155,12 @@ VBOXSTRICTRC iemOpcodeFetchPrefetch(PVMCPUCC pVCpu) RT_NOEXCEPT
     uint32_t cbLeftOnPage = GUEST_PAGE_SIZE - (GCPtrPC & GUEST_PAGE_OFFSET_MASK);
     if (cbToTryRead > cbLeftOnPage)
         cbToTryRead = cbLeftOnPage;
-    if (cbToTryRead > sizeof(pVCpu->iem.s.abOpcode))
-        cbToTryRead = sizeof(pVCpu->iem.s.abOpcode);
+    if (cbToTryRead > sizeof(ICORE(pVCpu).abOpcode))
+        cbToTryRead = sizeof(ICORE(pVCpu).abOpcode);
 
-    if (!(pVCpu->iem.s.fExec & IEM_F_BYPASS_HANDLERS))
+    if (!(ICORE(pVCpu).fExec & IEM_F_BYPASS_HANDLERS))
     {
-        VBOXSTRICTRC rcStrict = PGMPhysRead(pVCpu->CTX_SUFF(pVM), GCPhys, pVCpu->iem.s.abOpcode, cbToTryRead, PGMACCESSORIGIN_IEM);
+        VBOXSTRICTRC rcStrict = PGMPhysRead(pVCpu->CTX_SUFF(pVM), GCPhys, ICORE(pVCpu).abOpcode, cbToTryRead, PGMACCESSORIGIN_IEM);
         if (RT_LIKELY(rcStrict == VINF_SUCCESS))
         { /* likely */ }
         else if (PGM_PHYS_RW_IS_SUCCESS(rcStrict))
@@ -180,7 +180,7 @@ VBOXSTRICTRC iemOpcodeFetchPrefetch(PVMCPUCC pVCpu) RT_NOEXCEPT
     }
     else
     {
-        rc = PGMPhysSimpleReadGCPhys(pVCpu->CTX_SUFF(pVM), pVCpu->iem.s.abOpcode, GCPhys, cbToTryRead);
+        rc = PGMPhysSimpleReadGCPhys(pVCpu->CTX_SUFF(pVM), ICORE(pVCpu).abOpcode, GCPhys, cbToTryRead);
         if (RT_SUCCESS(rc))
         { /* likely */ }
         else
@@ -190,7 +190,7 @@ VBOXSTRICTRC iemOpcodeFetchPrefetch(PVMCPUCC pVCpu) RT_NOEXCEPT
             return rc;
         }
     }
-    pVCpu->iem.s.cbOpcode = cbToTryRead;
+    ICORE(pVCpu).cbOpcode = cbToTryRead;
     return VINF_SUCCESS;
 }
 #endif /* !IEM_WITH_CODE_TLB */
@@ -202,7 +202,7 @@ VBOXSTRICTRC iemOpcodeFetchPrefetch(PVMCPUCC pVCpu) RT_NOEXCEPT
 void iemOpcodeFlushLight(PVMCPUCC pVCpu, uint8_t cbInstr)
 {
 #ifndef IEM_WITH_CODE_TLB
-    pVCpu->iem.s.cbOpcode = cbInstr;
+    ICORE(pVCpu).cbOpcode = cbInstr;
 #else
     RT_NOREF(pVCpu, cbInstr);
 #endif
@@ -215,9 +215,9 @@ void iemOpcodeFlushLight(PVMCPUCC pVCpu, uint8_t cbInstr)
 void iemOpcodeFlushHeavy(PVMCPUCC pVCpu, uint8_t cbInstr)
 {
 #ifndef IEM_WITH_CODE_TLB
-    pVCpu->iem.s.cbOpcode = cbInstr; /* Note! SVM and VT-x may set this to zero on exit, rather than the instruction length. */
+    ICORE(pVCpu).cbOpcode = cbInstr; /* Note! SVM and VT-x may set this to zero on exit, rather than the instruction length. */
 #elif 1
-    pVCpu->iem.s.cbInstrBufTotal = 0;
+    ICORE(pVCpu).cbInstrBufTotal = 0;
     RT_NOREF(cbInstr);
 #else
     RT_NOREF(pVCpu, cbInstr);
@@ -253,17 +253,17 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
     for (;;)
     {
         Assert(cbDst <= 8);
-        uint32_t offBuf = pVCpu->iem.s.offInstrNextByte;
+        uint32_t offBuf = ICORE(pVCpu).offInstrNextByte;
 
         /*
          * We might have a partial buffer match, deal with that first to make the
          * rest simpler.  This is the first part of the cross page/buffer case.
          */
-        uint8_t const * const pbInstrBuf = pVCpu->iem.s.pbInstrBuf;
+        uint8_t const * const pbInstrBuf = ICORE(pVCpu).pbInstrBuf;
         if (pbInstrBuf != NULL)
         {
             Assert(cbDst != 0); /* pbInstrBuf shall be NULL in case of a TLB load */
-            uint32_t const cbInstrBuf = pVCpu->iem.s.cbInstrBuf;
+            uint32_t const cbInstrBuf = ICORE(pVCpu).cbInstrBuf;
             if (offBuf < cbInstrBuf)
             {
                 Assert(offBuf + cbDst > cbInstrBuf);
@@ -287,7 +287,7 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
         uint32_t cbMaxRead;
         if (IEM_IS_64BIT_CODE(pVCpu))
         {
-            GCPtrFirst = pVCpu->cpum.GstCtx.rip + (offBuf - (uint32_t)(int32_t)pVCpu->iem.s.offCurInstrStart);
+            GCPtrFirst = pVCpu->cpum.GstCtx.rip + (offBuf - (uint32_t)(int32_t)ICORE(pVCpu).offCurInstrStart);
             if (RT_LIKELY(IEM_IS_CANONICAL(GCPtrFirst)))
             { /* likely */ }
             else
@@ -296,7 +296,7 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
         }
         else
         {
-            GCPtrFirst = pVCpu->cpum.GstCtx.eip + (offBuf - (uint32_t)(int32_t)pVCpu->iem.s.offCurInstrStart);
+            GCPtrFirst = pVCpu->cpum.GstCtx.eip + (offBuf - (uint32_t)(int32_t)ICORE(pVCpu).offCurInstrStart);
             /* Assert(!(GCPtrFirst & ~(uint32_t)UINT16_MAX) || IEM_IS_32BIT_CODE(pVCpu)); - this is allowed */
             if (RT_LIKELY((uint32_t)GCPtrFirst <= pVCpu->cpum.GstCtx.cs.u32Limit))
             { /* likely */ }
@@ -322,13 +322,13 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
          * Get the TLB entry for this piece of code.
          */
         uint64_t const uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrFirst);
-        PIEMTLBENTRY   pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.CodeTlb, uTagNoRev);
-        if (   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.CodeTlb.uTlbRevision)
-            || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.CodeTlb.uTlbRevisionGlobal))
+        PIEMTLBENTRY   pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Code, uTagNoRev);
+        if (   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Code.uTlbRevision)
+            || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Code.uTlbRevisionGlobal))
         {
             /* likely when executing lots of code, otherwise unlikely */
 #  ifdef IEM_WITH_TLB_STATISTICS
-            pVCpu->iem.s.CodeTlb.cTlbCoreHits++;
+            ITLBS(pVCpu).Code.cTlbCoreHits++;
 #  endif
             Assert(!(pTlbe->fFlagsAndPhysRev & IEMTLBE_F_PT_NO_ACCESSED));
 
@@ -348,23 +348,23 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
             }
 
             /* Look up the physical page info if necessary. */
-            if ((pTlbe->fFlagsAndPhysRev & IEMTLBE_F_PHYS_REV) == pVCpu->iem.s.CodeTlb.uTlbPhysRev)
+            if ((pTlbe->fFlagsAndPhysRev & IEMTLBE_F_PHYS_REV) == ITLBS(pVCpu).Code.uTlbPhysRev)
             { /* not necessary */ }
             else
             {
-                if (RT_LIKELY(pVCpu->iem.s.CodeTlb.uTlbPhysRev > IEMTLB_PHYS_REV_INCR))
+                if (RT_LIKELY(ITLBS(pVCpu).Code.uTlbPhysRev > IEMTLB_PHYS_REV_INCR))
                 { /* likely */ }
                 else
                     iemTlbInvalidateAllPhysicalSlow(pVCpu);
                 pTlbe->fFlagsAndPhysRev &= ~IEMTLBE_GCPHYS2PTR_MASK;
-                int rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, pTlbe->GCPhys, &pVCpu->iem.s.CodeTlb.uTlbPhysRev,
+                int rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, pTlbe->GCPhys, &ITLBS(pVCpu).Code.uTlbPhysRev,
                                                     &pTlbe->pbMappingR3, &pTlbe->fFlagsAndPhysRev);
                 AssertRCStmt(rc, IEM_DO_LONGJMP(pVCpu, rc));
             }
         }
         else
         {
-            pVCpu->iem.s.CodeTlb.cTlbCoreMisses++;
+            ITLBS(pVCpu).Code.cTlbCoreMisses++;
 
             /* This page table walking will set A bits as required by the access while performing the walk.
                ASSUMES these are set when the address is translated rather than on commit... */
@@ -390,23 +390,23 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
                 || IEM_GET_CPL(pVCpu) != 0) /* optimization: Only use the PTE.G=1 entries in ring-0. */
             {
                 pTlbe--;
-                pTlbe->uTag         = uTagNoRev | pVCpu->iem.s.CodeTlb.uTlbRevision;
+                pTlbe->uTag         = uTagNoRev | ITLBS(pVCpu).Code.uTlbRevision;
                 if (WalkFast.fInfo & PGM_WALKINFO_BIG_PAGE)
-                    iemTlbLoadedLargePage<false>(pVCpu, &pVCpu->iem.s.CodeTlb, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
+                    iemTlbLoadedLargePage<false>(pVCpu, &ITLBS(pVCpu).Code, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
 #  ifdef IEMTLB_WITH_LARGE_PAGE_BITMAP
                 else
-                    ASMBitClear(pVCpu->iem.s.CodeTlb.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev));
+                    ASMBitClear(ITLBS(pVCpu).Code.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev));
 #  endif
             }
             else
             {
-                pVCpu->iem.s.CodeTlb.cTlbCoreGlobalLoads++;
-                pTlbe->uTag         = uTagNoRev | pVCpu->iem.s.CodeTlb.uTlbRevisionGlobal;
+                ITLBS(pVCpu).Code.cTlbCoreGlobalLoads++;
+                pTlbe->uTag         = uTagNoRev | ITLBS(pVCpu).Code.uTlbRevisionGlobal;
                 if (WalkFast.fInfo & PGM_WALKINFO_BIG_PAGE)
-                    iemTlbLoadedLargePage<true>(pVCpu, &pVCpu->iem.s.CodeTlb, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
+                    iemTlbLoadedLargePage<true>(pVCpu, &ITLBS(pVCpu).Code, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
 #  ifdef IEMTLB_WITH_LARGE_PAGE_BITMAP
                 else
-                    ASMBitClear(pVCpu->iem.s.CodeTlb.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev) + 1);
+                    ASMBitClear(ITLBS(pVCpu).Code.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev) + 1);
 #  endif
             }
             pTlbe->fFlagsAndPhysRev = (~WalkFast.fEffective & (X86_PTE_US | X86_PTE_RW | X86_PTE_D | X86_PTE_A))
@@ -425,12 +425,12 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
                 IEMTLBTRACE_LOAD_GLOBAL(pVCpu, GCPtrFirst, pTlbe->GCPhys, (uint32_t)pTlbe->fFlagsAndPhysRev, false);
 
             /* Resolve the physical address. */
-            if (RT_LIKELY(pVCpu->iem.s.CodeTlb.uTlbPhysRev > IEMTLB_PHYS_REV_INCR))
+            if (RT_LIKELY(ITLBS(pVCpu).Code.uTlbPhysRev > IEMTLB_PHYS_REV_INCR))
             { /* likely */ }
             else
                 iemTlbInvalidateAllPhysicalSlow(pVCpu);
             Assert(!(pTlbe->fFlagsAndPhysRev & IEMTLBE_GCPHYS2PTR_MASK));
-            rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, GCPhysPg, &pVCpu->iem.s.CodeTlb.uTlbPhysRev,
+            rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, GCPhysPg, &ITLBS(pVCpu).Code.uTlbPhysRev,
                                             &pTlbe->pbMappingR3, &pTlbe->fFlagsAndPhysRev);
             AssertRCStmt(rc, IEM_DO_LONGJMP(pVCpu, rc));
         }
@@ -440,26 +440,26 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
          * Try do a direct read using the pbMappingR3 pointer.
          * Note! Do not recheck the physical TLB revision number here as we have the
          *       wrong response to changes in the else case.  If someone is updating
-         *       pVCpu->iem.s.CodeTlb.uTlbPhysRev in parallel to us, we should be fine
+         *       ITLBS(pVCpu).Code.uTlbPhysRev in parallel to us, we should be fine
          *       pretending we always won the race.
          */
         if (    (pTlbe->fFlagsAndPhysRev & (/*IEMTLBE_F_PHYS_REV |*/ IEMTLBE_F_NO_MAPPINGR3 | IEMTLBE_F_PG_NO_READ))
-             == /*pVCpu->iem.s.CodeTlb.uTlbPhysRev*/ 0U)
+             == /*ITLBS(pVCpu).Code.uTlbPhysRev*/ 0U)
         {
             uint32_t const offPg = (GCPtrFirst & X86_PAGE_OFFSET_MASK);
-            pVCpu->iem.s.cbInstrBufTotal = offPg + cbMaxRead;
-            if (offBuf == (uint32_t)(int32_t)pVCpu->iem.s.offCurInstrStart)
+            ICORE(pVCpu).cbInstrBufTotal = offPg + cbMaxRead;
+            if (offBuf == (uint32_t)(int32_t)ICORE(pVCpu).offCurInstrStart)
             {
-                pVCpu->iem.s.cbInstrBuf       = offPg + RT_MIN(15, cbMaxRead);
-                pVCpu->iem.s.offCurInstrStart = (int16_t)offPg;
+                ICORE(pVCpu).cbInstrBuf       = offPg + RT_MIN(15, cbMaxRead);
+                ICORE(pVCpu).offCurInstrStart = (int16_t)offPg;
             }
             else
             {
-                uint32_t const cbInstr = offBuf - (uint32_t)(int32_t)pVCpu->iem.s.offCurInstrStart;
+                uint32_t const cbInstr = offBuf - (uint32_t)(int32_t)ICORE(pVCpu).offCurInstrStart;
                 if (cbInstr + (uint32_t)cbDst <= 15)
                 {
-                    pVCpu->iem.s.cbInstrBuf       = offPg + RT_MIN(cbMaxRead + cbInstr, 15) - cbInstr;
-                    pVCpu->iem.s.offCurInstrStart = (int16_t)(offPg - cbInstr);
+                    ICORE(pVCpu).cbInstrBuf       = offPg + RT_MIN(cbMaxRead + cbInstr, 15) - cbInstr;
+                    ICORE(pVCpu).offCurInstrStart = (int16_t)(offPg - cbInstr);
                 }
                 else
                 {
@@ -470,24 +470,24 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
             }
             if (cbDst <= cbMaxRead)
             {
-                pVCpu->iem.s.fTbCrossedPage     |= offPg == 0 || pVCpu->iem.s.fTbBranched != 0; /** @todo Spurious load effect on branch handling? */
+                IRECM(pVCpu).fTbCrossedPage     |= offPg == 0 || IRECM(pVCpu).fTbBranched != 0; /** @todo Spurious load effect on branch handling? */
 #  if 0 /* unused */
-                pVCpu->iem.s.GCPhysInstrBufPrev  = pVCpu->iem.s.GCPhysInstrBuf;
+                ICORE(pVCpu).GCPhysInstrBufPrev  = ICORE(pVCpu).GCPhysInstrBuf;
 #  endif
-                pVCpu->iem.s.offInstrNextByte = offPg + (uint32_t)cbDst;
-                pVCpu->iem.s.uInstrBufPc      = GCPtrFirst & ~(RTGCPTR)X86_PAGE_OFFSET_MASK;
-                pVCpu->iem.s.GCPhysInstrBuf   = pTlbe->GCPhys;
-                pVCpu->iem.s.pbInstrBuf       = pTlbe->pbMappingR3;
+                ICORE(pVCpu).offInstrNextByte = offPg + (uint32_t)cbDst;
+                ICORE(pVCpu).uInstrBufPc      = GCPtrFirst & ~(RTGCPTR)X86_PAGE_OFFSET_MASK;
+                ICORE(pVCpu).GCPhysInstrBuf   = pTlbe->GCPhys;
+                ICORE(pVCpu).pbInstrBuf       = pTlbe->pbMappingR3;
                 if (cbDst > 0) /* To make ASAN happy in the TLB load case. */
                     memcpy(pvDst, &pTlbe->pbMappingR3[offPg], cbDst);
                 else
                     Assert(!pvDst);
                 return;
             }
-            pVCpu->iem.s.pbInstrBuf = NULL;
+            ICORE(pVCpu).pbInstrBuf = NULL;
 
             memcpy(pvDst, &pTlbe->pbMappingR3[offPg], cbMaxRead);
-            pVCpu->iem.s.offInstrNextByte = offPg + cbMaxRead;
+            ICORE(pVCpu).offInstrNextByte = offPg + cbMaxRead;
         }
 # else
 #  error "refactor as needed"
@@ -496,10 +496,10 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
          * put it in the prefetch buffer.
          */
         if (   cbDst < cbMaxRead
-            && (pTlbe->fFlagsAndPhysRev & (IEMTLBE_F_PHYS_REV | IEMTLBE_F_PG_NO_READ)) == pVCpu->iem.s.CodeTlb.uTlbPhysRev)
+            && (pTlbe->fFlagsAndPhysRev & (IEMTLBE_F_PHYS_REV | IEMTLBE_F_PG_NO_READ)) == ITLBS(pVCpu).Code.uTlbPhysRev)
         {
             VBOXSTRICTRC rcStrict = PGMPhysRead(pVCpu->CTX_SUFF(pVM), pTlbe->GCPhys,
-                                                &pVCpu->iem.s.abOpcode[0], cbToTryRead, PGMACCESSORIGIN_IEM);
+                                                &ICORE(pVCpu).abOpcode[0], cbToTryRead, PGMACCESSORIGIN_IEM);
             if (RT_LIKELY(rcStrict == VINF_SUCCESS))
             { /* likely */ }
             else if (PGM_PHYS_RW_IS_SUCCESS(rcStrict))
@@ -525,10 +525,10 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
          */
         else
         {
-            pVCpu->iem.s.CodeTlb.cTlbSlowCodeReadPath++;
+            ITLBS(pVCpu).Code.cTlbSlowCodeReadPath++;
 
             /* Check instruction length. */
-            uint32_t const cbInstr = offBuf - (uint32_t)(int32_t)pVCpu->iem.s.offCurInstrStart;
+            uint32_t const cbInstr = offBuf - (uint32_t)(int32_t)ICORE(pVCpu).offCurInstrStart;
             if (RT_LIKELY(cbInstr + cbDst <= 15))
             { /* likely */ }
             else
@@ -565,17 +565,17 @@ void iemOpcodeFetchBytesJmp(PVMCPUCC pVCpu, size_t cbDst, void *pvDst) IEM_NOEXC
 
             /* Update the state and probably return. */
             uint32_t const offPg = (GCPtrFirst & X86_PAGE_OFFSET_MASK);
-            pVCpu->iem.s.fTbCrossedPage     |= offPg == 0 || pVCpu->iem.s.fTbBranched != 0;
+            IRECM(pVCpu).fTbCrossedPage     |= offPg == 0 || IRECM(pVCpu).fTbBranched != 0;
 #  if 0 /* unused */
-            pVCpu->iem.s.GCPhysInstrBufPrev  = pVCpu->iem.s.GCPhysInstrBuf;
+            ICORE(pVCpu).GCPhysInstrBufPrev  = ICORE(pVCpu).GCPhysInstrBuf;
 #  endif
-            pVCpu->iem.s.offCurInstrStart = (int16_t)(offPg - cbInstr);
-            pVCpu->iem.s.offInstrNextByte = offPg + cbInstr + cbToRead;
-            pVCpu->iem.s.cbInstrBuf       = offPg + RT_MIN(15, cbMaxRead + cbInstr) - cbToRead - cbInstr;
-            pVCpu->iem.s.cbInstrBufTotal  = X86_PAGE_SIZE; /** @todo ??? */
-            pVCpu->iem.s.GCPhysInstrBuf   = pTlbe->GCPhys;
-            pVCpu->iem.s.uInstrBufPc      = GCPtrFirst & ~(RTGCPTR)X86_PAGE_OFFSET_MASK;
-            pVCpu->iem.s.pbInstrBuf       = NULL;
+            ICORE(pVCpu).offCurInstrStart = (int16_t)(offPg - cbInstr);
+            ICORE(pVCpu).offInstrNextByte = offPg + cbInstr + cbToRead;
+            ICORE(pVCpu).cbInstrBuf       = offPg + RT_MIN(15, cbMaxRead + cbInstr) - cbToRead - cbInstr;
+            ICORE(pVCpu).cbInstrBufTotal  = X86_PAGE_SIZE; /** @todo ??? */
+            ICORE(pVCpu).GCPhysInstrBuf   = pTlbe->GCPhys;
+            ICORE(pVCpu).uInstrBufPc      = GCPtrFirst & ~(RTGCPTR)X86_PAGE_OFFSET_MASK;
+            ICORE(pVCpu).pbInstrBuf       = NULL;
             if (cbToRead == cbDst)
                 return;
             Assert(cbToRead == cbMaxRead);
@@ -613,11 +613,11 @@ VBOXSTRICTRC iemOpcodeFetchMoreBytes(PVMCPUCC pVCpu, size_t cbMin) RT_NOEXCEPT
      *
      * First translate CS:rIP to a physical address.
      */
-    uint8_t const   cbOpcode  = pVCpu->iem.s.cbOpcode;
-    uint8_t const   offOpcode = pVCpu->iem.s.offOpcode;
+    uint8_t const   cbOpcode  = ICORE(pVCpu).cbOpcode;
+    uint8_t const   offOpcode = ICORE(pVCpu).offOpcode;
     uint8_t const   cbLeft    = cbOpcode - offOpcode;
     Assert(cbLeft < cbMin);
-    Assert(cbOpcode <= sizeof(pVCpu->iem.s.abOpcode));
+    Assert(cbOpcode <= sizeof(ICORE(pVCpu).abOpcode));
 
     uint32_t        cbToTryRead;
     RTGCPTR         GCPtrNext;
@@ -657,8 +657,8 @@ VBOXSTRICTRC iemOpcodeFetchMoreBytes(PVMCPUCC pVCpu, size_t cbMin) RT_NOEXCEPT
        We're making ASSUMPTIONS here based on work done previously in
        iemInitDecoderAndPrefetchOpcodes, where bytes from the first page will
        be fetched in case of an instruction crossing two pages. */
-    if (cbToTryRead > sizeof(pVCpu->iem.s.abOpcode) - cbOpcode)
-        cbToTryRead = sizeof(pVCpu->iem.s.abOpcode) - cbOpcode;
+    if (cbToTryRead > sizeof(ICORE(pVCpu).abOpcode) - cbOpcode)
+        cbToTryRead = sizeof(ICORE(pVCpu).abOpcode) - cbOpcode;
     if (RT_LIKELY(cbToTryRead + cbLeft >= cbMin))
     { /* likely */ }
     else
@@ -696,9 +696,9 @@ VBOXSTRICTRC iemOpcodeFetchMoreBytes(PVMCPUCC pVCpu, size_t cbMin) RT_NOEXCEPT
      * and since PATM should only patch the start of an instruction there
      * should be no need to check again here.
      */
-    if (!(pVCpu->iem.s.fExec & IEM_F_BYPASS_HANDLERS))
+    if (!(ICORE(pVCpu).fExec & IEM_F_BYPASS_HANDLERS))
     {
-        VBOXSTRICTRC rcStrict = PGMPhysRead(pVCpu->CTX_SUFF(pVM), GCPhys, &pVCpu->iem.s.abOpcode[cbOpcode],
+        VBOXSTRICTRC rcStrict = PGMPhysRead(pVCpu->CTX_SUFF(pVM), GCPhys, &ICORE(pVCpu).abOpcode[cbOpcode],
                                             cbToTryRead, PGMACCESSORIGIN_IEM);
         if (RT_LIKELY(rcStrict == VINF_SUCCESS))
         { /* likely */ }
@@ -719,7 +719,7 @@ VBOXSTRICTRC iemOpcodeFetchMoreBytes(PVMCPUCC pVCpu, size_t cbMin) RT_NOEXCEPT
     }
     else
     {
-        rc = PGMPhysSimpleReadGCPhys(pVCpu->CTX_SUFF(pVM), &pVCpu->iem.s.abOpcode[cbOpcode], GCPhys, cbToTryRead);
+        rc = PGMPhysSimpleReadGCPhys(pVCpu->CTX_SUFF(pVM), &ICORE(pVCpu).abOpcode[cbOpcode], GCPhys, cbToTryRead);
         if (RT_SUCCESS(rc))
         { /* likely */ }
         else
@@ -728,8 +728,8 @@ VBOXSTRICTRC iemOpcodeFetchMoreBytes(PVMCPUCC pVCpu, size_t cbMin) RT_NOEXCEPT
             return rc;
         }
     }
-    pVCpu->iem.s.cbOpcode = cbOpcode + cbToTryRead;
-    Log5(("%.*Rhxs\n", pVCpu->iem.s.cbOpcode, pVCpu->iem.s.abOpcode));
+    ICORE(pVCpu).cbOpcode = cbOpcode + cbToTryRead;
+    Log5(("%.*Rhxs\n", ICORE(pVCpu).cbOpcode, ICORE(pVCpu).abOpcode));
 
     return VINF_SUCCESS;
 }
@@ -751,7 +751,7 @@ uint8_t iemOpcodeGetNextU8SlowJmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_MAY_LONGJMP
 #else
     VBOXSTRICTRC rcStrict = iemOpcodeFetchMoreBytes(pVCpu, 1);
     if (rcStrict == VINF_SUCCESS)
-        return pVCpu->iem.s.abOpcode[pVCpu->iem.s.offOpcode++];
+        return ICORE(pVCpu).abOpcode[ICORE(pVCpu).offOpcode++];
     IEM_DO_LONGJMP(pVCpu, VBOXSTRICTRC_VAL(rcStrict));
 #endif
 }
@@ -773,12 +773,12 @@ uint16_t iemOpcodeGetNextU16SlowJmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_MAY_LONGJMP
     VBOXSTRICTRC rcStrict = iemOpcodeFetchMoreBytes(pVCpu, 2);
     if (rcStrict == VINF_SUCCESS)
     {
-        uint8_t offOpcode = pVCpu->iem.s.offOpcode;
-        pVCpu->iem.s.offOpcode += 2;
+        uint8_t offOpcode = ICORE(pVCpu).offOpcode;
+        ICORE(pVCpu).offOpcode += 2;
 # ifdef IEM_USE_UNALIGNED_DATA_ACCESS
-        return *(uint16_t const *)&pVCpu->iem.s.abOpcode[offOpcode];
+        return *(uint16_t const *)&ICORE(pVCpu).abOpcode[offOpcode];
 # else
-        return RT_MAKE_U16(pVCpu->iem.s.abOpcode[offOpcode], pVCpu->iem.s.abOpcode[offOpcode + 1]);
+        return RT_MAKE_U16(ICORE(pVCpu).abOpcode[offOpcode], ICORE(pVCpu).abOpcode[offOpcode + 1]);
 # endif
     }
     IEM_DO_LONGJMP(pVCpu, VBOXSTRICTRC_VAL(rcStrict));
@@ -802,15 +802,15 @@ uint32_t iemOpcodeGetNextU32SlowJmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_MAY_LONGJMP
     VBOXSTRICTRC rcStrict = iemOpcodeFetchMoreBytes(pVCpu, 4);
     if (rcStrict == VINF_SUCCESS)
     {
-        uint8_t offOpcode = pVCpu->iem.s.offOpcode;
-        pVCpu->iem.s.offOpcode = offOpcode + 4;
+        uint8_t offOpcode = ICORE(pVCpu).offOpcode;
+        ICORE(pVCpu).offOpcode = offOpcode + 4;
 # ifdef IEM_USE_UNALIGNED_DATA_ACCESS
-        return *(uint32_t const *)&pVCpu->iem.s.abOpcode[offOpcode];
+        return *(uint32_t const *)&ICORE(pVCpu).abOpcode[offOpcode];
 # else
-        return RT_MAKE_U32_FROM_U8(pVCpu->iem.s.abOpcode[offOpcode],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 1],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 2],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 3]);
+        return RT_MAKE_U32_FROM_U8(ICORE(pVCpu).abOpcode[offOpcode],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 1],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 2],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 3]);
 # endif
     }
     IEM_DO_LONGJMP(pVCpu, VBOXSTRICTRC_VAL(rcStrict));
@@ -834,19 +834,19 @@ uint64_t iemOpcodeGetNextU64SlowJmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_MAY_LONGJMP
     VBOXSTRICTRC rcStrict = iemOpcodeFetchMoreBytes(pVCpu, 8);
     if (rcStrict == VINF_SUCCESS)
     {
-        uint8_t offOpcode = pVCpu->iem.s.offOpcode;
-        pVCpu->iem.s.offOpcode = offOpcode + 8;
+        uint8_t offOpcode = ICORE(pVCpu).offOpcode;
+        ICORE(pVCpu).offOpcode = offOpcode + 8;
 # ifdef IEM_USE_UNALIGNED_DATA_ACCESS
-        return *(uint64_t const *)&pVCpu->iem.s.abOpcode[offOpcode];
+        return *(uint64_t const *)&ICORE(pVCpu).abOpcode[offOpcode];
 # else
-        return RT_MAKE_U64_FROM_U8(pVCpu->iem.s.abOpcode[offOpcode],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 1],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 2],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 3],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 4],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 5],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 6],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 7]);
+        return RT_MAKE_U64_FROM_U8(ICORE(pVCpu).abOpcode[offOpcode],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 1],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 2],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 3],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 4],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 5],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 6],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 7]);
 # endif
     }
     IEM_DO_LONGJMP(pVCpu, VBOXSTRICTRC_VAL(rcStrict));

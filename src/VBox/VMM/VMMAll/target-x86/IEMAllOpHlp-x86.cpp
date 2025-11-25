@@ -1,4 +1,4 @@
-/* $Id: IEMAllOpHlp-x86.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllOpHlp-x86.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - x86 target, opcode decoding helpers.
  */
@@ -74,14 +74,14 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmp(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAndR
 #define SET_SS_DEF() \
     do \
     { \
-        if (!(pVCpu->iem.s.fPrefixes & IEM_OP_PRF_SEG_MASK)) \
-            pVCpu->iem.s.iEffSeg = X86_SREG_SS; \
+        if (!(ICORE(pVCpu).fPrefixes & IEM_OP_PRF_SEG_MASK)) \
+            ICORE(pVCpu).iEffSeg = X86_SREG_SS; \
     } while (0)
 
     if (!IEM_IS_64BIT_CODE(pVCpu))
     {
 /** @todo Check the effective address size crap! */
-        if (pVCpu->iem.s.enmEffAddrMode == IEMMODE_16BIT)
+        if (ICORE(pVCpu).enmEffAddrMode == IEMMODE_16BIT)
         {
             uint16_t u16EffAddr;
 
@@ -117,7 +117,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmp(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAndR
             return u16EffAddr;
         }
 
-        Assert(pVCpu->iem.s.enmEffAddrMode == IEMMODE_32BIT);
+        Assert(ICORE(pVCpu).enmEffAddrMode == IEMMODE_32BIT);
         uint32_t u32EffAddr;
 
         /* Handle the disp32 form with no registers first. */
@@ -206,7 +206,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmp(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAndR
             }
         }
 
-        Assert(pVCpu->iem.s.enmEffAddrMode == IEMMODE_32BIT);
+        Assert(ICORE(pVCpu).enmEffAddrMode == IEMMODE_32BIT);
         Log5(("iemOpHlpCalcRmEffAddrJmp: EffAddr=%#010RX32\n", u32EffAddr));
         return u32EffAddr;
     }
@@ -222,7 +222,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmp(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAndR
     else
     {
         /* Get the register (or SIB) value. */
-        switch ((bRm & X86_MODRM_RM_MASK) | pVCpu->iem.s.uRexB)
+        switch ((bRm & X86_MODRM_RM_MASK) | ICORE(pVCpu).uRexB)
         {
             case  0: u64EffAddr = pVCpu->cpum.GstCtx.rax; break;
             case  1: u64EffAddr = pVCpu->cpum.GstCtx.rcx; break;
@@ -245,7 +245,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmp(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAndR
                 uint8_t bSib; IEM_OPCODE_GET_NEXT_U8(&bSib);
 
                 /* Get the index and scale it. */
-                switch (((bSib >> X86_SIB_INDEX_SHIFT) & X86_SIB_INDEX_SMASK) | pVCpu->iem.s.uRexIndex)
+                switch (((bSib >> X86_SIB_INDEX_SHIFT) & X86_SIB_INDEX_SMASK) | ICORE(pVCpu).uRexIndex)
                 {
                     case  0: u64EffAddr = pVCpu->cpum.GstCtx.rax; break;
                     case  1: u64EffAddr = pVCpu->cpum.GstCtx.rcx; break;
@@ -268,7 +268,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmp(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAndR
                 u64EffAddr <<= (bSib >> X86_SIB_SCALE_SHIFT) & X86_SIB_SCALE_SMASK;
 
                 /* add base */
-                switch ((bSib & X86_SIB_BASE_MASK) | pVCpu->iem.s.uRexB)
+                switch ((bSib & X86_SIB_BASE_MASK) | ICORE(pVCpu).uRexB)
                 {
                     case  0: u64EffAddr += pVCpu->cpum.GstCtx.rax; break;
                     case  1: u64EffAddr += pVCpu->cpum.GstCtx.rcx; break;
@@ -289,7 +289,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmp(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAndR
                     case 13:
                         if ((bRm & X86_MODRM_MOD_MASK) != 0)
                         {
-                            if (!pVCpu->iem.s.uRexB)
+                            if (!ICORE(pVCpu).uRexB)
                             {
                                 u64EffAddr += pVCpu->cpum.GstCtx.rbp;
                                 SET_SS_DEF();
@@ -335,12 +335,12 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmp(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAndR
 
     }
 
-    if (pVCpu->iem.s.enmEffAddrMode == IEMMODE_64BIT)
+    if (ICORE(pVCpu).enmEffAddrMode == IEMMODE_64BIT)
     {
         Log5(("iemOpHlpCalcRmEffAddrJmp: EffAddr=%#010RGv\n", u64EffAddr));
         return u64EffAddr;
     }
-    Assert(pVCpu->iem.s.enmEffAddrMode == IEMMODE_32BIT);
+    Assert(ICORE(pVCpu).enmEffAddrMode == IEMMODE_32BIT);
     Log5(("iemOpHlpCalcRmEffAddrJmp: EffAddr=%#010RGv\n", u64EffAddr & UINT32_MAX));
     return u64EffAddr & UINT32_MAX;
 }

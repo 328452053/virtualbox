@@ -1,4 +1,4 @@
-/* $Id: IEMInline.h 111486 2025-10-24 07:23:14Z alexander.eichner@oracle.com $ */
+/* $Id: IEMInline.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inlined Functions, Common.
  */
@@ -63,7 +63,7 @@ DECL_FORCE_INLINE(VBOXSTRICTRC) iemExecStatusCodeFiddling(PVMCPUCC pVCpu, VBOXST
 #endif
             )
         {
-            rcStrict = pVCpu->iem.s.rcPassUp;
+            rcStrict = ICORE(pVCpu).rcPassUp;
             if (RT_LIKELY(rcStrict == VINF_SUCCESS))
             { /* likely */ }
             else
@@ -99,7 +99,7 @@ DECL_FORCE_INLINE(VBOXSTRICTRC) iemExecStatusCodeFiddling(PVMCPUCC pVCpu, VBOXST
                       || rcStrict == VINF_VMX_MODIFIES_BEHAVIOR
                       , ("rcStrict=%Rrc\n", VBOXSTRICTRC_VAL(rcStrict)));
 /** @todo adjust for VINF_EM_RAW_EMULATE_INSTR. */
-            int32_t const rcPassUp = pVCpu->iem.s.rcPassUp;
+            int32_t const rcPassUp = ICORE(pVCpu).rcPassUp;
             if (rcPassUp == VINF_SUCCESS)
                 pVCpu->iem.s.cRetInfStatuses++;
             else if (   rcPassUp < VINF_EM_FIRST
@@ -125,13 +125,13 @@ DECL_FORCE_INLINE(VBOXSTRICTRC) iemExecStatusCodeFiddling(PVMCPUCC pVCpu, VBOXST
     }
     else
     {
-        rcStrict = pVCpu->iem.s.rcPassUp;
+        rcStrict = ICORE(pVCpu).rcPassUp;
         if (rcStrict != VINF_SUCCESS)
             pVCpu->iem.s.cRetPassUpStatus++;
     }
 
     /* Just clear it here as well. */
-    pVCpu->iem.s.rcPassUp = VINF_SUCCESS;
+    ICORE(pVCpu).rcPassUp = VINF_SUCCESS;
 
     return rcStrict;
 }
@@ -150,9 +150,9 @@ DECLINLINE(int) iemSetPassUpStatus(PVMCPUCC pVCpu, VBOXSTRICTRC rcPassUp) RT_NOE
 {
     AssertRC(VBOXSTRICTRC_VAL(rcPassUp)); Assert(rcPassUp != VINF_SUCCESS);
 
-    int32_t const rcOldPassUp = pVCpu->iem.s.rcPassUp;
+    int32_t const rcOldPassUp = ICORE(pVCpu).rcPassUp;
     if (rcOldPassUp == VINF_SUCCESS)
-        pVCpu->iem.s.rcPassUp = VBOXSTRICTRC_VAL(rcPassUp);
+        ICORE(pVCpu).rcPassUp = VBOXSTRICTRC_VAL(rcPassUp);
     /* If both are EM scheduling codes, use EM priority rules. */
     else if (   rcOldPassUp >= VINF_EM_FIRST && rcOldPassUp <= VINF_EM_LAST
              && rcPassUp    >= VINF_EM_FIRST && rcPassUp    <= VINF_EM_LAST)
@@ -160,7 +160,7 @@ DECLINLINE(int) iemSetPassUpStatus(PVMCPUCC pVCpu, VBOXSTRICTRC rcPassUp) RT_NOE
         if (rcPassUp < rcOldPassUp)
         {
             LogEx(LOG_GROUP_IEM,("IEM: rcPassUp=%Rrc! rcOldPassUp=%Rrc\n", VBOXSTRICTRC_VAL(rcPassUp), rcOldPassUp));
-            pVCpu->iem.s.rcPassUp = VBOXSTRICTRC_VAL(rcPassUp);
+            ICORE(pVCpu).rcPassUp = VBOXSTRICTRC_VAL(rcPassUp);
         }
         else
             LogEx(LOG_GROUP_IEM,("IEM: rcPassUp=%Rrc  rcOldPassUp=%Rrc!\n", VBOXSTRICTRC_VAL(rcPassUp), rcOldPassUp));
@@ -169,7 +169,7 @@ DECLINLINE(int) iemSetPassUpStatus(PVMCPUCC pVCpu, VBOXSTRICTRC rcPassUp) RT_NOE
     else if (rcOldPassUp >= VINF_EM_FIRST && rcOldPassUp <= VINF_EM_LAST)
     {
         LogEx(LOG_GROUP_IEM,("IEM: rcPassUp=%Rrc! rcOldPassUp=%Rrc\n", VBOXSTRICTRC_VAL(rcPassUp), rcOldPassUp));
-        pVCpu->iem.s.rcPassUp = VBOXSTRICTRC_VAL(rcPassUp);
+        ICORE(pVCpu).rcPassUp = VBOXSTRICTRC_VAL(rcPassUp);
     }
     /* Don't override specific status code, first come first served. */
     else
@@ -209,7 +209,7 @@ DECLINLINE(int) iemMemPageMap(PVMCPUCC pVCpu, RTGCPHYS GCPhysMem, uint32_t fAcce
     int rc = PGMPhysIemGCPhys2Ptr(pVCpu->CTX_SUFF(pVM), pVCpu,
                                   GCPhysMem,
                                   RT_BOOL(fAccess & IEM_ACCESS_TYPE_WRITE),
-                                  RT_BOOL(pVCpu->iem.s.fExec & IEM_F_BYPASS_HANDLERS),
+                                  RT_BOOL(ICORE(pVCpu).fExec & IEM_F_BYPASS_HANDLERS),
                                   ppvMem,
                                   pLock);
     /*Log(("PGMPhysIemGCPhys2Ptr %Rrc pLock=%.*Rhxs\n", rc, sizeof(*pLock), pLock));*/

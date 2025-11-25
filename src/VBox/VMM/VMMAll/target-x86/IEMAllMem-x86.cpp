@@ -1,4 +1,4 @@
-/* $Id: IEMAllMem-x86.cpp 111713 2025-11-13 15:27:35Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllMem-x86.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - x86 target, memory.
  */
@@ -253,17 +253,17 @@ static unsigned iemMemMapFindFree(PVMCPUCC pVCpu)
     /*
      * The easy case.
      */
-    if (pVCpu->iem.s.cActiveMappings == 0)
+    if (ICORE(pVCpu).cActiveMappings == 0)
     {
-        pVCpu->iem.s.iNextMapping = 1;
+        ICORE(pVCpu).iNextMapping = 1;
         return 0;
     }
 
     /* There should be enough mappings for all instructions. */
-    AssertReturn(pVCpu->iem.s.cActiveMappings < RT_ELEMENTS(pVCpu->iem.s.aMemMappings), 1024);
+    AssertReturn(ICORE(pVCpu).cActiveMappings < RT_ELEMENTS(ICORE(pVCpu).aMemMappings), 1024);
 
-    for (unsigned i = 0; i < RT_ELEMENTS(pVCpu->iem.s.aMemMappings); i++)
-        if (pVCpu->iem.s.aMemMappings[i].fAccess == IEM_ACCESS_INVALID)
+    for (unsigned i = 0; i < RT_ELEMENTS(ICORE(pVCpu).aMemMappings); i++)
+        if (ICORE(pVCpu).aMemMappings[i].fAccess == IEM_ACCESS_INVALID)
             return i;
 
     AssertFailedReturn(1024);
@@ -316,21 +316,21 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
     /*
      * Check the input and figure out which mapping entry to use.
      */
-    Assert(cbMem <= sizeof(pVCpu->iem.s.aBounceBuffers[0]));
+    Assert(cbMem <= sizeof(ICORE(pVCpu).aBounceBuffers[0]));
     Assert(   cbMem <= 64 || cbMem == 512 || cbMem == 256 || cbMem == 108 || cbMem == 104 || cbMem == 102 || cbMem == 94
            || (iSegReg == UINT8_MAX && uAlignCtl == 0 && fAccess == IEM_ACCESS_DATA_R /* for the CPUID logging interface */) );
     Assert(!(fAccess & ~(IEM_ACCESS_TYPE_MASK | IEM_ACCESS_WHAT_MASK | IEM_ACCESS_ATOMIC | IEM_ACCESS_PARTIAL_WRITE)));
-    Assert(pVCpu->iem.s.cActiveMappings < RT_ELEMENTS(pVCpu->iem.s.aMemMappings));
+    Assert(ICORE(pVCpu).cActiveMappings < RT_ELEMENTS(ICORE(pVCpu).aMemMappings));
 
-    unsigned iMemMap = pVCpu->iem.s.iNextMapping;
-    if (   iMemMap >= RT_ELEMENTS(pVCpu->iem.s.aMemMappings)
-        || pVCpu->iem.s.aMemMappings[iMemMap].fAccess != IEM_ACCESS_INVALID)
+    unsigned iMemMap = ICORE(pVCpu).iNextMapping;
+    if (   iMemMap >= RT_ELEMENTS(ICORE(pVCpu).aMemMappings)
+        || ICORE(pVCpu).aMemMappings[iMemMap].fAccess != IEM_ACCESS_INVALID)
     {
         iMemMap = iemMemMapFindFree(pVCpu);
-        AssertLogRelMsgReturn(iMemMap < RT_ELEMENTS(pVCpu->iem.s.aMemMappings),
-                              ("active=%d fAccess[0] = {%#x, %#x, %#x}\n", pVCpu->iem.s.cActiveMappings,
-                               pVCpu->iem.s.aMemMappings[0].fAccess, pVCpu->iem.s.aMemMappings[1].fAccess,
-                               pVCpu->iem.s.aMemMappings[2].fAccess),
+        AssertLogRelMsgReturn(iMemMap < RT_ELEMENTS(ICORE(pVCpu).aMemMappings),
+                              ("active=%d fAccess[0] = {%#x, %#x, %#x}\n", ICORE(pVCpu).cActiveMappings,
+                               ICORE(pVCpu).aMemMappings[0].fAccess, ICORE(pVCpu).aMemMappings[1].fAccess,
+                               ICORE(pVCpu).aMemMappings[2].fAccess),
                               VERR_IEM_IPE_9);
     }
 
@@ -414,15 +414,15 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
      */
     uint8_t           *pbMem     = NULL;
     uint64_t const     uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-    PIEMTLBENTRY       pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
+    PIEMTLBENTRY       pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
     uint64_t const     fTlbeAD   = IEMTLBE_F_PT_NO_ACCESSED | (fAccess & IEM_ACCESS_TYPE_WRITE ? IEMTLBE_F_PT_NO_DIRTY : 0);
-    if (   (   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
+    if (   (   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
             && !(pTlbe->fFlagsAndPhysRev & fTlbeAD) )
-        || (   (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)
+        || (   (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)
             && !(pTlbe->fFlagsAndPhysRev & fTlbeAD) ) )
     {
 # ifdef IEM_WITH_TLB_STATISTICS
-        pVCpu->iem.s.DataTlb.cTlbCoreHits++;
+        ITLBS(pVCpu).Data.cTlbCoreHits++;
 # endif
 
         /* If the page is either supervisor only or non-writable, we need to do
@@ -451,7 +451,7 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
         }
 
         /* Look up the physical page info if necessary. */
-        if ((pTlbe->fFlagsAndPhysRev & IEMTLBE_F_PHYS_REV) == pVCpu->iem.s.DataTlb.uTlbPhysRev)
+        if ((pTlbe->fFlagsAndPhysRev & IEMTLBE_F_PHYS_REV) == ITLBS(pVCpu).Data.uTlbPhysRev)
 # ifdef IN_RING3
             pbMem = pTlbe->pbMappingR3;
 # else
@@ -459,13 +459,13 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
 # endif
         else
         {
-            if (RT_LIKELY(pVCpu->iem.s.CodeTlb.uTlbPhysRev > IEMTLB_PHYS_REV_INCR))
+            if (RT_LIKELY(ITLBS(pVCpu).Code.uTlbPhysRev > IEMTLB_PHYS_REV_INCR))
             { /* likely */ }
             else
                 iemTlbInvalidateAllPhysicalSlow(pVCpu);
             pTlbe->pbMappingR3       = NULL;
             pTlbe->fFlagsAndPhysRev &= ~IEMTLBE_GCPHYS2PTR_MASK;
-            int rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, pTlbe->GCPhys, &pVCpu->iem.s.DataTlb.uTlbPhysRev,
+            int rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, pTlbe->GCPhys, &ITLBS(pVCpu).Data.uTlbPhysRev,
                                                 &pbMem, &pTlbe->fFlagsAndPhysRev);
             AssertRCReturn(rc, rc);
 # ifdef IN_RING3
@@ -475,7 +475,7 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
     }
     else
     {
-        pVCpu->iem.s.DataTlb.cTlbCoreMisses++;
+        ITLBS(pVCpu).Data.cTlbCoreMisses++;
 
         /* This page table walking will set A bits as required by the access while performing the walk.
            ASSUMES these are set when the address is translated rather than on commit... */
@@ -503,30 +503,30 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
         }
 
         uint32_t fDataBps;
-        if (   RT_LIKELY(!(pVCpu->iem.s.fExec & IEM_F_PENDING_BRK_DATA))
+        if (   RT_LIKELY(!(ICORE(pVCpu).fExec & IEM_F_PENDING_BRK_DATA))
             || RT_LIKELY(!(fDataBps = iemMemCheckDataBreakpoint(pVCpu->CTX_SUFF(pVM), pVCpu, GCPtrMem, cbMem, fAccess))))
         {
             if (   !(WalkFast.fEffective & PGM_PTATTRS_G_MASK)
                 || IEM_GET_CPL(pVCpu) != 0) /* optimization: Only use the PTE.G=1 entries in ring-0. */
             {
                 pTlbe--;
-                pTlbe->uTag         = uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision;
+                pTlbe->uTag         = uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision;
                 if (WalkFast.fInfo & PGM_WALKINFO_BIG_PAGE)
-                    iemTlbLoadedLargePage<false>(pVCpu, &pVCpu->iem.s.DataTlb, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
+                    iemTlbLoadedLargePage<false>(pVCpu, &ITLBS(pVCpu).Data, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
 # ifdef IEMTLB_WITH_LARGE_PAGE_BITMAP
                 else
-                    ASMBitClear(pVCpu->iem.s.DataTlb.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev));
+                    ASMBitClear(ITLBS(pVCpu).Data.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev));
 # endif
             }
             else
             {
-                pVCpu->iem.s.DataTlb.cTlbCoreGlobalLoads++;
-                pTlbe->uTag         = uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal;
+                ITLBS(pVCpu).Data.cTlbCoreGlobalLoads++;
+                pTlbe->uTag         = uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal;
                 if (WalkFast.fInfo & PGM_WALKINFO_BIG_PAGE)
-                    iemTlbLoadedLargePage<true>(pVCpu, &pVCpu->iem.s.DataTlb, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
+                    iemTlbLoadedLargePage<true>(pVCpu, &ITLBS(pVCpu).Data, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
 # ifdef IEMTLB_WITH_LARGE_PAGE_BITMAP
                 else
-                    ASMBitClear(pVCpu->iem.s.DataTlb.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev) + 1);
+                    ASMBitClear(ITLBS(pVCpu).Data.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev) + 1);
 # endif
             }
         }
@@ -538,7 +538,7 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
                 LogEx(LOG_GROUP_IEM, ("iemMemMap: Data breakpoint: fDataBps=%#x for %RGv LB %zx; fAccess=%#x cs:rip=%04x:%08RX64\n",
                                       fDataBps, GCPtrMem, cbMem, fAccess, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip));
             pVCpu->cpum.GstCtx.eflags.uBoth |= fDataBps & (CPUMCTX_DBG_HIT_DRX_MASK | CPUMCTX_DBG_DBGF_MASK);
-            pTlbe = &pVCpu->iem.s.DataBreakpointTlbe;
+            pTlbe = &ITLBS(pVCpu).DataBreakpointTlbe;
             pTlbe->uTag = uTagNoRev;
         }
         pTlbe->fFlagsAndPhysRev = (~WalkFast.fEffective & (X86_PTE_US | X86_PTE_RW | X86_PTE_D | X86_PTE_A) /* skipping NX */)
@@ -555,7 +555,7 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
                || IEM_GET_CPL(pVCpu) != 3
                || (fAccess & IEM_ACCESS_WHAT_SYS));
 
-        if (pTlbe != &pVCpu->iem.s.DataBreakpointTlbe)
+        if (pTlbe != &ITLBS(pVCpu).DataBreakpointTlbe)
         {
             if (!IEMTLBE_IS_GLOBAL(pTlbe))
                 IEMTLBTRACE_LOAD(       pVCpu, GCPtrMem, pTlbe->GCPhys, (uint32_t)pTlbe->fFlagsAndPhysRev, true);
@@ -565,7 +565,7 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
 
         /* Resolve the physical address. */
         Assert(!(pTlbe->fFlagsAndPhysRev & IEMTLBE_GCPHYS2PTR_MASK));
-        rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, GCPhysPg, &pVCpu->iem.s.DataTlb.uTlbPhysRev,
+        rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, GCPhysPg, &ITLBS(pVCpu).Data.uTlbPhysRev,
                                         &pbMem, &pTlbe->fFlagsAndPhysRev);
         AssertRCReturn(rc, rc);
 # ifdef IN_RING3
@@ -598,7 +598,7 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
     {
         Assert(!(fAccess & IEM_ACCESS_NOT_LOCKED));
         RTGCPHYS const GCPhysFirst = pTlbe->GCPhys | (GCPtrMem & GUEST_PAGE_OFFSET_MASK);
-        rcStrict = iemMemPageMap(pVCpu, GCPhysFirst, fAccess, (void **)&pbMem, &pVCpu->iem.s.aMemMappingLocks[iMemMap].Lock);
+        rcStrict = iemMemPageMap(pVCpu, GCPhysFirst, fAccess, (void **)&pbMem, &ICORE(pVCpu).aMemMappingLocks[iMemMap].Lock);
         if (rcStrict != VINF_SUCCESS)
             return iemMemBounceBufferMapPhys(pVCpu, iMemMap, ppvMem, pbUnmapInfo, cbMem, GCPhysFirst, fAccess, rcStrict);
     }
@@ -623,7 +623,7 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
         Log2(("IEM RD %RGv (%RGp) LB %#zx\n", GCPtrMem, GCPhysFirst, cbMem));
 
     void *pvMem;
-    rcStrict = iemMemPageMap(pVCpu, GCPhysFirst, fAccess, &pvMem, &pVCpu->iem.s.aMemMappingLocks[iMemMap].Lock);
+    rcStrict = iemMemPageMap(pVCpu, GCPhysFirst, fAccess, &pvMem, &ICORE(pVCpu).aMemMappingLocks[iMemMap].Lock);
     if (rcStrict != VINF_SUCCESS)
         return iemMemBounceBufferMapPhys(pVCpu, iMemMap, ppvMem, pbUnmapInfo, cbMem, GCPhysFirst, fAccess, rcStrict);
 
@@ -632,15 +632,15 @@ VBOXSTRICTRC iemMemMap(PVMCPUCC pVCpu, void **ppvMem, uint8_t *pbUnmapInfo, size
     /*
      * Fill in the mapping table entry.
      */
-    pVCpu->iem.s.aMemMappings[iMemMap].pv      = pvMem;
-    pVCpu->iem.s.aMemMappings[iMemMap].fAccess = fAccess;
-    pVCpu->iem.s.iNextMapping     = iMemMap + 1;
-    pVCpu->iem.s.cActiveMappings += 1;
+    ICORE(pVCpu).aMemMappings[iMemMap].pv      = pvMem;
+    ICORE(pVCpu).aMemMappings[iMemMap].fAccess = fAccess;
+    ICORE(pVCpu).iNextMapping     = iMemMap + 1;
+    ICORE(pVCpu).cActiveMappings += 1;
 
     *ppvMem = pvMem;
     *pbUnmapInfo = iMemMap | 0x08 | ((fAccess & IEM_ACCESS_TYPE_MASK) << 4);
     AssertCompile(IEM_ACCESS_TYPE_MASK <= 0xf);
-    AssertCompile(RT_ELEMENTS(pVCpu->iem.s.aMemMappings) < 8);
+    AssertCompile(RT_ELEMENTS(ICORE(pVCpu).aMemMappings) < 8);
 
     return VINF_SUCCESS;
 }
@@ -702,7 +702,7 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
      */
     Assert(cbMem <= 64 || cbMem == 512 || cbMem == 108 || cbMem == 104 || cbMem == 94); /* 512 is the max! */
     Assert(!(fAccess & ~(IEM_ACCESS_TYPE_MASK | IEM_ACCESS_WHAT_MASK | IEM_ACCESS_ATOMIC | IEM_ACCESS_PARTIAL_WRITE)));
-    Assert(pVCpu->iem.s.cActiveMappings < RT_ELEMENTS(pVCpu->iem.s.aMemMappings));
+    Assert(ICORE(pVCpu).cActiveMappings < RT_ELEMENTS(ICORE(pVCpu).aMemMappings));
 
     VBOXSTRICTRC rcStrict = iemMemApplySegment(pVCpu, fAccess, iSegReg, cbMem, &GCPtrMem);
     if (rcStrict == VINF_SUCCESS) { /*likely*/ }
@@ -763,15 +763,15 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
     /*
      * Figure out which mapping entry to use.
      */
-    unsigned iMemMap = pVCpu->iem.s.iNextMapping;
-    if (   iMemMap >= RT_ELEMENTS(pVCpu->iem.s.aMemMappings)
-        || pVCpu->iem.s.aMemMappings[iMemMap].fAccess != IEM_ACCESS_INVALID)
+    unsigned iMemMap = ICORE(pVCpu).iNextMapping;
+    if (   iMemMap >= RT_ELEMENTS(ICORE(pVCpu).aMemMappings)
+        || ICORE(pVCpu).aMemMappings[iMemMap].fAccess != IEM_ACCESS_INVALID)
     {
         iMemMap = iemMemMapFindFree(pVCpu);
-        AssertLogRelMsgStmt(iMemMap < RT_ELEMENTS(pVCpu->iem.s.aMemMappings),
-                            ("active=%d fAccess[0] = {%#x, %#x, %#x}\n", pVCpu->iem.s.cActiveMappings,
-                             pVCpu->iem.s.aMemMappings[0].fAccess, pVCpu->iem.s.aMemMappings[1].fAccess,
-                             pVCpu->iem.s.aMemMappings[2].fAccess),
+        AssertLogRelMsgStmt(iMemMap < RT_ELEMENTS(ICORE(pVCpu).aMemMappings),
+                            ("active=%d fAccess[0] = {%#x, %#x, %#x}\n", ICORE(pVCpu).cActiveMappings,
+                             ICORE(pVCpu).aMemMappings[0].fAccess, ICORE(pVCpu).aMemMappings[1].fAccess,
+                             ICORE(pVCpu).aMemMappings[2].fAccess),
                             IEM_DO_LONGJMP(pVCpu, VERR_IEM_IPE_9));
     }
 
@@ -807,26 +807,26 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
                                         : 0;
     uint64_t const     fNoRead          = fAccess & IEM_ACCESS_TYPE_READ ? IEMTLBE_F_PG_NO_READ : 0;
     uint64_t const     uTagNoRev        = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrMem);
-    PIEMTLBENTRY       pTlbe            = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
+    PIEMTLBENTRY       pTlbe            = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
     uint64_t const     fTlbeAD          = IEMTLBE_F_PT_NO_ACCESSED | (fNoWriteNoDirty & IEMTLBE_F_PT_NO_DIRTY);
-    if (   (   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
+    if (   (   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
             && !(pTlbe->fFlagsAndPhysRev & fTlbeAD) )
-        || (   (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)
+        || (   (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)
             && !(pTlbe->fFlagsAndPhysRev & fTlbeAD) ) )
     {
 # ifdef IEM_WITH_TLB_STATISTICS
         if (a_fSafeCall)
-            pVCpu->iem.s.DataTlb.cTlbSafeHits++;
+            ITLBS(pVCpu).Data.cTlbSafeHits++;
         else
-            pVCpu->iem.s.DataTlb.cTlbCoreHits++;
+            ITLBS(pVCpu).Data.cTlbCoreHits++;
 # endif
     }
     else
     {
         if (a_fSafeCall)
-            pVCpu->iem.s.DataTlb.cTlbSafeMisses++;
+            ITLBS(pVCpu).Data.cTlbSafeMisses++;
         else
-            pVCpu->iem.s.DataTlb.cTlbCoreMisses++;
+            ITLBS(pVCpu).Data.cTlbCoreMisses++;
 
         /* This page table walking will set A and D bits as required by the
            access while performing the walk.
@@ -855,33 +855,33 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
         }
 
         uint32_t fDataBps;
-        if (   RT_LIKELY(!(pVCpu->iem.s.fExec & IEM_F_PENDING_BRK_DATA))
+        if (   RT_LIKELY(!(ICORE(pVCpu).fExec & IEM_F_PENDING_BRK_DATA))
             || RT_LIKELY(!(fDataBps = iemMemCheckDataBreakpoint(pVCpu->CTX_SUFF(pVM), pVCpu, GCPtrMem, cbMem, fAccess))))
         {
             if (   !(WalkFast.fEffective & PGM_PTATTRS_G_MASK)
                 || IEM_GET_CPL(pVCpu) != 0) /* optimization: Only use the PTE.G=1 entries in ring-0. */
             {
                 pTlbe--;
-                pTlbe->uTag         = uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision;
+                pTlbe->uTag         = uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision;
                 if (WalkFast.fInfo & PGM_WALKINFO_BIG_PAGE)
-                    iemTlbLoadedLargePage<false>(pVCpu, &pVCpu->iem.s.DataTlb, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
+                    iemTlbLoadedLargePage<false>(pVCpu, &ITLBS(pVCpu).Data, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
 # ifdef IEMTLB_WITH_LARGE_PAGE_BITMAP
                 else
-                    ASMBitClear(pVCpu->iem.s.DataTlb.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev));
+                    ASMBitClear(ITLBS(pVCpu).Data.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev));
 # endif
             }
             else
             {
                 if (a_fSafeCall)
-                    pVCpu->iem.s.DataTlb.cTlbSafeGlobalLoads++;
+                    ITLBS(pVCpu).Data.cTlbSafeGlobalLoads++;
                 else
-                    pVCpu->iem.s.DataTlb.cTlbCoreGlobalLoads++;
-                pTlbe->uTag         = uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal;
+                    ITLBS(pVCpu).Data.cTlbCoreGlobalLoads++;
+                pTlbe->uTag         = uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal;
                 if (WalkFast.fInfo & PGM_WALKINFO_BIG_PAGE)
-                    iemTlbLoadedLargePage<true>(pVCpu, &pVCpu->iem.s.DataTlb, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
+                    iemTlbLoadedLargePage<true>(pVCpu, &ITLBS(pVCpu).Data, uTagNoRev, RT_BOOL(pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE));
 # ifdef IEMTLB_WITH_LARGE_PAGE_BITMAP
                 else
-                    ASMBitClear(pVCpu->iem.s.DataTlb.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev) + 1);
+                    ASMBitClear(ITLBS(pVCpu).Data.bmLargePage, IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev) + 1);
 # endif
             }
         }
@@ -893,7 +893,7 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
                 LogEx(LOG_GROUP_IEM, ("iemMemMapJmp<%d>: Data breakpoint: fDataBps=%#x for %RGv LB %zx; fAccess=%#x cs:rip=%04x:%08RX64\n",
                                       a_fSafeCall, fDataBps, GCPtrMem, cbMem, fAccess, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip));
             pVCpu->cpum.GstCtx.eflags.uBoth |= fDataBps & (CPUMCTX_DBG_HIT_DRX_MASK | CPUMCTX_DBG_DBGF_MASK);
-            pTlbe = &pVCpu->iem.s.DataBreakpointTlbe;
+            pTlbe = &ITLBS(pVCpu).DataBreakpointTlbe;
             pTlbe->uTag = uTagNoRev;
         }
         pTlbe->fFlagsAndPhysRev = (~WalkFast.fEffective & (X86_PTE_US | X86_PTE_RW | X86_PTE_D | X86_PTE_A) /* skipping NX */)
@@ -906,7 +906,7 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
                || (fQPage & (PGMQPAGE_F_CR0_WP0 | PGMQPAGE_F_USER_MODE)) == PGMQPAGE_F_CR0_WP0);
         Assert(!(pTlbe->fFlagsAndPhysRev & fNoUser & IEMTLBE_F_PT_NO_USER));
 
-        if (pTlbe != &pVCpu->iem.s.DataBreakpointTlbe)
+        if (pTlbe != &ITLBS(pVCpu).DataBreakpointTlbe)
         {
             if (!IEMTLBE_IS_GLOBAL(pTlbe))
                 IEMTLBTRACE_LOAD(       pVCpu, GCPtrMem, pTlbe->GCPhys, (uint32_t)pTlbe->fFlagsAndPhysRev, true);
@@ -917,7 +917,7 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
         /* Resolve the physical address. */
         Assert(!(pTlbe->fFlagsAndPhysRev & IEMTLBE_GCPHYS2PTR_MASK));
         uint8_t *pbMemFullLoad = NULL;
-        rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, GCPhysPg, &pVCpu->iem.s.DataTlb.uTlbPhysRev,
+        rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, GCPhysPg, &ITLBS(pVCpu).Data.uTlbPhysRev,
                                         &pbMemFullLoad, &pTlbe->fFlagsAndPhysRev);
         AssertRCStmt(rc, IEM_DO_LONGJMP(pVCpu, rc));
 # ifdef IN_RING3
@@ -932,7 +932,7 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
      */
     uint8_t *pbMem;
     if (   (pTlbe->fFlagsAndPhysRev & (IEMTLBE_F_PHYS_REV | IEMTLBE_F_PT_NO_ACCESSED | fNoRead | fNoWriteNoDirty | fNoUser))
-        == pVCpu->iem.s.DataTlb.uTlbPhysRev)
+        == ITLBS(pVCpu).Data.uTlbPhysRev)
 # ifdef IN_RING3
         pbMem = pTlbe->pbMappingR3;
 # else
@@ -973,7 +973,7 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
         /*
          * Check if the physical page info needs updating.
          */
-        if ((pTlbe->fFlagsAndPhysRev & IEMTLBE_F_PHYS_REV) == pVCpu->iem.s.DataTlb.uTlbPhysRev)
+        if ((pTlbe->fFlagsAndPhysRev & IEMTLBE_F_PHYS_REV) == ITLBS(pVCpu).Data.uTlbPhysRev)
 # ifdef IN_RING3
             pbMem = pTlbe->pbMappingR3;
 # else
@@ -984,7 +984,7 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
             pTlbe->pbMappingR3       = NULL;
             pTlbe->fFlagsAndPhysRev &= ~IEMTLBE_GCPHYS2PTR_MASK;
             pbMem = NULL;
-            int rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, pTlbe->GCPhys, &pVCpu->iem.s.DataTlb.uTlbPhysRev,
+            int rc = PGMPhysIemGCPhys2PtrNoLock(pVCpu->CTX_SUFF(pVM), pVCpu, pTlbe->GCPhys, &ITLBS(pVCpu).Data.uTlbPhysRev,
                                                 &pbMem, &pTlbe->fFlagsAndPhysRev);
             AssertRCStmt(rc, IEM_DO_LONGJMP(pVCpu, rc));
 # ifdef IN_RING3
@@ -1021,7 +1021,7 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
     {
         Assert(!(fAccess & IEM_ACCESS_NOT_LOCKED));
         RTGCPHYS const GCPhysFirst = pTlbe->GCPhys | (GCPtrMem & GUEST_PAGE_OFFSET_MASK);
-        rcStrict = iemMemPageMap(pVCpu, GCPhysFirst, fAccess, (void **)&pbMem, &pVCpu->iem.s.aMemMappingLocks[iMemMap].Lock);
+        rcStrict = iemMemPageMap(pVCpu, GCPhysFirst, fAccess, (void **)&pbMem, &ICORE(pVCpu).aMemMappingLocks[iMemMap].Lock);
         if (rcStrict == VINF_SUCCESS)
         {
             *pbUnmapInfo = iMemMap | 0x08 | ((fAccess & IEM_ACCESS_TYPE_MASK) << 4);
@@ -1051,7 +1051,7 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
         Log2(("IEM RD %RGv (%RGp) LB %#zx\n", GCPtrMem, GCPhysFirst, cbMem));
 
     void *pvMem;
-    rcStrict = iemMemPageMap(pVCpu, GCPhysFirst, fAccess, &pvMem, &pVCpu->iem.s.aMemMappingLocks[iMemMap].Lock);
+    rcStrict = iemMemPageMap(pVCpu, GCPhysFirst, fAccess, &pvMem, &ICORE(pVCpu).aMemMappingLocks[iMemMap].Lock);
     if (rcStrict == VINF_SUCCESS)
     { /* likely */ }
     else
@@ -1067,10 +1067,10 @@ static void *iemMemMapJmp(PVMCPUCC pVCpu, uint8_t *pbUnmapInfo, size_t cbMem, ui
     /*
      * Fill in the mapping table entry.
      */
-    pVCpu->iem.s.aMemMappings[iMemMap].pv      = pvMem;
-    pVCpu->iem.s.aMemMappings[iMemMap].fAccess = fAccess;
-    pVCpu->iem.s.iNextMapping = iMemMap + 1;
-    pVCpu->iem.s.cActiveMappings++;
+    ICORE(pVCpu).aMemMappings[iMemMap].pv      = pvMem;
+    ICORE(pVCpu).aMemMappings[iMemMap].fAccess = fAccess;
+    ICORE(pVCpu).iNextMapping = iMemMap + 1;
+    ICORE(pVCpu).cActiveMappings++;
 
     *pbUnmapInfo = iMemMap | 0x08 | ((fAccess & IEM_ACCESS_TYPE_MASK) << 4);
     return pvMem;

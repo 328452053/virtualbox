@@ -1,4 +1,4 @@
-/* $Id: IEMAllN8veEmit-x86.h 111487 2025-10-24 07:45:23Z alexander.eichner@oracle.com $ */
+/* $Id: IEMAllN8veEmit-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Native Recompiler, x86 Target - Code Emitters.
  */
@@ -389,11 +389,13 @@ DECL_FORCE_INLINE(void) iemNativeClearPostponedEFlags(PIEMRECOMPILERSTATE pReNat
 
 
 template<bool const a_fDoOp>
-DECL_INLINE_THROW(uint32_t) iemNativeEmitPostponedEFlagsCalcLogical(PIEMNATIVEINSTR pCodeBuf, uint32_t off, uint32_t fEflUpdate, uint8_t cOpBits,
-                                                                    uint8_t idxRegResult, uint8_t idxRegEfl, uint8_t idxRegTmp)
+DECL_INLINE_THROW(uint32_t)
+iemNativeEmitPostponedEFlagsCalcLogical(PIEMNATIVEINSTR pCodeBuf, uint32_t off, uint32_t fEflUpdate, uint8_t cOpBits,
+                                        uint8_t idxRegResult, uint8_t idxRegEfl, uint8_t idxRegTmp)
 {
 #ifdef RT_ARCH_AMD64
     Assert(fEflUpdate == X86_EFL_STATUS_BITS); /** @todo r=aeichner Port the bugfix from the ARMv8 bits over, see @bugref{10996} for details. */
+    RT_NOREF(fEflUpdate);
 
     /* Do TEST idxRegResult, idxRegResult to set flags. */
     if RT_CONSTEXPR_IF(a_fDoOp)
@@ -770,7 +772,7 @@ iemNativeEmitEFlagsForLogical(PIEMRECOMPILERSTATE pReNative, uint32_t off, uint8
         STAM_COUNTER_INC(&pReNative->pVCpu->iem.s.StatNativeEflSkippedLogical);
         pReNative->fSkippingEFlags = X86_EFL_STATUS_BITS;
 # ifdef IEMNATIVE_STRICT_EFLAGS_SKIPPING
-        off = iemNativeEmitOrImmIntoVCpuU32(pReNative, off, X86_EFL_STATUS_BITS, RT_UOFFSETOF(VMCPU, iem.s.fSkippingEFlags));
+        off = iemNativeEmitOrImmIntoVCpuU32(pReNative, off, X86_EFL_STATUS_BITS, IRECM_OFFSETOF(fSkippingEFlags));
 # endif
         Log5(("EFLAGS: Skipping %#x - iemNativeEmitEFlagsForLogical\n", X86_EFL_STATUS_BITS));
         return off;
@@ -819,7 +821,7 @@ iemNativeEmitEFlagsForLogical(PIEMRECOMPILERSTATE pReNative, uint32_t off, uint8
         Log5(("EFLAGS: fSkippingEFlags %#x -> 0 (iemNativeEmitEFlagsForLogical)\n", pReNative->fSkippingEFlags));
     pReNative->fSkippingEFlags = 0;
 # ifdef IEMNATIVE_STRICT_EFLAGS_SKIPPING
-    off = iemNativeEmitStoreImmToVCpuU32(pReNative, off, 0, RT_UOFFSETOF(VMCPU, iem.s.fSkippingEFlags));
+    off = iemNativeEmitStoreImmToVCpuU32(pReNative, off, 0, IRECM_OFFSETOF(fSkippingEFlags));
 # endif
 #endif
     return off;
@@ -854,7 +856,7 @@ iemNativeEmitEFlagsForArithmetic(PIEMRECOMPILERSTATE pReNative, uint32_t off, ui
         pReNative->fSkippingEFlags = X86_EFL_STATUS_BITS;
         Log5(("EFLAGS: Skipping %#x - iemNativeEmitEFlagsForArithmetic\n", X86_EFL_STATUS_BITS));
 # ifdef IEMNATIVE_STRICT_EFLAGS_SKIPPING
-        off = iemNativeEmitOrImmIntoVCpuU32(pReNative, off, X86_EFL_STATUS_BITS, RT_UOFFSETOF(VMCPU, iem.s.fSkippingEFlags));
+        off = iemNativeEmitOrImmIntoVCpuU32(pReNative, off, X86_EFL_STATUS_BITS, IRECM_OFFSETOF(fSkippingEFlags));
 # endif
     }
     else
@@ -1019,7 +1021,7 @@ iemNativeEmitEFlagsForArithmetic(PIEMRECOMPILERSTATE pReNative, uint32_t off, ui
             Log5(("EFLAGS: fSkippingEFlags %#x -> 0 (iemNativeEmitEFlagsForArithmetic)\n", pReNative->fSkippingEFlags));
         pReNative->fSkippingEFlags = 0;
 # ifdef IEMNATIVE_STRICT_EFLAGS_SKIPPING
-        off = iemNativeEmitStoreImmToVCpuU32(pReNative, off, 0, RT_UOFFSETOF(VMCPU, iem.s.fSkippingEFlags));
+        off = iemNativeEmitStoreImmToVCpuU32(pReNative, off, 0, IRECM_OFFSETOF(fSkippingEFlags));
 # endif
 #endif
     }
@@ -2108,7 +2110,7 @@ RT_NOREF(pReNative, off, idxRegEfl, idxRegResult, idxRegSrc, idxRegCount, cOpBit
         STAM_COUNTER_INC(&pReNative->pVCpu->iem.s.StatNativeEflSkippedShift);
         pReNative->fSkippingEFlags |= X86_EFL_STATUS_BITS;
 # ifdef IEMNATIVE_STRICT_EFLAGS_SKIPPING
-        off = iemNativeEmitOrImmIntoVCpuU32(pReNative, off, X86_EFL_STATUS_BITS, RT_UOFFSETOF(VMCPU, iem.s.fSkippingEFlags));
+        off = iemNativeEmitOrImmIntoVCpuU32(pReNative, off, X86_EFL_STATUS_BITS, IRECM_OFFSETOF(fSkippingEFlags));
 # endif
     }
     else
@@ -2136,7 +2138,7 @@ RT_NOREF(pReNative, off, idxRegEfl, idxRegResult, idxRegSrc, idxRegCount, cOpBit
         pCodeBuf[off++] = 0x58 + (idxRegTmp & 7);
         /* Clear the status bits in EFLs. */
         off = iemNativeEmitAndGpr32ByImmEx(pCodeBuf, off, idxRegEfl, ~X86_EFL_STATUS_BITS);
-        uint8_t const idxTargetCpuEflFlavour = pReNative->pVCpu->iem.s.aidxTargetCpuEflFlavour[1];
+        uint8_t const idxTargetCpuEflFlavour = ICORE(pReNative->pVCpu).aidxTargetCpuEflFlavour[1];
         if (idxTargetCpuEflFlavour == IEMTARGETCPU_EFL_BEHAVIOR_NATIVE)
             off = iemNativeEmitAndGpr32ByImmEx(pCodeBuf, off, idxRegTmp, X86_EFL_STATUS_BITS);
         else
@@ -2246,7 +2248,7 @@ RT_NOREF(pReNative, off, idxRegEfl, idxRegResult, idxRegSrc, idxRegCount, cOpBit
         }
         pCodeBuf[off++] = Armv8A64MkInstrBfi(idxRegEfl, idxRegTmp, X86_EFL_CF_BIT, 1, false /*f64Bit*/);
 
-        uint8_t const idxTargetCpuEflFlavour = pReNative->pVCpu->iem.s.aidxTargetCpuEflFlavour[0];
+        uint8_t const idxTargetCpuEflFlavour = ICORE(pReNative->pVCpu).aidxTargetCpuEflFlavour[0];
         if (idxTargetCpuEflFlavour != IEMTARGETCPU_EFL_BEHAVIOR_AMD)
         {
             /* Intel: OF = first bit shifted: fEfl |= X86_EFL_GET_OF_ ## cOpBits(uDst ^ (uDst << 1)); */
@@ -2276,7 +2278,7 @@ RT_NOREF(pReNative, off, idxRegEfl, idxRegResult, idxRegSrc, idxRegCount, cOpBit
             Log5(("EFLAGS: fSkippingEFlags %#x -> 0 (iemNativeEmitEFlagsForShift)\n", pReNative->fSkippingEFlags));
         pReNative->fSkippingEFlags = 0;
 # ifdef IEMNATIVE_STRICT_EFLAGS_SKIPPING
-        off = iemNativeEmitStoreImmToVCpuU32(pReNative, off, 0, RT_UOFFSETOF(VMCPU, iem.s.fSkippingEFlags));
+        off = iemNativeEmitStoreImmToVCpuU32(pReNative, off, 0, IRECM_OFFSETOF(fSkippingEFlags));
 # endif
 #endif
     }
@@ -2301,7 +2303,7 @@ iemNativeEmit_shl_r_CL_efl(PIEMRECOMPILERSTATE pReNative, uint32_t off,
     AssertStmt(idxRegCount == X86_GREG_xCX, IEMNATIVE_DO_LONGJMP(pReNative, VERR_IEM_EMIT_UNEXPECTED_VAR_REGISTER));
 
     /* We only need a copy of the input value if the target CPU differs from the host CPU. */
-    uint8_t const         idxRegDstIn = pReNative->pVCpu->iem.s.aidxTargetCpuEflFlavour[1] == IEMTARGETCPU_EFL_BEHAVIOR_NATIVE
+    uint8_t const         idxRegDstIn = ICORE(pReNative->pVCpu).aidxTargetCpuEflFlavour[1] == IEMTARGETCPU_EFL_BEHAVIOR_NATIVE
                                       ? UINT8_MAX : iemNativeRegAllocTmp(pReNative, &off);
     PIEMNATIVEINSTR const pCodeBuf    = iemNativeInstrBufEnsure(pReNative, off, 4+2+3+4);
 
@@ -3147,13 +3149,13 @@ iemNativeEmitMxcsrUpdate(PIEMRECOMPILERSTATE pReNative, uint32_t off, uint8_t co
     pbCodeBuf[off++] = 0x0f;
     pbCodeBuf[off++] = 0xae;
     pbCodeBuf[off++] = X86_MODRM_MAKE(X86_MOD_MEM4, 3, IEMNATIVE_REG_FIXED_PVMCPU & 7);
-    pbCodeBuf[off++] = RT_BYTE1(RT_UOFFSETOF(VMCPU, iem.s.uRegMxcsrTmp));
-    pbCodeBuf[off++] = RT_BYTE2(RT_UOFFSETOF(VMCPU, iem.s.uRegMxcsrTmp));
-    pbCodeBuf[off++] = RT_BYTE3(RT_UOFFSETOF(VMCPU, iem.s.uRegMxcsrTmp));
-    pbCodeBuf[off++] = RT_BYTE4(RT_UOFFSETOF(VMCPU, iem.s.uRegMxcsrTmp));
+    pbCodeBuf[off++] = RT_BYTE1(IRECM_OFFSETOF(uRegMxcsrTmp));
+    pbCodeBuf[off++] = RT_BYTE2(IRECM_OFFSETOF(uRegMxcsrTmp));
+    pbCodeBuf[off++] = RT_BYTE3(IRECM_OFFSETOF(uRegMxcsrTmp));
+    pbCodeBuf[off++] = RT_BYTE4(IRECM_OFFSETOF(uRegMxcsrTmp));
 
     /* Load MXCSR, mask everything except status flags and or into guest MXCSR. */
-    off = iemNativeEmitLoadGprFromVCpuU32(pReNative, off, idxRegTmp, RT_UOFFSETOF(VMCPU, iem.s.uRegMxcsrTmp));
+    off = iemNativeEmitLoadGprFromVCpuU32(pReNative, off, idxRegTmp, IRECM_OFFSETOF(uRegMxcsrTmp));
 
     /* Store the flags in the MXCSR xcpt flags register. */
     off = iemNativeEmitLoadGprFromGpr32(pReNative, off, idxRegMxCsrXcptFlags, idxRegTmp);
@@ -3161,7 +3163,7 @@ iemNativeEmitMxcsrUpdate(PIEMRECOMPILERSTATE pReNative, uint32_t off, uint8_t co
 
     /* Clear the status flags in the temporary copy and write it back to MXCSR. */
     off = iemNativeEmitAndGpr32ByImm(pReNative, off, idxRegTmp, ~X86_MXCSR_XCPT_FLAGS);
-    off = iemNativeEmitStoreGprToVCpuU32(pReNative, off, idxRegTmp, RT_UOFFSETOF(VMCPU, iem.s.uRegMxcsrTmp));
+    off = iemNativeEmitStoreGprToVCpuU32(pReNative, off, idxRegTmp, IRECM_OFFSETOF(uRegMxcsrTmp));
 
     pbCodeBuf = iemNativeInstrBufEnsure(pReNative, off, 8);
 
@@ -3171,10 +3173,10 @@ iemNativeEmitMxcsrUpdate(PIEMRECOMPILERSTATE pReNative, uint32_t off, uint8_t co
     pbCodeBuf[off++] = 0x0f;
     pbCodeBuf[off++] = 0xae;
     pbCodeBuf[off++] = X86_MODRM_MAKE(X86_MOD_MEM4, 2, IEMNATIVE_REG_FIXED_PVMCPU & 7);
-    pbCodeBuf[off++] = RT_BYTE1(RT_UOFFSETOF(VMCPU, iem.s.uRegMxcsrTmp));
-    pbCodeBuf[off++] = RT_BYTE2(RT_UOFFSETOF(VMCPU, iem.s.uRegMxcsrTmp));
-    pbCodeBuf[off++] = RT_BYTE3(RT_UOFFSETOF(VMCPU, iem.s.uRegMxcsrTmp));
-    pbCodeBuf[off++] = RT_BYTE4(RT_UOFFSETOF(VMCPU, iem.s.uRegMxcsrTmp));
+    pbCodeBuf[off++] = RT_BYTE1(IRECM_OFFSETOF(uRegMxcsrTmp));
+    pbCodeBuf[off++] = RT_BYTE2(IRECM_OFFSETOF(uRegMxcsrTmp));
+    pbCodeBuf[off++] = RT_BYTE3(IRECM_OFFSETOF(uRegMxcsrTmp));
+    pbCodeBuf[off++] = RT_BYTE4(IRECM_OFFSETOF(uRegMxcsrTmp));
 
 #elif defined(RT_ARCH_ARM64)
     PIEMNATIVEINSTR pu32CodeBuf = iemNativeInstrBufEnsure(pReNative, off, 7);
@@ -3243,7 +3245,7 @@ iemNativeEmitMxcsrUpdate(PIEMRECOMPILERSTATE pReNative, uint32_t off, uint8_t co
     off = iemNativeRegFlushPendingWrites(pReNative, off);
 
 #ifdef IEMNATIVE_WITH_INSTRUCTION_COUNTING
-    off = iemNativeEmitStoreImmToVCpuU8(pReNative, off, idxInstr, RT_UOFFSETOF(VMCPUCC, iem.s.idxTbCurInstr));
+    off = iemNativeEmitStoreImmToVCpuU8(pReNative, off, idxInstr, IRECM_OFFSETOF(idxTbCurInstr));
 #else
     RT_NOREF(idxInstr);
 #endif

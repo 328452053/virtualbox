@@ -1,4 +1,4 @@
-/* $Id: IEMInlineExec-armv8.h 109859 2025-06-15 22:07:50Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMInlineExec-armv8.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - ARMv8 target, Inline Exec/Decoder routines.
  *
@@ -94,12 +94,12 @@ DECLINLINE(void) iemInitExecTargetStrict(PVMCPUCC pVCpu) RT_NOEXCEPT
     iemInitDecoderStrictTarget(pVCpu);
 
 #  ifdef IEM_WITH_CODE_TLB
-    pVCpu->iem.s.offInstrNextByte   = UINT16_MAX;
-    pVCpu->iem.s.pbInstrBuf         = NULL;
-    pVCpu->iem.s.cbInstrBufTotal    = UINT16_MAX;
-    pVCpu->iem.s.uInstrBufPc        = UINT64_C(0xc0ffc0ffcff0c0ff);
+    ICORE(pVCpu).offInstrNextByte   = UINT16_MAX;
+    ICORE(pVCpu).pbInstrBuf         = NULL;
+    ICORE(pVCpu).cbInstrBufTotal    = UINT16_MAX;
+    ICORE(pVCpu).uInstrBufPc        = UINT64_C(0xc0ffc0ffcff0c0ff);
 #  else
-    pVCpu->iem.s.cbOpcode           = 127;
+    ICORE(pVCpu).cbOpcode           = 127;
 #  endif
 }
 

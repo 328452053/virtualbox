@@ -1,4 +1,4 @@
-/* $Id: IEMAllTlbInline-armv8.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllTlbInline-armv8.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - x86 target, Inline TLB routines.
  *
@@ -167,7 +167,7 @@ DECLINLINE(void) iemTlbInvalidateLargePageWorkerInner(PVMCPUCC pVCpu, IEMTLB *pT
     AssertCompile(IEMTLB_CALC_TAG_NO_REV(p V C p u - not true, (RTGCPTR)0x8731U << GUEST_PAGE_SHIFT) == 0x8731U);
     if (   !a_fDataTlb
         && GCPtrInstrBufPcTag - GCPtrTag < (a_f2MbLargePage ? 512U : 1024U))
-        pVCpu->iem.s.cbInstrBufTotal = 0;
+        ICORE(pVCpu).cbInstrBufTotal = 0;
 
     /*
      * Combine TAG values with the TLB revisions.
@@ -427,8 +427,8 @@ DECLINLINE(void) iemTlbInvalidatePageWorker(PVMCPUCC pVCpu, IEMTLB *pTlb, RTGCPT
     {
         IEMTLBTRACE_EVICT_SLOT(pVCpu, GCPtrTag, pTlb->aEntries[idxBase].GCPhys, idxBase, a_fDataTlb);
         pTlb->aEntries[idxBase].uTag = 0;
-        if (!a_fDataTlb && GCPtrTag == IEMTLB_CALC_TAG_NO_REV(pVCpu, pVCpu->iem.s.uInstrBufPc))
-            pVCpu->iem.s.cbInstrBufTotal = 0;
+        if (!a_fDataTlb && GCPtrTag == IEMTLB_CALC_TAG_NO_REV(pVCpu, ICORE(pVCpu).uInstrBufPc))
+            ICORE(pVCpu).cbInstrBufTotal = 0;
     }
 
 #if 0 /** @todo ARMv8: TLB flushing is a lot more complex on arm! */
@@ -443,7 +443,7 @@ DECLINLINE(void) iemTlbInvalidatePageWorker(PVMCPUCC pVCpu, IEMTLB *pTlb, RTGCPT
     if (pTlb->GlobalLargePageRange.uLastTag || pTlb->NonGlobalLargePageRange.uLastTag)
 # endif
     {
-        RTGCPTR const GCPtrInstrBufPcTag = a_fDataTlb ? 0 : IEMTLB_CALC_TAG_NO_REV(pVCpu, pVCpu->iem.s.uInstrBufPc);
+        RTGCPTR const GCPtrInstrBufPcTag = a_fDataTlb ? 0 : IEMTLB_CALC_TAG_NO_REV(pVCpu, ICORE(pVCpu).uInstrBufPc);
         if (pVCpu->cpum.GstCtx.cr4 & X86_CR4_PAE)
             iemTlbInvalidateLargePageWorker<a_fDataTlb, true>(pVCpu, pTlb, GCPtrTag, GCPtrInstrBufPcTag);
         else

@@ -1,4 +1,4 @@
-/* $Id: IEMR3.cpp 111486 2025-10-24 07:23:14Z alexander.eichner@oracle.com $ */
+/* $Id: IEMR3.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager.
  */
@@ -227,31 +227,32 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
     uint64_t const uInitialTlbPhysRev  = UINT64_C(0) + (IEMTLB_PHYS_REV_INCR * 4U);
 #endif
 
+    PVMCPU const pVCpu0 = pVM->apCpusR3[0];
     for (VMCPUID idCpu = 0; idCpu < pVM->cCpus; idCpu++)
     {
         PVMCPU const pVCpu = pVM->apCpusR3[idCpu];
         AssertCompile(sizeof(pVCpu->iem.s) <= sizeof(pVCpu->iem.padding)); /* (tstVMStruct can't do it's job w/o instruction stats) */
 
-        pVCpu->iem.s.CodeTlb.uTlbRevision       = pVCpu->iem.s.DataTlb.uTlbRevision       = uInitialTlbRevision;
+        ITLBS(pVCpu).Code.uTlbRevision       = ITLBS(pVCpu).Data.uTlbRevision       = uInitialTlbRevision;
 #ifdef VBOX_VMM_TARGET_X86
-        pVCpu->iem.s.CodeTlb.uTlbRevisionGlobal = pVCpu->iem.s.DataTlb.uTlbRevisionGlobal = uInitialTlbRevision;
-        pVCpu->iem.s.CodeTlb.uTlbPhysRev        = pVCpu->iem.s.DataTlb.uTlbPhysRev        = uInitialTlbPhysRev;
-        pVCpu->iem.s.CodeTlb.NonGlobalLargePageRange.uFirstTag = UINT64_MAX;
-        pVCpu->iem.s.CodeTlb.GlobalLargePageRange.uFirstTag    = UINT64_MAX;
-        pVCpu->iem.s.DataTlb.NonGlobalLargePageRange.uFirstTag = UINT64_MAX;
-        pVCpu->iem.s.DataTlb.GlobalLargePageRange.uFirstTag    = UINT64_MAX;
+        ITLBS(pVCpu).Code.uTlbRevisionGlobal = ITLBS(pVCpu).Data.uTlbRevisionGlobal = uInitialTlbRevision;
+        ITLBS(pVCpu).Code.uTlbPhysRev        = ITLBS(pVCpu).Data.uTlbPhysRev        = uInitialTlbPhysRev;
+        ITLBS(pVCpu).Code.NonGlobalLargePageRange.uFirstTag = UINT64_MAX;
+        ITLBS(pVCpu).Code.GlobalLargePageRange.uFirstTag    = UINT64_MAX;
+        ITLBS(pVCpu).Data.NonGlobalLargePageRange.uFirstTag = UINT64_MAX;
+        ITLBS(pVCpu).Data.GlobalLargePageRange.uFirstTag    = UINT64_MAX;
 #elif defined(VBOX_VMM_TARGET_ARMV8)
-        pVCpu->iem.s.CodeTlb.uTlbPhysRevAndStuff0 = pVCpu->iem.s.DataTlb.uTlbPhysRevAndStuff0 = uInitialTlbPhysRev | IEMTLBE_F_NG;
-        pVCpu->iem.s.CodeTlb.uTlbPhysRevAndStuff1 = pVCpu->iem.s.DataTlb.uTlbPhysRevAndStuff1 = uInitialTlbPhysRev | IEMTLBE_F_NG;
-        pVCpu->iem.s.CodeTlb.LargePageRange.uFirstTag = UINT64_MAX;
-        pVCpu->iem.s.DataTlb.LargePageRange.uFirstTag = UINT64_MAX;
+        ITLBS(pVCpu).Code.uTlbPhysRevAndStuff0 = ITLBS(pVCpu).Data.uTlbPhysRevAndStuff0 = uInitialTlbPhysRev | IEMTLBE_F_NG;
+        ITLBS(pVCpu).Code.uTlbPhysRevAndStuff1 = ITLBS(pVCpu).Data.uTlbPhysRevAndStuff1 = uInitialTlbPhysRev | IEMTLBE_F_NG;
+        ITLBS(pVCpu).Code.LargePageRange.uFirstTag = UINT64_MAX;
+        ITLBS(pVCpu).Data.LargePageRange.uFirstTag = UINT64_MAX;
 #else
 # error "port me"
 #endif
 
 #ifndef VBOX_VMM_TARGET_ARMV8
-        pVCpu->iem.s.cTbsTillNextTimerPoll      = 128;
-        pVCpu->iem.s.cTbsTillNextTimerPollPrev  = 128;
+        IRECM(pVCpu).cTbsTillNextTimerPoll      = 128;
+        IRECM(pVCpu).cTbsTillNextTimerPollPrev  = 128;
 #endif
 
         /*
@@ -259,69 +260,69 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
          */
         if (idCpu == 0)
         {
-            pVCpu->iem.s.enmCpuVendor                     = CPUMGetGuestCpuVendor(pVM);
+            ICORE(pVCpu).enmCpuVendor                     = CPUMGetGuestCpuVendor(pVM);
 #if !defined(VBOX_VMM_TARGET_ARMV8)
-            pVCpu->iem.s.aidxTargetCpuEflFlavour[0]       =    pVCpu->iem.s.enmCpuVendor == CPUMCPUVENDOR_INTEL
-                                                            || pVCpu->iem.s.enmCpuVendor == CPUMCPUVENDOR_VIA /*??*/
+            ICORE(pVCpu).aidxTargetCpuEflFlavour[0]       =    ICORE(pVCpu).enmCpuVendor == CPUMCPUVENDOR_INTEL
+                                                            || ICORE(pVCpu).enmCpuVendor == CPUMCPUVENDOR_VIA /*??*/
                                                           ? IEMTARGETCPU_EFL_BEHAVIOR_INTEL : IEMTARGETCPU_EFL_BEHAVIOR_AMD;
 # if defined(RT_ARCH_X86) || defined(RT_ARCH_AMD64)
-            if (pVCpu->iem.s.enmCpuVendor == CPUMGetHostCpuVendor(pVM))
-                pVCpu->iem.s.aidxTargetCpuEflFlavour[1]   = IEMTARGETCPU_EFL_BEHAVIOR_NATIVE;
+            if (ICORE(pVCpu).enmCpuVendor == CPUMGetHostCpuVendor(pVM))
+                ICORE(pVCpu).aidxTargetCpuEflFlavour[1]   = IEMTARGETCPU_EFL_BEHAVIOR_NATIVE;
             else
 # endif
-                pVCpu->iem.s.aidxTargetCpuEflFlavour[1]   = pVCpu->iem.s.aidxTargetCpuEflFlavour[0];
+                ICORE(pVCpu).aidxTargetCpuEflFlavour[1]   = ICORE(pVCpu).aidxTargetCpuEflFlavour[0];
 #else
-            pVCpu->iem.s.aidxTargetCpuEflFlavour[0]   = IEMTARGETCPU_EFL_BEHAVIOR_NATIVE;
-            pVCpu->iem.s.aidxTargetCpuEflFlavour[1]   = pVCpu->iem.s.aidxTargetCpuEflFlavour[0];
+            ICORE(pVCpu).aidxTargetCpuEflFlavour[0]   = IEMTARGETCPU_EFL_BEHAVIOR_NATIVE;
+            ICORE(pVCpu).aidxTargetCpuEflFlavour[1]   = ICORE(pVCpu).aidxTargetCpuEflFlavour[0];
 #endif
 
 #if !defined(VBOX_VMM_TARGET_ARMV8) && (IEM_CFG_TARGET_CPU == IEMTARGETCPU_DYNAMIC)
             switch (pVM->cpum.ro.GuestFeatures.enmMicroarch)
             {
-                case kCpumMicroarch_Intel_8086:     pVCpu->iem.s.uTargetCpu = IEMTARGETCPU_8086; break;
-                case kCpumMicroarch_Intel_80186:    pVCpu->iem.s.uTargetCpu = IEMTARGETCPU_186; break;
-                case kCpumMicroarch_Intel_80286:    pVCpu->iem.s.uTargetCpu = IEMTARGETCPU_286; break;
-                case kCpumMicroarch_Intel_80386:    pVCpu->iem.s.uTargetCpu = IEMTARGETCPU_386; break;
-                case kCpumMicroarch_Intel_80486:    pVCpu->iem.s.uTargetCpu = IEMTARGETCPU_486; break;
-                case kCpumMicroarch_Intel_P5:       pVCpu->iem.s.uTargetCpu = IEMTARGETCPU_PENTIUM; break;
-                case kCpumMicroarch_Intel_P6:       pVCpu->iem.s.uTargetCpu = IEMTARGETCPU_PPRO; break;
-                case kCpumMicroarch_NEC_V20:        pVCpu->iem.s.uTargetCpu = IEMTARGETCPU_V20; break;
-                case kCpumMicroarch_NEC_V30:        pVCpu->iem.s.uTargetCpu = IEMTARGETCPU_V20; break;
-                default:                            pVCpu->iem.s.uTargetCpu = IEMTARGETCPU_CURRENT; break;
+                case kCpumMicroarch_Intel_8086:     ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_8086; break;
+                case kCpumMicroarch_Intel_80186:    ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_186; break;
+                case kCpumMicroarch_Intel_80286:    ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_286; break;
+                case kCpumMicroarch_Intel_80386:    ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_386; break;
+                case kCpumMicroarch_Intel_80486:    ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_486; break;
+                case kCpumMicroarch_Intel_P5:       ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_PENTIUM; break;
+                case kCpumMicroarch_Intel_P6:       ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_PPRO; break;
+                case kCpumMicroarch_NEC_V20:        ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_V20; break;
+                case kCpumMicroarch_NEC_V30:        ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_V20; break;
+                default:                            ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_CURRENT; break;
             }
             LogRel(("IEM: TargetCpu=%s, Microarch=%s aidxTargetCpuEflFlavour={%d,%d}\n",
-                    iemGetTargetCpuName(pVCpu->iem.s.uTargetCpu), CPUMMicroarchName(pVM->cpum.ro.GuestFeatures.enmMicroarch),
-                    pVCpu->iem.s.aidxTargetCpuEflFlavour[0], pVCpu->iem.s.aidxTargetCpuEflFlavour[1]));
+                    iemGetTargetCpuName(ICORE(pVCpu).uTargetCpu), CPUMMicroarchName(pVM->cpum.ro.GuestFeatures.enmMicroarch),
+                    ICORE(pVCpu).aidxTargetCpuEflFlavour[0], ICORE(pVCpu).aidxTargetCpuEflFlavour[1]));
 #else
             LogRel(("IEM: Microarch=%s aidxTargetCpuEflFlavour={%d,%d}\n",
                     CPUMMicroarchName(pVM->cpum.ro.GuestFeatures.enmMicroarch),
-                    pVCpu->iem.s.aidxTargetCpuEflFlavour[0], pVCpu->iem.s.aidxTargetCpuEflFlavour[1]));
+                    ICORE(pVCpu).aidxTargetCpuEflFlavour[0], ICORE(pVCpu).aidxTargetCpuEflFlavour[1]));
 #endif
         }
         else
         {
-            pVCpu->iem.s.enmCpuVendor                     = pVM->apCpusR3[0]->iem.s.enmCpuVendor;
-            pVCpu->iem.s.aidxTargetCpuEflFlavour[0]       = pVM->apCpusR3[0]->iem.s.aidxTargetCpuEflFlavour[0];
-            pVCpu->iem.s.aidxTargetCpuEflFlavour[1]       = pVM->apCpusR3[0]->iem.s.aidxTargetCpuEflFlavour[1];
+            ICORE(pVCpu).enmCpuVendor                     = ICORE(pVCpu0).enmCpuVendor;
+            ICORE(pVCpu).aidxTargetCpuEflFlavour[0]       = ICORE(pVCpu0).aidxTargetCpuEflFlavour[0];
+            ICORE(pVCpu).aidxTargetCpuEflFlavour[1]       = ICORE(pVCpu0).aidxTargetCpuEflFlavour[1];
 #if IEM_CFG_TARGET_CPU == IEMTARGETCPU_DYNAMIC
-            pVCpu->iem.s.uTargetCpu                       = pVM->apCpusR3[0]->iem.s.uTargetCpu;
+            ICORE(pVCpu).uTargetCpu                       = ICORE(pVCpu0).uTargetCpu;
 #endif
         }
 
         /*
          * Mark all buffers free.
          */
-        uint32_t iMemMap = RT_ELEMENTS(pVCpu->iem.s.aMemMappings);
+        uint32_t iMemMap = RT_ELEMENTS(ICORE(pVCpu).aMemMappings);
         while (iMemMap-- > 0)
-            pVCpu->iem.s.aMemMappings[iMemMap].fAccess = IEM_ACCESS_INVALID;
+            ICORE(pVCpu).aMemMappings[iMemMap].fAccess = IEM_ACCESS_INVALID;
 
 #ifdef VBOX_WITH_IEM_RECOMPILER
         /*
          * Recompiler state and configuration distribution.
          */
-        pVCpu->iem.s.uRegFpCtrl                    = IEMNATIVE_SIMD_FP_CTRL_REG_NOT_MODIFIED;
-        pVCpu->iem.s.uTbNativeRecompileAtUsedCount = uTbNativeRecompileAtUsedCount;
-        pVCpu->iem.s.fHostICacheInvalidation       = fHostICacheInvalidation;
+        IRECM(pVCpu).uRegFpCtrl                    = IEMNATIVE_SIMD_FP_CTRL_REG_NOT_MODIFIED;
+        IRECM(pVCpu).uTbNativeRecompileAtUsedCount = uTbNativeRecompileAtUsedCount;
+        IRECM(pVCpu).fHostICacheInvalidation       = fHostICacheInvalidation;
 #endif
 
 #ifdef IEM_WITH_TLB_TRACE
@@ -365,7 +366,7 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
                         "Instructions interpreted",                     "/IEM/CPU%u/cInstructions", idCpu);
         STAMR3RegisterF(pVM, &pVCpu->iem.s.cLongJumps,                  STAMTYPE_U32,       STAMVISIBILITY_ALWAYS, STAMUNIT_BYTES,
                         "Number of longjmp calls",                      "/IEM/CPU%u/cLongJumps", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.cPotentialExits,             STAMTYPE_U32,       STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ICORE(pVCpu).cPotentialExits,             STAMTYPE_U32,       STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Potential exits",                              "/IEM/CPU%u/cPotentialExits", idCpu);
         STAMR3RegisterF(pVM, &pVCpu->iem.s.cRetAspectNotImplemented,    STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "VERR_IEM_ASPECT_NOT_IMPLEMENTED",              "/IEM/CPU%u/cRetAspectNotImplemented", idCpu);
@@ -381,53 +382,53 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
                         "Number of misaligned (for the host) atomic instructions", "/IEM/CPU%u/cMisalignedAtomics", idCpu);
 
         /* Code TLB: */
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.uTlbRevision,        STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.uTlbRevision,        STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB non-global revision",                 "/IEM/CPU%u/Tlb/Code/RevisionNonGlobal", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.uTlbRevisionGlobal,  STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.uTlbRevisionGlobal,  STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB global revision",                     "/IEM/CPU%u/Tlb/Code/RevisionGlobal", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlsFlushes,         STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlsFlushes,         STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB non-global flushes",                  "/IEM/CPU%u/Tlb/Code/RevisionNonGlobalFlushes", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlsGlobalFlushes,   STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlsGlobalFlushes,   STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB global flushes",                      "/IEM/CPU%u/Tlb/Code/RevisionGlobalFlushes", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbRevisionRollovers, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbRevisionRollovers, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB revision rollovers",                  "/IEM/CPU%u/Tlb/Code/RevisionRollovers", idCpu);
 
-        STAMR3RegisterF(pVM, (void *)&pVCpu->iem.s.CodeTlb.uTlbPhysRev, STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, (void *)&ITLBS(pVCpu).Code.uTlbPhysRev, STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB physical revision",                   "/IEM/CPU%u/Tlb/Code/PhysicalRevision", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbPhysRevFlushes,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbPhysRevFlushes,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB revision flushes",                    "/IEM/CPU%u/Tlb/Code/PhysicalRevisionFlushes", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbPhysRevRollovers, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbPhysRevRollovers, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB revision rollovers",                  "/IEM/CPU%u/Tlb/Code/PhysicalRevisionRollovers", idCpu);
 
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbGlobalLargePageCurLoads,  STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbGlobalLargePageCurLoads,  STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB global large page loads since flush", "/IEM/CPU%u/Tlb/Code/LargePageGlobalCurLoads", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.GlobalLargePageRange.uFirstTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.GlobalLargePageRange.uFirstTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB global large page range: lowest tag", "/IEM/CPU%u/Tlb/Code/LargePageGlobalFirstTag", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.GlobalLargePageRange.uLastTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.GlobalLargePageRange.uLastTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB global large page range: last tag",   "/IEM/CPU%u/Tlb/Code/LargePageGlobalLastTag", idCpu);
 
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbNonGlobalLargePageCurLoads,  STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbNonGlobalLargePageCurLoads,  STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB non-global large page loads since flush", "/IEM/CPU%u/Tlb/Code/LargePageNonGlobalCurLoads", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.NonGlobalLargePageRange.uFirstTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.NonGlobalLargePageRange.uFirstTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB non-global large page range: lowest tag", "/IEM/CPU%u/Tlb/Code/LargePageNonGlobalFirstTag", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.NonGlobalLargePageRange.uLastTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.NonGlobalLargePageRange.uLastTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB non-global large page range: last tag",   "/IEM/CPU%u/Tlb/Code/LargePageNonGlobalLastTag", idCpu);
 
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbInvlPg, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbInvlPg, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB page invalidation requests",          "/IEM/CPU%u/Tlb/Code/InvlPg", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbInvlPgLargeGlobal, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbInvlPgLargeGlobal, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB page invlpg scanning for global large pages",     "/IEM/CPU%u/Tlb/Code/InvlPg/LargeGlobal", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbInvlPgLargeNonGlobal, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbInvlPgLargeNonGlobal, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Code TLB page invlpg scanning for non-global large pages", "/IEM/CPU%u/Tlb/Code/InvlPg/LargeNonGlobal", idCpu);
 
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbCoreMisses,      STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbCoreMisses,      STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB misses",                              "/IEM/CPU%u/Tlb/Code/Misses", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbCoreGlobalLoads, STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbCoreGlobalLoads, STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB global loads",                        "/IEM/CPU%u/Tlb/Code/Misses/GlobalLoads", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbSlowCodeReadPath, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbSlowCodeReadPath, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB slow read path",                      "/IEM/CPU%u/Tlb/Code/SlowReads", idCpu);
 # ifdef IEM_WITH_TLB_STATISTICS
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbCoreHits,        STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbCoreHits,        STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB hits (non-native)",                   "/IEM/CPU%u/Tlb/Code/Hits/Other", idCpu);
 #  if defined(VBOX_WITH_IEM_NATIVE_RECOMPILER)
         STAMR3RegisterF(pVM, (void *)&pVCpu->iem.s.StatNativeCodeTlbHitsForNewPage, STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
@@ -450,19 +451,19 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
                                "Code TLB actual miss rate",             "/IEM/CPU%u/Tlb/Code/RateMisses", idCpu);
 
 #  if defined(VBOX_WITH_IEM_NATIVE_RECOMPILER)
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbNativeMissTag,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbNativeMissTag,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB misses in native code: Tag mismatch [not directly included grand parent sum]",
                         "/IEM/CPU%u/Tlb/Code/Misses/NativeBreakdown/Tag", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbNativeMissFlagsAndPhysRev,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbNativeMissFlagsAndPhysRev,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB misses in native code: Flags or physical revision mistmatch [not directly included grand parent sum]",
                         "/IEM/CPU%u/Tlb/Code/Misses/NativeBreakdown/FlagsAndPhysRev", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbNativeMissAlignment,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbNativeMissAlignment,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB misses in native code: Alignment [not directly included grand parent sum]",
                         "/IEM/CPU%u/Tlb/Code/Misses/NativeBreakdown/Alignment", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbNativeMissCrossPage,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbNativeMissCrossPage,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB misses in native code: Cross page [not directly included grand parent sum]",
                         "/IEM/CPU%u/Tlb/Code/Misses/NativeBreakdown/CrossPage", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.CodeTlb.cTlbNativeMissNonCanonical,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Code.cTlbNativeMissNonCanonical,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Code TLB misses in native code: Non-canonical [not directly included grand parent sum]",
                         "/IEM/CPU%u/Tlb/Code/Misses/NativeBreakdown/NonCanonical", idCpu);
 
@@ -476,55 +477,55 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
 # endif /* IEM_WITH_TLB_STATISTICS */
 
         /* Data TLB organized as best we can... */
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.uTlbRevision,        STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.uTlbRevision,        STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB non-global revision",                 "/IEM/CPU%u/Tlb/Data/RevisionNonGlobal", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.uTlbRevisionGlobal,  STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.uTlbRevisionGlobal,  STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB global revision",                     "/IEM/CPU%u/Tlb/Data/RevisionGlobal", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlsFlushes,         STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlsFlushes,         STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB non-global flushes",                  "/IEM/CPU%u/Tlb/Data/RevisionNonGlobalFlushes", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlsGlobalFlushes,   STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlsGlobalFlushes,   STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB global flushes",                      "/IEM/CPU%u/Tlb/Data/RevisionGlobalFlushes", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbRevisionRollovers, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbRevisionRollovers, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB revision rollovers",                  "/IEM/CPU%u/Tlb/Data/RevisionRollovers", idCpu);
 
-        STAMR3RegisterF(pVM, (void *)&pVCpu->iem.s.DataTlb.uTlbPhysRev, STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, (void *)&ITLBS(pVCpu).Data.uTlbPhysRev, STAMTYPE_X64,       STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB physical revision",                   "/IEM/CPU%u/Tlb/Data/PhysicalRevision", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbPhysRevFlushes,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbPhysRevFlushes,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB revision flushes",                    "/IEM/CPU%u/Tlb/Data/PhysicalRevisionFlushes", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbPhysRevRollovers, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbPhysRevRollovers, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB revision rollovers",                  "/IEM/CPU%u/Tlb/Data/PhysicalRevisionRollovers", idCpu);
 
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbGlobalLargePageCurLoads,  STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbGlobalLargePageCurLoads,  STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB global large page loads since flush", "/IEM/CPU%u/Tlb/Data/LargePageGlobalCurLoads", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.GlobalLargePageRange.uFirstTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.GlobalLargePageRange.uFirstTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB global large page range: lowest tag", "/IEM/CPU%u/Tlb/Data/LargePageGlobalFirstTag", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.GlobalLargePageRange.uLastTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.GlobalLargePageRange.uLastTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB global large page range: last tag",   "/IEM/CPU%u/Tlb/Data/LargePageGlobalLastTag", idCpu);
 
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbNonGlobalLargePageCurLoads,  STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbNonGlobalLargePageCurLoads,  STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB non-global large page loads since flush", "/IEM/CPU%u/Tlb/Data/LargePageNonGlobalCurLoads", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.NonGlobalLargePageRange.uFirstTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.NonGlobalLargePageRange.uFirstTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB non-global large page range: lowest tag", "/IEM/CPU%u/Tlb/Data/LargePageNonGlobalFirstTag", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.NonGlobalLargePageRange.uLastTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.NonGlobalLargePageRange.uLastTag, STAMTYPE_X64, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB non-global large page range: last tag",   "/IEM/CPU%u/Tlb/Data/LargePageNonGlobalLastTag", idCpu);
 
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbInvlPg, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbInvlPg, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB page invalidation requests",          "/IEM/CPU%u/Tlb/Data/InvlPg", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbInvlPgLargeGlobal, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbInvlPgLargeGlobal, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB page invlpg scanning for global large pages",     "/IEM/CPU%u/Tlb/Data/InvlPg/LargeGlobal", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbInvlPgLargeNonGlobal, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbInvlPgLargeNonGlobal, STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Data TLB page invlpg scanning for non-global large pages", "/IEM/CPU%u/Tlb/Data/InvlPg/LargeNonGlobal", idCpu);
 
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbCoreMisses,      STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbCoreMisses,      STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB core misses (iemMemMap, direct iemMemMapJmp (not safe path))",
                         "/IEM/CPU%u/Tlb/Data/Misses/Core", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbCoreGlobalLoads, STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbCoreGlobalLoads, STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB global loads",
                         "/IEM/CPU%u/Tlb/Data/Misses/Core/GlobalLoads", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbSafeReadPath,    STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbSafeReadPath,    STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB safe read path (inline/native misses going to iemMemMapJmp)",
                         "/IEM/CPU%u/Tlb/Data/Misses/Safe/Reads", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbSafeWritePath,   STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbSafeWritePath,   STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB safe write path (inline/native misses going to iemMemMapJmp)",
                         "/IEM/CPU%u/Tlb/Data/Misses/Safe/Writes", idCpu);
         RTStrPrintf(szPat, sizeof(szPat), "/IEM/CPU%u/Tlb/Data/Misses/*", idCpu);
@@ -534,41 +535,41 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
         RTStrPrintf(szPat, sizeof(szPat), "/IEM/CPU%u/Tlb/Data/Misses/Safe/*", idCpu);
         STAMR3RegisterSum(pVM->pUVM, STAMVISIBILITY_ALWAYS, szPat, "Data TLB actual safe path calls (read + write)",
                           "/IEM/CPU%u/Tlb/Data/Misses/Safe", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbSafeHits,        STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbSafeHits,        STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB hits in iemMemMapJmp - not part of safe-path total",
                         "/IEM/CPU%u/Tlb/Data/Misses/Safe/SubPartHits", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbSafeMisses,      STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbSafeMisses,      STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB misses in iemMemMapJmp - not part of safe-path total",
                         "/IEM/CPU%u/Tlb/Data/Misses/Safe/SubPartMisses", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbSafeGlobalLoads, STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbSafeGlobalLoads, STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB global loads",
                         "/IEM/CPU%u/Tlb/Data/Misses/Safe/SubPartMisses/GlobalLoads", idCpu);
 
 # ifdef IEM_WITH_TLB_STATISTICS
 #  ifdef VBOX_WITH_IEM_NATIVE_RECOMPILER
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbNativeMissTag,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbNativeMissTag,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB misses in native code: Tag mismatch [not directly included grand parent sum]",
                         "/IEM/CPU%u/Tlb/Data/Misses/NativeBreakdown/Tag", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbNativeMissFlagsAndPhysRev,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbNativeMissFlagsAndPhysRev,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB misses in native code: Flags or physical revision mistmatch [not directly included grand parent sum]",
                         "/IEM/CPU%u/Tlb/Data/Misses/NativeBreakdown/FlagsAndPhysRev", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbNativeMissAlignment,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbNativeMissAlignment,  STAMTYPE_COUNTER, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB misses in native code: Alignment [not directly included grand parent sum]",
                         "/IEM/CPU%u/Tlb/Data/Misses/NativeBreakdown/Alignment", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbNativeMissCrossPage,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbNativeMissCrossPage,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB misses in native code: Cross page [not directly included grand parent sum]",
                         "/IEM/CPU%u/Tlb/Data/Misses/NativeBreakdown/CrossPage", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbNativeMissNonCanonical,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbNativeMissNonCanonical,  STAMTYPE_U32_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB misses in native code: Non-canonical [not directly included grand parent sum]",
                         "/IEM/CPU%u/Tlb/Data/Misses/NativeBreakdown/NonCanonical", idCpu);
 #  endif
 # endif
 
 # ifdef IEM_WITH_TLB_STATISTICS
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbCoreHits,        STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbCoreHits,        STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB core hits (iemMemMap, direct iemMemMapJmp (not safe path))",
                         "/IEM/CPU%u/Tlb/Data/Hits/Core", idCpu);
-        STAMR3RegisterF(pVM, &pVCpu->iem.s.DataTlb.cTlbInlineCodeHits,  STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, &ITLBS(pVCpu).Data.cTlbInlineCodeHits,  STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Data TLB hits in IEMAllMemRWTmplInline.cpp.h",
                         "/IEM/CPU%u/Tlb/Data/Hits/Inline", idCpu);
 #  ifdef VBOX_WITH_IEM_NATIVE_RECOMPILER
@@ -608,9 +609,9 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
 
 
 #ifdef VBOX_WITH_IEM_RECOMPILER
-        STAMR3RegisterF(pVM, (void *)&pVCpu->iem.s.cTbExecNative,       STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, (void *)&IRECM(pVCpu).cTbExecNative,       STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Executed native translation block",            "/IEM/CPU%u/re/cTbExecNative", idCpu);
-        STAMR3RegisterF(pVM, (void *)&pVCpu->iem.s.cTbExecThreaded,     STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, (void *)&IRECM(pVCpu).cTbExecThreaded,     STAMTYPE_U64_RESET, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Executed threaded translation block",          "/IEM/CPU%u/re/cTbExecThreaded", idCpu);
         STAMR3RegisterF(pVM, (void *)&pVCpu->iem.s.StatTbThreadedExecBreaks, STAMTYPE_COUNTER,   STAMVISIBILITY_ALWAYS, STAMUNIT_OCCURENCES,
                         "Times threaded TB execution was interrupted/broken off", "/IEM/CPU%u/re/cTbExecThreadedBreaks", idCpu);
@@ -639,10 +640,10 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
         STAMR3RegisterF(pVM, (void *)&pVCpu->iem.s.StatTimerPollFactorMultiplication, STAMTYPE_PROFILE, STAMVISIBILITY_ALWAYS, STAMUNIT_NONE,
                         "Timer polling factor",                         "/IEM/CPU%u/re/TimerPoll/FactorMultiplication", idCpu);
 # endif
-        STAMR3RegisterF(pVM, (void *)&pVCpu->iem.s.cTbsTillNextTimerPollPrev, STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
+        STAMR3RegisterF(pVM, (void *)&IRECM(pVCpu).cTbsTillNextTimerPollPrev, STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Timer polling interval (in TBs)",              "/IEM/CPU%u/re/TimerPollInterval", idCpu);
 
-        PIEMTBALLOCATOR const pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+        PIEMTBALLOCATOR const pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
         STAMR3RegisterF(pVM, (void *)&pTbAllocator->StatAllocs,         STAMTYPE_COUNTER,   STAMVISIBILITY_ALWAYS, STAMUNIT_CALLS,
                         "Translation block allocations",                "/IEM/CPU%u/re/cTbAllocCalls", idCpu);
         STAMR3RegisterF(pVM, (void *)&pTbAllocator->StatFrees,          STAMTYPE_COUNTER,   STAMVISIBILITY_ALWAYS, STAMUNIT_CALLS,
@@ -668,7 +669,7 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
         STAMR3RegisterF(pVM, (void *)&pTbAllocator->cThreadedTbs,       STAMTYPE_U32,   STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Number of currently allocated threaded TBs",   "/IEM/CPU%u/re/cTbAllocatedThreaded", idCpu);
 
-        PIEMTBCACHE     const pTbCache     = pVCpu->iem.s.pTbCacheR3;
+        PIEMTBCACHE     const pTbCache     = IRECM(pVCpu).pTbCacheR3;
         STAMR3RegisterF(pVM, (void *)&pTbCache->cHash,                  STAMTYPE_U32, STAMVISIBILITY_ALWAYS, STAMUNIT_COUNT,
                         "Translation block lookup table size",          "/IEM/CPU%u/re/cTbHashTab", idCpu);
 
@@ -1310,7 +1311,7 @@ static void iemR3InfoTlbPrintHeader(PVMCPU pVCpu, PCDBGFINFOHLP pHlp, IEMTLB con
 {
     if (*pfHeader)
         return;
-    pHlp->pfnPrintf(pHlp, "%cTLB for CPU %u:\n", &pVCpu->iem.s.CodeTlb == pTlb ? 'I' : 'D', pVCpu->idCpu);
+    pHlp->pfnPrintf(pHlp, "%cTLB for CPU %u:\n", &ITLBS(pVCpu).Code == pTlb ? 'I' : 'D', pVCpu->idCpu);
     *pfHeader = true;
 }
 
@@ -1630,27 +1631,27 @@ static void iemR3InfoTlbCommon(PVM pVM, PCDBGFINFOHLP pHlp, int cArgs, char **pa
                 break;
 
             case 'a':
-                iemR3InfoTlbPrintAddress(pVCpu, pHlp, fITlb ? &pVCpu->iem.s.CodeTlb : &pVCpu->iem.s.DataTlb,
+                iemR3InfoTlbPrintAddress(pVCpu, pHlp, fITlb ? &ITLBS(pVCpu).Code : &ITLBS(pVCpu).Data,
                                          ValueUnion.u64, fFlags, &fNeedHeader);
                 fAddressMode = true;
                 cActionArgs++;
                 break;
 
             case 'A':
-                iemR3InfoTlbPrintSlots(pVCpu, pHlp, fITlb ? &pVCpu->iem.s.CodeTlb : &pVCpu->iem.s.DataTlb,
-                                       0, RT_ELEMENTS(pVCpu->iem.s.CodeTlb.aEntries), fFlags, &fNeedHeader);
+                iemR3InfoTlbPrintSlots(pVCpu, pHlp, fITlb ? &ITLBS(pVCpu).Code : &ITLBS(pVCpu).Data,
+                                       0, RT_ELEMENTS(ITLBS(pVCpu).Code.aEntries), fFlags, &fNeedHeader);
                 cActionArgs++;
                 break;
 
             case 'r':
-                iemR3InfoTlbPrintSlots(pVCpu, pHlp, fITlb ? &pVCpu->iem.s.CodeTlb : &pVCpu->iem.s.DataTlb,
+                iemR3InfoTlbPrintSlots(pVCpu, pHlp, fITlb ? &ITLBS(pVCpu).Code : &ITLBS(pVCpu).Data,
                                        ValueUnion.PairU32.uFirst, ValueUnion.PairU32.uSecond, fFlags, &fNeedHeader);
                 fAddressMode = false;
                 cActionArgs++;
                 break;
 
             case 's':
-                iemR3InfoTlbPrintSlots(pVCpu, pHlp, fITlb ? &pVCpu->iem.s.CodeTlb : &pVCpu->iem.s.DataTlb,
+                iemR3InfoTlbPrintSlots(pVCpu, pHlp, fITlb ? &ITLBS(pVCpu).Code : &ITLBS(pVCpu).Data,
                                        ValueUnion.u32, 1, fFlags, &fNeedHeader);
                 fAddressMode = false;
                 cActionArgs++;
@@ -1666,7 +1667,7 @@ static void iemR3InfoTlbCommon(PVM pVM, PCDBGFINFOHLP pHlp, int cArgs, char **pa
                     uint64_t uAddr;
                     rc = RTStrToUInt64Full(ValueUnion.psz, 16, &uAddr);
                     if (RT_SUCCESS(rc) && rc != VWRN_NUMBER_TOO_BIG)
-                        iemR3InfoTlbPrintAddress(pVCpu, pHlp, fITlb ? &pVCpu->iem.s.CodeTlb : &pVCpu->iem.s.DataTlb,
+                        iemR3InfoTlbPrintAddress(pVCpu, pHlp, fITlb ? &ITLBS(pVCpu).Code : &ITLBS(pVCpu).Data,
                                                  uAddr, fFlags, &fNeedHeader);
                     else
                         pHlp->pfnPrintf(pHlp, "error: Invalid or malformed guest address '%s': %Rrc\n", ValueUnion.psz, rc);
@@ -1676,7 +1677,7 @@ static void iemR3InfoTlbCommon(PVM pVM, PCDBGFINFOHLP pHlp, int cArgs, char **pa
                     uint32_t uSlot;
                     rc = RTStrToUInt32Full(ValueUnion.psz, 16, &uSlot);
                     if (RT_SUCCESS(rc) && rc != VWRN_NUMBER_TOO_BIG)
-                        iemR3InfoTlbPrintSlots(pVCpu, pHlp, fITlb ? &pVCpu->iem.s.CodeTlb : &pVCpu->iem.s.DataTlb,
+                        iemR3InfoTlbPrintSlots(pVCpu, pHlp, fITlb ? &ITLBS(pVCpu).Code : &ITLBS(pVCpu).Data,
                                                uSlot, 1, fFlags, &fNeedHeader);
                     else
                         pHlp->pfnPrintf(pHlp, "error: Invalid or malformed TLB slot number '%s': %Rrc\n", ValueUnion.psz, rc);
@@ -1719,8 +1720,8 @@ static void iemR3InfoTlbCommon(PVM pVM, PCDBGFINFOHLP pHlp, int cArgs, char **pa
      * If no action taken, we display all (-A) by default.
      */
     if (!cActionArgs)
-        iemR3InfoTlbPrintSlots(pVCpu, pHlp, fITlb ? &pVCpu->iem.s.CodeTlb : &pVCpu->iem.s.DataTlb,
-                               0, RT_ELEMENTS(pVCpu->iem.s.CodeTlb.aEntries), fFlags, &fNeedHeader);
+        iemR3InfoTlbPrintSlots(pVCpu, pHlp, fITlb ? &ITLBS(pVCpu).Code : &ITLBS(pVCpu).Data,
+                               0, RT_ELEMENTS(ITLBS(pVCpu).Code.aEntries), fFlags, &fNeedHeader);
 }
 
 
@@ -2202,7 +2203,7 @@ static DECLCALLBACK(void) iemR3InfoTb(PVM pVM, PCDBGFINFOHLP pHlp, int cArgs, ch
          *       trigger native recompilation.
          */
         fFlags &= IEMTB_F_KEY_MASK;
-        IEMTBCACHE const * const pTbCache = pVCpu->iem.s.pTbCacheR3;
+        IEMTBCACHE const * const pTbCache = IRECM(pVCpu).pTbCacheR3;
         uint32_t const           idxHash  = IEMTBCACHE_HASH(pTbCache, fFlags, GCPhysPc);
         pTb = IEMTBCACHE_PTR_GET_TB(pTbCache->apHash[idxHash]);
         while (pTb)
@@ -2226,7 +2227,7 @@ static DECLCALLBACK(void) iemR3InfoTb(PVM pVM, PCDBGFINFOHLP pHlp, int cArgs, ch
          * Use the TB ID for indexing.
          */
         pTb = NULL;
-        PIEMTBALLOCATOR const pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+        PIEMTBALLOCATOR const pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
         if (pTbAllocator)
         {
             size_t const idxTbChunk   = idTb / pTbAllocator->cTbsPerChunk;
@@ -2244,8 +2245,8 @@ static DECLCALLBACK(void) iemR3InfoTb(PVM pVM, PCDBGFINFOHLP pHlp, int cArgs, ch
          * Disassemble according to type.
          */
         size_t const  idxTbChunk = pTb->idxAllocChunk;
-        size_t const  idxTbNo    = (pTb - &pVCpu->iem.s.pTbAllocatorR3->aChunks[idxTbChunk].paTbs[0])
-                                 + idxTbChunk * pVCpu->iem.s.pTbAllocatorR3->cTbsPerChunk;
+        size_t const  idxTbNo    = (pTb - &IRECM(pVCpu).pTbAllocatorR3->aChunks[idxTbChunk].paTbs[0])
+                                 + idxTbChunk * IRECM(pVCpu).pTbAllocatorR3->cTbsPerChunk;
         switch (pTb->fFlags & IEMTB_F_TYPE_MASK)
         {
 # ifdef VBOX_WITH_IEM_NATIVE_RECOMPILER
@@ -2410,7 +2411,7 @@ static DECLCALLBACK(void) iemR3InfoTbTop(PVM pVM, PCDBGFINFOHLP pHlp, int cArgs,
         uint64_t    uSortKey;
     }               aTop[cTopMax] = { { NULL, 0 }, };
     uint32_t        cValid        = 0;
-    PIEMTBALLOCATOR pTbAllocator  = pVCpu->iem.s.pTbAllocatorR3;
+    PIEMTBALLOCATOR pTbAllocator  = IRECM(pVCpu).pTbAllocatorR3;
     if (pTbAllocator)
     {
         uint32_t const cTbsPerChunk = pTbAllocator->cTbsPerChunk;

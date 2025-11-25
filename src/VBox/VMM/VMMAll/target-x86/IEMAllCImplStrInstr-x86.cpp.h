@@ -1,4 +1,4 @@
-/* $Id: IEMAllCImplStrInstr-x86.cpp.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllCImplStrInstr-x86.cpp.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - String Instruction Implementation Code Template, x86 target.
  */
@@ -758,7 +758,7 @@ IEM_CIMPL_DEF_1(RT_CONCAT4(iemCImpl_rep_movs_op,OP_SIZE,_addr,ADDR_SIZE), uint8_
     /*
      * Be careful with handle bypassing.
      */
-    if (pVCpu->iem.s.fExec & IEM_F_BYPASS_HANDLERS)
+    if (ICORE(pVCpu).fExec & IEM_F_BYPASS_HANDLERS)
     {
         Log(("%s: declining because we're bypassing handlers\n", __FUNCTION__));
         return VERR_IEM_ASPECT_NOT_IMPLEMENTED;
@@ -909,7 +909,7 @@ IEM_CIMPL_DEF_0(RT_CONCAT4(iemCImpl_stos_,OP_rAX,_m,ADDR_SIZE))
      * Be careful with handle bypassing.
      */
     /** @todo Permit doing a page if correctly aligned. */
-    if (pVCpu->iem.s.fExec & IEM_F_BYPASS_HANDLERS)
+    if (ICORE(pVCpu).fExec & IEM_F_BYPASS_HANDLERS)
     {
         Log(("%s: declining because we're bypassing handlers\n", __FUNCTION__));
         return VERR_IEM_ASPECT_NOT_IMPLEMENTED;
@@ -1157,7 +1157,7 @@ IEM_CIMPL_DEF_1(RT_CONCAT4(iemCImpl_ins_op,OP_SIZE,_addr,ADDR_SIZE), bool, fIoCh
     /*
      * Be careful with handle bypassing.
      */
-    if (pVCpu->iem.s.fExec & IEM_F_BYPASS_HANDLERS)
+    if (ICORE(pVCpu).fExec & IEM_F_BYPASS_HANDLERS)
     {
         Log(("%s: declining because we're bypassing handlers\n", __FUNCTION__));
         return VERR_IEM_ASPECT_NOT_IMPLEMENTED;
@@ -1244,7 +1244,7 @@ IEM_CIMPL_DEF_1(RT_CONCAT4(iemCImpl_ins_op,OP_SIZE,_addr,ADDR_SIZE), bool, fIoCh
                 iemSetPassUpStatus(pVCpu, rcStrict);
                 rcStrict = rcStrict2;
             }
-            pVCpu->iem.s.cPotentialExits++;
+            ICORE(pVCpu).cPotentialExits++;
         }
         else
             AssertLogRelMsgFailedReturn(("rcStrict2=%Rrc\n", VBOXSTRICTRC_VAL(rcStrict2)), RT_FAILURE_NP(rcStrict2) ? rcStrict2 : VERR_IEM_IPE_1);
@@ -1323,7 +1323,7 @@ IEM_CIMPL_DEF_1(RT_CONCAT4(iemCImpl_rep_ins_op,OP_SIZE,_addr,ADDR_SIZE), bool, f
     /*
      * Be careful with handle bypassing.
      */
-    if (pVCpu->iem.s.fExec & IEM_F_BYPASS_HANDLERS)
+    if (ICORE(pVCpu).fExec & IEM_F_BYPASS_HANDLERS)
     {
         Log(("%s: declining because we're bypassing handlers\n", __FUNCTION__));
         return VERR_IEM_ASPECT_NOT_IMPLEMENTED;
@@ -1384,7 +1384,7 @@ IEM_CIMPL_DEF_1(RT_CONCAT4(iemCImpl_rep_ins_op,OP_SIZE,_addr,ADDR_SIZE), bool, f
                         rcStrict = iemSetPassUpStatus(pVCpu, rcStrict);
                         if (uCounterReg == 0)
                             rcStrict = iemRegAddToRipAndFinishingClearingRF(pVCpu, cbInstr);
-                        pVCpu->iem.s.cPotentialExits++;
+                        ICORE(pVCpu).cPotentialExits++;
                     }
                     return rcStrict;
                 }
@@ -1453,7 +1453,7 @@ IEM_CIMPL_DEF_1(RT_CONCAT4(iemCImpl_rep_ins_op,OP_SIZE,_addr,ADDR_SIZE), bool, f
                 rcStrict = iemSetPassUpStatus(pVCpu, rcStrict);
                 if (uCounterReg == 0)
                     rcStrict = iemRegAddToRipAndFinishingClearingRF(pVCpu, cbInstr);
-                pVCpu->iem.s.cPotentialExits++;
+                ICORE(pVCpu).cPotentialExits++;
                 return rcStrict;
             }
 
@@ -1472,7 +1472,7 @@ IEM_CIMPL_DEF_1(RT_CONCAT4(iemCImpl_rep_ins_op,OP_SIZE,_addr,ADDR_SIZE), bool, f
     /*
      * Done.
      */
-    pVCpu->iem.s.cPotentialExits++;
+    ICORE(pVCpu).cPotentialExits++;
     return iemRegAddToRipAndFinishingClearingRF(pVCpu, cbInstr);
 }
 
@@ -1547,7 +1547,7 @@ IEM_CIMPL_DEF_2(RT_CONCAT4(iemCImpl_outs_op,OP_SIZE,_addr,ADDR_SIZE), uint8_t, i
             if (rcStrict != VINF_SUCCESS)
                 rcStrict = iemSetPassUpStatus(pVCpu, rcStrict);
             rcStrict = iemRegAddToRipAndFinishingClearingRF(pVCpu, cbInstr);
-            pVCpu->iem.s.cPotentialExits++;
+            ICORE(pVCpu).cPotentialExits++;
         }
     }
     return rcStrict;
@@ -1676,7 +1676,7 @@ IEM_CIMPL_DEF_2(RT_CONCAT4(iemCImpl_rep_outs_op,OP_SIZE,_addr,ADDR_SIZE), uint8_
                         rcStrict = iemSetPassUpStatus(pVCpu, rcStrict);
                         if (uCounterReg == 0)
                             rcStrict = iemRegAddToRipAndFinishingClearingRF(pVCpu, cbInstr);
-                        pVCpu->iem.s.cPotentialExits++;
+                        ICORE(pVCpu).cPotentialExits++;
                     }
                     return rcStrict;
                 }
@@ -1729,7 +1729,7 @@ IEM_CIMPL_DEF_2(RT_CONCAT4(iemCImpl_rep_outs_op,OP_SIZE,_addr,ADDR_SIZE), uint8_
                     rcStrict = iemSetPassUpStatus(pVCpu, rcStrict);
                     if (uCounterReg == 0)
                         iemRegAddToRipAndFinishingClearingRF(pVCpu, cbInstr);
-                    pVCpu->iem.s.cPotentialExits++;
+                    ICORE(pVCpu).cPotentialExits++;
                 }
                 return rcStrict;
             }
@@ -1748,7 +1748,7 @@ IEM_CIMPL_DEF_2(RT_CONCAT4(iemCImpl_rep_outs_op,OP_SIZE,_addr,ADDR_SIZE), uint8_
     /*
      * Done.
      */
-    pVCpu->iem.s.cPotentialExits++;
+    ICORE(pVCpu).cPotentialExits++;
     return iemRegAddToRipAndFinishingClearingRF(pVCpu, cbInstr);
 }
 

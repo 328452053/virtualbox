@@ -1,4 +1,4 @@
-/* $Id: IEMInline-x86.h 110741 2025-08-15 22:48:13Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMInline-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inlined Functions, x86 target.
  */
@@ -264,7 +264,7 @@ DECL_FORCE_INLINE(uint32_t) iemCalcExecFlags(PVMCPUCC pVCpu) RT_NOEXCEPT
  */
 DECL_FORCE_INLINE(void) iemRecalcExecModeAndCplAndAcFlags(PVMCPUCC pVCpu)
 {
-    pVCpu->iem.s.fExec = (pVCpu->iem.s.fExec & ~(IEM_F_MODE_MASK | IEM_F_X86_CPL_MASK | IEM_F_X86_AC))
+    ICORE(pVCpu).fExec = (ICORE(pVCpu).fExec & ~(IEM_F_MODE_MASK | IEM_F_X86_CPL_MASK | IEM_F_X86_AC))
                        | iemCalcExecModeAndCplFlags(pVCpu);
 }
 
@@ -277,7 +277,7 @@ DECL_FORCE_INLINE(void) iemRecalcExecModeAndCplAndAcFlags(PVMCPUCC pVCpu)
  */
 DECL_FORCE_INLINE(void) iemRecalcExecDbgFlags(PVMCPUCC pVCpu)
 {
-    pVCpu->iem.s.fExec = (pVCpu->iem.s.fExec & ~IEM_F_PENDING_BRK_MASK)
+    ICORE(pVCpu).fExec = (ICORE(pVCpu).fExec & ~IEM_F_PENDING_BRK_MASK)
                        | iemCalcExecDbgFlags(pVCpu);
 }
 
@@ -459,7 +459,7 @@ DECL_FORCE_INLINE(void *) iemGRegRef(PVMCPUCC pVCpu, uint8_t iReg) RT_NOEXCEPT
  */
 DECL_FORCE_INLINE(uint8_t *) iemGRegRefU8(PVMCPUCC pVCpu, uint8_t iReg) RT_NOEXCEPT
 {
-    if (iReg < 4 || (pVCpu->iem.s.fPrefixes & (IEM_OP_PRF_REX | IEM_OP_PRF_VEX)))
+    if (iReg < 4 || (ICORE(pVCpu).fPrefixes & (IEM_OP_PRF_REX | IEM_OP_PRF_VEX)))
     {
         Assert(iReg < 16);
         return &pVCpu->cpum.GstCtx.aGRegs[iReg].u8;
@@ -660,7 +660,7 @@ DECL_FORCE_INLINE(uint64_t) iemGRegFetchU64(PVMCPUCC pVCpu, uint8_t iReg) RT_NOE
  */
 DECL_FORCE_INLINE(void) iemGRegStoreU8(PVMCPUCC pVCpu, uint8_t iReg, uint16_t bValue) RT_NOEXCEPT
 {
-    if (iReg < 4 || (pVCpu->iem.s.fPrefixes & (IEM_OP_PRF_REX | IEM_OP_PRF_VEX)))
+    if (iReg < 4 || (ICORE(pVCpu).fPrefixes & (IEM_OP_PRF_REX | IEM_OP_PRF_VEX)))
     {
         Assert(iReg < 16);
         pVCpu->cpum.GstCtx.aGRegs[iReg].u8 = bValue;

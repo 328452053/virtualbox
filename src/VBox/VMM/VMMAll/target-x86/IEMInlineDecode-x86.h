@@ -1,4 +1,4 @@
-/* $Id: IEMInlineDecode-x86.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMInlineDecode-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inlined Decoding related Functions, x86 target.
  */
@@ -48,7 +48,7 @@ DECL_INLINE_THROW(uint8_t) iemOpcodeGetFirstU8Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_M
      * Check for hardware instruction breakpoints.
     * Note! Guest breakpoints are only checked after POP SS or MOV SS on AMD CPUs.
      */
-    if (RT_LIKELY(!(pVCpu->iem.s.fExec & IEM_F_PENDING_BRK_INSTR)))
+    if (RT_LIKELY(!(ICORE(pVCpu).fExec & IEM_F_PENDING_BRK_INSTR)))
     { /* likely */ }
     else
     {
@@ -71,28 +71,28 @@ DECL_INLINE_THROW(uint8_t) iemOpcodeGetFirstU8Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_M
      */
 # ifdef IEM_WITH_CODE_TLB
     uint8_t         bRet;
-    uintptr_t       offBuf = pVCpu->iem.s.offInstrNextByte;
-    uint8_t const  *pbBuf  = pVCpu->iem.s.pbInstrBuf;
+    uintptr_t       offBuf = ICORE(pVCpu).offInstrNextByte;
+    uint8_t const  *pbBuf  = ICORE(pVCpu).pbInstrBuf;
     if (RT_LIKELY(   pbBuf != NULL
-                  && offBuf < pVCpu->iem.s.cbInstrBuf))
+                  && offBuf < ICORE(pVCpu).cbInstrBuf))
     {
-        pVCpu->iem.s.offInstrNextByte = (uint32_t)offBuf + 1;
+        ICORE(pVCpu).offInstrNextByte = (uint32_t)offBuf + 1;
         bRet = pbBuf[offBuf];
     }
     else
         bRet = iemOpcodeGetNextU8SlowJmp(pVCpu);
 #  ifdef IEM_WITH_CODE_TLB_AND_OPCODE_BUF
-    Assert(pVCpu->iem.s.offOpcode == 0);
-    pVCpu->iem.s.abOpcode[pVCpu->iem.s.offOpcode++] = bRet;
+    Assert(ICORE(pVCpu).offOpcode == 0);
+    ICORE(pVCpu).abOpcode[ICORE(pVCpu).offOpcode++] = bRet;
 #  endif
     return bRet;
 
 # else /* !IEM_WITH_CODE_TLB */
-    uintptr_t offOpcode = pVCpu->iem.s.offOpcode;
-    if (RT_LIKELY((uint8_t)offOpcode < pVCpu->iem.s.cbOpcode))
+    uintptr_t offOpcode = ICORE(pVCpu).offOpcode;
+    if (RT_LIKELY((uint8_t)offOpcode < ICORE(pVCpu).cbOpcode))
     {
-        pVCpu->iem.s.offOpcode = (uint8_t)offOpcode + 1;
-        return pVCpu->iem.s.abOpcode[offOpcode];
+        ICORE(pVCpu).offOpcode = (uint8_t)offOpcode + 1;
+        return ICORE(pVCpu).abOpcode[offOpcode];
     }
     return iemOpcodeGetNextU8SlowJmp(pVCpu);
 # endif
@@ -117,28 +117,28 @@ DECL_INLINE_THROW(uint8_t) iemOpcodeGetNextU8Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_MA
 {
 # ifdef IEM_WITH_CODE_TLB
     uint8_t         bRet;
-    uintptr_t       offBuf = pVCpu->iem.s.offInstrNextByte;
-    uint8_t const  *pbBuf  = pVCpu->iem.s.pbInstrBuf;
+    uintptr_t       offBuf = ICORE(pVCpu).offInstrNextByte;
+    uint8_t const  *pbBuf  = ICORE(pVCpu).pbInstrBuf;
     if (RT_LIKELY(   pbBuf != NULL
-                  && offBuf < pVCpu->iem.s.cbInstrBuf))
+                  && offBuf < ICORE(pVCpu).cbInstrBuf))
     {
-        pVCpu->iem.s.offInstrNextByte = (uint32_t)offBuf + 1;
+        ICORE(pVCpu).offInstrNextByte = (uint32_t)offBuf + 1;
         bRet = pbBuf[offBuf];
     }
     else
         bRet = iemOpcodeGetNextU8SlowJmp(pVCpu);
 #  ifdef IEM_WITH_CODE_TLB_AND_OPCODE_BUF
-    Assert(pVCpu->iem.s.offOpcode < sizeof(pVCpu->iem.s.abOpcode));
-    pVCpu->iem.s.abOpcode[pVCpu->iem.s.offOpcode++] = bRet;
+    Assert(ICORE(pVCpu).offOpcode < sizeof(ICORE(pVCpu).abOpcode));
+    ICORE(pVCpu).abOpcode[ICORE(pVCpu).offOpcode++] = bRet;
 #  endif
     return bRet;
 
 # else /* !IEM_WITH_CODE_TLB */
-    uintptr_t offOpcode = pVCpu->iem.s.offOpcode;
-    if (RT_LIKELY((uint8_t)offOpcode < pVCpu->iem.s.cbOpcode))
+    uintptr_t offOpcode = ICORE(pVCpu).offOpcode;
+    if (RT_LIKELY((uint8_t)offOpcode < ICORE(pVCpu).cbOpcode))
     {
-        pVCpu->iem.s.offOpcode = (uint8_t)offOpcode + 1;
-        return pVCpu->iem.s.abOpcode[offOpcode];
+        ICORE(pVCpu).offOpcode = (uint8_t)offOpcode + 1;
+        return ICORE(pVCpu).abOpcode[offOpcode];
     }
     return iemOpcodeGetNextU8SlowJmp(pVCpu);
 # endif
@@ -199,12 +199,12 @@ DECL_INLINE_THROW(uint16_t) iemOpcodeGetNextU16Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_
 {
 # ifdef IEM_WITH_CODE_TLB
     uint16_t        u16Ret;
-    uintptr_t       offBuf = pVCpu->iem.s.offInstrNextByte;
-    uint8_t const  *pbBuf  = pVCpu->iem.s.pbInstrBuf;
+    uintptr_t       offBuf = ICORE(pVCpu).offInstrNextByte;
+    uint8_t const  *pbBuf  = ICORE(pVCpu).pbInstrBuf;
     if (RT_LIKELY(   pbBuf != NULL
-                  && offBuf + 2 <= pVCpu->iem.s.cbInstrBuf))
+                  && offBuf + 2 <= ICORE(pVCpu).cbInstrBuf))
     {
-        pVCpu->iem.s.offInstrNextByte = (uint32_t)offBuf + 2;
+        ICORE(pVCpu).offInstrNextByte = (uint32_t)offBuf + 2;
 #  ifdef IEM_USE_UNALIGNED_DATA_ACCESS
         u16Ret = *(uint16_t const *)&pbBuf[offBuf];
 #  else
@@ -215,28 +215,28 @@ DECL_INLINE_THROW(uint16_t) iemOpcodeGetNextU16Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_
         u16Ret = iemOpcodeGetNextU16SlowJmp(pVCpu);
 
 #  ifdef IEM_WITH_CODE_TLB_AND_OPCODE_BUF
-    uintptr_t const offOpcode = pVCpu->iem.s.offOpcode;
-    Assert(offOpcode + 1 < sizeof(pVCpu->iem.s.abOpcode));
+    uintptr_t const offOpcode = ICORE(pVCpu).offOpcode;
+    Assert(offOpcode + 1 < sizeof(ICORE(pVCpu).abOpcode));
 #   ifdef IEM_USE_UNALIGNED_DATA_ACCESS
-    *(uint16_t *)&pVCpu->iem.s.abOpcode[offOpcode] = u16Ret;
+    *(uint16_t *)&ICORE(pVCpu).abOpcode[offOpcode] = u16Ret;
 #   else
-    pVCpu->iem.s.abOpcode[offOpcode]     = RT_LO_U8(u16Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 1] = RT_HI_U8(u16Ret);
+    ICORE(pVCpu).abOpcode[offOpcode]     = RT_LO_U8(u16Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 1] = RT_HI_U8(u16Ret);
 #   endif
-    pVCpu->iem.s.offOpcode = (uint8_t)offOpcode + (uint8_t)2;
+    ICORE(pVCpu).offOpcode = (uint8_t)offOpcode + (uint8_t)2;
 #  endif
 
     return u16Ret;
 
 # else /* !IEM_WITH_CODE_TLB */
-    uintptr_t const offOpcode = pVCpu->iem.s.offOpcode;
-    if (RT_LIKELY((uint8_t)offOpcode + 2 <= pVCpu->iem.s.cbOpcode))
+    uintptr_t const offOpcode = ICORE(pVCpu).offOpcode;
+    if (RT_LIKELY((uint8_t)offOpcode + 2 <= ICORE(pVCpu).cbOpcode))
     {
-        pVCpu->iem.s.offOpcode = (uint8_t)offOpcode + 2;
+        ICORE(pVCpu).offOpcode = (uint8_t)offOpcode + 2;
 #  ifdef IEM_USE_UNALIGNED_DATA_ACCESS
-        return *(uint16_t const *)&pVCpu->iem.s.abOpcode[offOpcode];
+        return *(uint16_t const *)&ICORE(pVCpu).abOpcode[offOpcode];
 #  else
-        return RT_MAKE_U16(pVCpu->iem.s.abOpcode[offOpcode], pVCpu->iem.s.abOpcode[offOpcode + 1]);
+        return RT_MAKE_U16(ICORE(pVCpu).abOpcode[offOpcode], ICORE(pVCpu).abOpcode[offOpcode + 1]);
 #  endif
     }
     return iemOpcodeGetNextU16SlowJmp(pVCpu);
@@ -289,12 +289,12 @@ DECL_INLINE_THROW(uint32_t) iemOpcodeGetNextU32Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_
 {
 # ifdef IEM_WITH_CODE_TLB
     uint32_t u32Ret;
-    uintptr_t       offBuf = pVCpu->iem.s.offInstrNextByte;
-    uint8_t const  *pbBuf  = pVCpu->iem.s.pbInstrBuf;
+    uintptr_t       offBuf = ICORE(pVCpu).offInstrNextByte;
+    uint8_t const  *pbBuf  = ICORE(pVCpu).pbInstrBuf;
     if (RT_LIKELY(   pbBuf != NULL
-                  && offBuf + 4 <= pVCpu->iem.s.cbInstrBuf))
+                  && offBuf + 4 <= ICORE(pVCpu).cbInstrBuf))
     {
-        pVCpu->iem.s.offInstrNextByte = (uint32_t)offBuf + 4;
+        ICORE(pVCpu).offInstrNextByte = (uint32_t)offBuf + 4;
 #  ifdef IEM_USE_UNALIGNED_DATA_ACCESS
         u32Ret = *(uint32_t const *)&pbBuf[offBuf];
 #  else
@@ -308,33 +308,33 @@ DECL_INLINE_THROW(uint32_t) iemOpcodeGetNextU32Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_
         u32Ret = iemOpcodeGetNextU32SlowJmp(pVCpu);
 
 #  ifdef IEM_WITH_CODE_TLB_AND_OPCODE_BUF
-    uintptr_t const offOpcode = pVCpu->iem.s.offOpcode;
-    Assert(offOpcode + 3 < sizeof(pVCpu->iem.s.abOpcode));
+    uintptr_t const offOpcode = ICORE(pVCpu).offOpcode;
+    Assert(offOpcode + 3 < sizeof(ICORE(pVCpu).abOpcode));
 #   ifdef IEM_USE_UNALIGNED_DATA_ACCESS
-    *(uint32_t *)&pVCpu->iem.s.abOpcode[offOpcode] = u32Ret;
+    *(uint32_t *)&ICORE(pVCpu).abOpcode[offOpcode] = u32Ret;
 #   else
-    pVCpu->iem.s.abOpcode[offOpcode]     = RT_BYTE1(u32Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 1] = RT_BYTE2(u32Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 2] = RT_BYTE3(u32Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 3] = RT_BYTE4(u32Ret);
+    ICORE(pVCpu).abOpcode[offOpcode]     = RT_BYTE1(u32Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 1] = RT_BYTE2(u32Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 2] = RT_BYTE3(u32Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 3] = RT_BYTE4(u32Ret);
 #   endif
-    pVCpu->iem.s.offOpcode = (uint8_t)offOpcode + (uint8_t)4;
+    ICORE(pVCpu).offOpcode = (uint8_t)offOpcode + (uint8_t)4;
 #  endif /* IEM_WITH_CODE_TLB_AND_OPCODE_BUF */
 
     return u32Ret;
 
 # else  /* !IEM_WITH_CODE_TLB */
-    uintptr_t const offOpcode = pVCpu->iem.s.offOpcode;
-    if (RT_LIKELY((uint8_t)offOpcode + 4 <= pVCpu->iem.s.cbOpcode))
+    uintptr_t const offOpcode = ICORE(pVCpu).offOpcode;
+    if (RT_LIKELY((uint8_t)offOpcode + 4 <= ICORE(pVCpu).cbOpcode))
     {
-        pVCpu->iem.s.offOpcode = (uint8_t)offOpcode + 4;
+        ICORE(pVCpu).offOpcode = (uint8_t)offOpcode + 4;
 #  ifdef IEM_USE_UNALIGNED_DATA_ACCESS
-        return *(uint32_t const *)&pVCpu->iem.s.abOpcode[offOpcode];
+        return *(uint32_t const *)&ICORE(pVCpu).abOpcode[offOpcode];
 #  else
-        return RT_MAKE_U32_FROM_U8(pVCpu->iem.s.abOpcode[offOpcode],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 1],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 2],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 3]);
+        return RT_MAKE_U32_FROM_U8(ICORE(pVCpu).abOpcode[offOpcode],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 1],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 2],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 3]);
 #  endif
     }
     return iemOpcodeGetNextU32SlowJmp(pVCpu);
@@ -387,12 +387,12 @@ DECL_INLINE_THROW(uint64_t) iemOpcodeGetNextU64Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_
 {
 # ifdef IEM_WITH_CODE_TLB
     uint64_t        u64Ret;
-    uintptr_t       offBuf = pVCpu->iem.s.offInstrNextByte;
-    uint8_t const  *pbBuf  = pVCpu->iem.s.pbInstrBuf;
+    uintptr_t       offBuf = ICORE(pVCpu).offInstrNextByte;
+    uint8_t const  *pbBuf  = ICORE(pVCpu).pbInstrBuf;
     if (RT_LIKELY(   pbBuf != NULL
-                  && offBuf + 8 <= pVCpu->iem.s.cbInstrBuf))
+                  && offBuf + 8 <= ICORE(pVCpu).cbInstrBuf))
     {
-        pVCpu->iem.s.offInstrNextByte = (uint32_t)offBuf + 8;
+        ICORE(pVCpu).offInstrNextByte = (uint32_t)offBuf + 8;
 #  ifdef IEM_USE_UNALIGNED_DATA_ACCESS
         u64Ret = *(uint64_t const *)&pbBuf[offBuf];
 #  else
@@ -410,41 +410,41 @@ DECL_INLINE_THROW(uint64_t) iemOpcodeGetNextU64Jmp(PVMCPUCC pVCpu) IEM_NOEXCEPT_
         u64Ret = iemOpcodeGetNextU64SlowJmp(pVCpu);
 
 #  ifdef IEM_WITH_CODE_TLB_AND_OPCODE_BUF
-    uintptr_t const offOpcode = pVCpu->iem.s.offOpcode;
-    Assert(offOpcode + 7 < sizeof(pVCpu->iem.s.abOpcode));
+    uintptr_t const offOpcode = ICORE(pVCpu).offOpcode;
+    Assert(offOpcode + 7 < sizeof(ICORE(pVCpu).abOpcode));
 #   ifdef IEM_USE_UNALIGNED_DATA_ACCESS
-    *(uint64_t *)&pVCpu->iem.s.abOpcode[offOpcode] = u64Ret;
+    *(uint64_t *)&ICORE(pVCpu).abOpcode[offOpcode] = u64Ret;
 #   else
-    pVCpu->iem.s.abOpcode[offOpcode]     = RT_BYTE1(u64Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 1] = RT_BYTE2(u64Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 2] = RT_BYTE3(u64Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 3] = RT_BYTE4(u64Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 4] = RT_BYTE5(u64Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 5] = RT_BYTE6(u64Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 6] = RT_BYTE7(u64Ret);
-    pVCpu->iem.s.abOpcode[offOpcode + 7] = RT_BYTE8(u64Ret);
+    ICORE(pVCpu).abOpcode[offOpcode]     = RT_BYTE1(u64Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 1] = RT_BYTE2(u64Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 2] = RT_BYTE3(u64Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 3] = RT_BYTE4(u64Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 4] = RT_BYTE5(u64Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 5] = RT_BYTE6(u64Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 6] = RT_BYTE7(u64Ret);
+    ICORE(pVCpu).abOpcode[offOpcode + 7] = RT_BYTE8(u64Ret);
 #   endif
-    pVCpu->iem.s.offOpcode = (uint8_t)offOpcode + (uint8_t)8;
+    ICORE(pVCpu).offOpcode = (uint8_t)offOpcode + (uint8_t)8;
 #  endif /* IEM_WITH_CODE_TLB_AND_OPCODE_BUF */
 
     return u64Ret;
 
 # else /* !IEM_WITH_CODE_TLB */
-    uintptr_t const offOpcode = pVCpu->iem.s.offOpcode;
-    if (RT_LIKELY((uint8_t)offOpcode + 8 <= pVCpu->iem.s.cbOpcode))
+    uintptr_t const offOpcode = ICORE(pVCpu).offOpcode;
+    if (RT_LIKELY((uint8_t)offOpcode + 8 <= ICORE(pVCpu).cbOpcode))
     {
-        pVCpu->iem.s.offOpcode = (uint8_t)offOpcode + 8;
+        ICORE(pVCpu).offOpcode = (uint8_t)offOpcode + 8;
 #  ifdef IEM_USE_UNALIGNED_DATA_ACCESS
-        return *(uint64_t const *)&pVCpu->iem.s.abOpcode[offOpcode];
+        return *(uint64_t const *)&ICORE(pVCpu).abOpcode[offOpcode];
 #  else
-        return RT_MAKE_U64_FROM_U8(pVCpu->iem.s.abOpcode[offOpcode],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 1],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 2],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 3],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 4],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 5],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 6],
-                                   pVCpu->iem.s.abOpcode[offOpcode + 7]);
+        return RT_MAKE_U64_FROM_U8(ICORE(pVCpu).abOpcode[offOpcode],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 1],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 2],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 3],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 4],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 5],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 6],
+                                   ICORE(pVCpu).abOpcode[offOpcode + 7]);
 #  endif
     }
     return iemOpcodeGetNextU64SlowJmp(pVCpu);
@@ -486,23 +486,23 @@ DECLINLINE(void) iemRecalEffOpSize(PVMCPUCC pVCpu) RT_NOEXCEPT
     switch (IEM_GET_CPU_MODE(pVCpu))
     {
         case IEMMODE_16BIT:
-            pVCpu->iem.s.enmEffOpSize = pVCpu->iem.s.fPrefixes & IEM_OP_PRF_SIZE_OP ? IEMMODE_32BIT : IEMMODE_16BIT;
+            ICORE(pVCpu).enmEffOpSize = ICORE(pVCpu).fPrefixes & IEM_OP_PRF_SIZE_OP ? IEMMODE_32BIT : IEMMODE_16BIT;
             break;
         case IEMMODE_32BIT:
-            pVCpu->iem.s.enmEffOpSize = pVCpu->iem.s.fPrefixes & IEM_OP_PRF_SIZE_OP ? IEMMODE_16BIT : IEMMODE_32BIT;
+            ICORE(pVCpu).enmEffOpSize = ICORE(pVCpu).fPrefixes & IEM_OP_PRF_SIZE_OP ? IEMMODE_16BIT : IEMMODE_32BIT;
             break;
         case IEMMODE_64BIT:
-            switch (pVCpu->iem.s.fPrefixes & (IEM_OP_PRF_SIZE_REX_W | IEM_OP_PRF_SIZE_OP))
+            switch (ICORE(pVCpu).fPrefixes & (IEM_OP_PRF_SIZE_REX_W | IEM_OP_PRF_SIZE_OP))
             {
                 case 0:
-                    pVCpu->iem.s.enmEffOpSize = pVCpu->iem.s.enmDefOpSize;
+                    ICORE(pVCpu).enmEffOpSize = ICORE(pVCpu).enmDefOpSize;
                     break;
                 case IEM_OP_PRF_SIZE_OP:
-                    pVCpu->iem.s.enmEffOpSize = IEMMODE_16BIT;
+                    ICORE(pVCpu).enmEffOpSize = IEMMODE_16BIT;
                     break;
                 case IEM_OP_PRF_SIZE_REX_W:
                 case IEM_OP_PRF_SIZE_REX_W | IEM_OP_PRF_SIZE_OP:
-                    pVCpu->iem.s.enmEffOpSize = IEMMODE_64BIT;
+                    ICORE(pVCpu).enmEffOpSize = IEMMODE_64BIT;
                     break;
             }
             break;
@@ -521,11 +521,11 @@ DECLINLINE(void) iemRecalEffOpSize(PVMCPUCC pVCpu) RT_NOEXCEPT
 DECLINLINE(void) iemRecalEffOpSize64Default(PVMCPUCC pVCpu) RT_NOEXCEPT
 {
     Assert(IEM_IS_64BIT_CODE(pVCpu));
-    pVCpu->iem.s.enmDefOpSize = IEMMODE_64BIT;
-    if ((pVCpu->iem.s.fPrefixes & (IEM_OP_PRF_SIZE_REX_W | IEM_OP_PRF_SIZE_OP)) != IEM_OP_PRF_SIZE_OP)
-        pVCpu->iem.s.enmEffOpSize = IEMMODE_64BIT;
+    ICORE(pVCpu).enmDefOpSize = IEMMODE_64BIT;
+    if ((ICORE(pVCpu).fPrefixes & (IEM_OP_PRF_SIZE_REX_W | IEM_OP_PRF_SIZE_OP)) != IEM_OP_PRF_SIZE_OP)
+        ICORE(pVCpu).enmEffOpSize = IEMMODE_64BIT;
     else
-        pVCpu->iem.s.enmEffOpSize = IEMMODE_16BIT;
+        ICORE(pVCpu).enmEffOpSize = IEMMODE_16BIT;
 }
 
 
@@ -540,12 +540,12 @@ DECLINLINE(void) iemRecalEffOpSize64Default(PVMCPUCC pVCpu) RT_NOEXCEPT
 DECLINLINE(void) iemRecalEffOpSize64DefaultAndIntelIgnoresOpSizePrefix(PVMCPUCC pVCpu) RT_NOEXCEPT
 {
     Assert(IEM_IS_64BIT_CODE(pVCpu));
-    pVCpu->iem.s.enmDefOpSize = IEMMODE_64BIT;
-    if (   (pVCpu->iem.s.fPrefixes & (IEM_OP_PRF_SIZE_REX_W | IEM_OP_PRF_SIZE_OP)) != IEM_OP_PRF_SIZE_OP
-        || pVCpu->iem.s.enmCpuVendor == CPUMCPUVENDOR_INTEL)
-        pVCpu->iem.s.enmEffOpSize = IEMMODE_64BIT;
+    ICORE(pVCpu).enmDefOpSize = IEMMODE_64BIT;
+    if (   (ICORE(pVCpu).fPrefixes & (IEM_OP_PRF_SIZE_REX_W | IEM_OP_PRF_SIZE_OP)) != IEM_OP_PRF_SIZE_OP
+        || ICORE(pVCpu).enmCpuVendor == CPUMCPUVENDOR_INTEL)
+        ICORE(pVCpu).enmEffOpSize = IEMMODE_64BIT;
     else
-        pVCpu->iem.s.enmEffOpSize = IEMMODE_16BIT;
+        ICORE(pVCpu).enmEffOpSize = IEMMODE_16BIT;
 }
 
 #endif /* !IEM_WITH_OPAQUE_DECODER_STATE */

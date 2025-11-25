@@ -1,4 +1,4 @@
-/* $Id: IEMAllN8veRecompiler.cpp 111485 2025-10-24 07:19:15Z alexander.eichner@oracle.com $ */
+/* $Id: IEMAllN8veRecompiler.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Native Recompiler
  *
@@ -157,7 +157,7 @@ template<bool const a_fWithIrqCheck>
 IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookup,(PVMCPUCC pVCpu, uint8_t idxTbLookup,
                                                                      uint32_t fFlags, RTGCPHYS GCPhysPc))
 {
-    PIEMTB const    pTb     = pVCpu->iem.s.pCurTbR3;
+    PIEMTB const    pTb     = IRECM(pVCpu).pCurTbR3;
     Assert(idxTbLookup < pTb->cTbLookupEntries);
     PIEMTB * const  ppNewTb = IEMTB_GET_TB_LOOKUP_TAB_ENTRY(pTb, idxTbLookup);
 #if 1
@@ -166,16 +166,16 @@ IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookup,(PVMCPUCC pV
     {
 # ifdef VBOX_STRICT
         uint64_t const uFlatPcAssert = pVCpu->cpum.GstCtx.rip + pVCpu->cpum.GstCtx.cs.u64Base;
-        AssertMsg(   (uFlatPcAssert & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK) == pVCpu->iem.s.uInstrBufPc
-                  && (GCPhysPc      & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK) == pVCpu->iem.s.GCPhysInstrBuf
+        AssertMsg(   (uFlatPcAssert & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK) == ICORE(pVCpu).uInstrBufPc
+                  && (GCPhysPc      & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK) == ICORE(pVCpu).GCPhysInstrBuf
                   && (GCPhysPc      & GUEST_PAGE_OFFSET_MASK)            == (uFlatPcAssert & GUEST_PAGE_OFFSET_MASK),
                   ("GCPhysPc=%RGp uFlatPcAssert=%#RX64 uInstrBufPc=%#RX64 GCPhysInstrBuf=%RGp\n",
-                   GCPhysPc, uFlatPcAssert, pVCpu->iem.s.uInstrBufPc, pVCpu->iem.s.GCPhysInstrBuf));
+                   GCPhysPc, uFlatPcAssert, ICORE(pVCpu).uInstrBufPc, ICORE(pVCpu).GCPhysInstrBuf));
 # endif
         if (pNewTb->GCPhysPc == GCPhysPc)
         {
 # ifdef VBOX_STRICT
-            uint32_t fAssertFlags = (pVCpu->iem.s.fExec & IEMTB_F_IEM_F_MASK & IEMTB_F_KEY_MASK) | IEMTB_F_TYPE_NATIVE;
+            uint32_t fAssertFlags = (ICORE(pVCpu).fExec & IEMTB_F_IEM_F_MASK & IEMTB_F_KEY_MASK) | IEMTB_F_TYPE_NATIVE;
             if (pVCpu->cpum.GstCtx.rflags.uBoth & CPUMCTX_INHIBIT_SHADOW)
                 fAssertFlags |= IEMTB_F_X86_INHIBIT_SHADOW;
             if (pVCpu->cpum.GstCtx.rflags.uBoth & CPUMCTX_INHIBIT_NMI)
@@ -208,7 +208,7 @@ IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookup,(PVMCPUCC pV
                 if (!a_fWithIrqCheck || !iemNativeHlpReturnBreakViaLookupIsIrqOrForceFlagPending(pVCpu) )
                 {
                     /* Do polling. */
-                    if (   RT_LIKELY((int32_t)--pVCpu->iem.s.cTbsTillNextTimerPoll > 0)
+                    if (   RT_LIKELY((int32_t)--IRECM(pVCpu).cTbsTillNextTimerPoll > 0)
                         || iemPollTimers(pVCpu->CTX_SUFF(pVM), pVCpu) == VINF_SUCCESS)
                     {
                         /*
@@ -220,10 +220,10 @@ IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookup,(PVMCPUCC pV
                             STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatNativeTbExitDirectLinking1NoIrq);
 
                         pNewTb->cUsed                 += 1;
-                        pNewTb->msLastUsed             = pVCpu->iem.s.msRecompilerPollNow;
-                        pVCpu->iem.s.pCurTbR3          = pNewTb;
-                        pVCpu->iem.s.ppTbLookupEntryR3 = IEMTB_GET_TB_LOOKUP_TAB_ENTRY(pNewTb, 0);
-                        pVCpu->iem.s.cTbExecNative    += 1;
+                        pNewTb->msLastUsed             = IRECM(pVCpu).msRecompilerPollNow;
+                        IRECM(pVCpu).pCurTbR3          = pNewTb;
+                        IRECM(pVCpu).ppTbLookupEntryR3 = IEMTB_GET_TB_LOOKUP_TAB_ENTRY(pNewTb, 0);
+                        IRECM(pVCpu).cTbExecNative    += 1;
                         Log10(("iemNativeHlpReturnBreakViaLookupWithPc: match at %04x:%08RX64 (%RGp): pTb=%p[%#x]-> %p\n",
                                pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, GCPhysPc, pTb, idxTbLookup, pNewTb));
                         return (uintptr_t)pNewTb->Native.paInstructions;
@@ -252,7 +252,7 @@ IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookup,(PVMCPUCC pV
     NOREF(GCPhysPc);
 #endif
 
-    pVCpu->iem.s.ppTbLookupEntryR3 = ppNewTb;
+    IRECM(pVCpu).ppTbLookupEntryR3 = ppNewTb;
     return 0;
 }
 
@@ -263,7 +263,7 @@ IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookup,(PVMCPUCC pV
 template <bool const a_fWithIrqCheck>
 IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookupWithTlb,(PVMCPUCC pVCpu, uint8_t idxTbLookup))
 {
-    PIEMTB const    pTb     = pVCpu->iem.s.pCurTbR3;
+    PIEMTB const    pTb     = IRECM(pVCpu).pCurTbR3;
     Assert(idxTbLookup < pTb->cTbLookupEntries);
     PIEMTB * const  ppNewTb = IEMTB_GET_TB_LOOKUP_TAB_ENTRY(pTb, idxTbLookup);
 #if 1
@@ -273,7 +273,7 @@ IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookupWithTlb,(PVMC
         /*
          * Calculate the flags for the next TB and check if they match.
          */
-        uint32_t fFlags = (pVCpu->iem.s.fExec & IEMTB_F_IEM_F_MASK & IEMTB_F_KEY_MASK) | IEMTB_F_TYPE_NATIVE;
+        uint32_t fFlags = (ICORE(pVCpu).fExec & IEMTB_F_IEM_F_MASK & IEMTB_F_KEY_MASK) | IEMTB_F_TYPE_NATIVE;
         if (!(pVCpu->cpum.GstCtx.rflags.uBoth & (CPUMCTX_INHIBIT_SHADOW | CPUMCTX_INHIBIT_NMI)))
         { /* likely */ }
         else
@@ -308,24 +308,24 @@ IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookupWithTlb,(PVMC
             /* Advance within the current buffer (PAGE) when possible. */
             RTGCPHYS GCPhysPc;
             uint64_t off;
-            if (   pVCpu->iem.s.pbInstrBuf
-                && (off = uPc - pVCpu->iem.s.uInstrBufPc) < pVCpu->iem.s.cbInstrBufTotal) /*ugly*/
+            if (   ICORE(pVCpu).pbInstrBuf
+                && (off = uPc - ICORE(pVCpu).uInstrBufPc) < ICORE(pVCpu).cbInstrBufTotal) /*ugly*/
             {
-                pVCpu->iem.s.offInstrNextByte = (uint32_t)off;
-                pVCpu->iem.s.offCurInstrStart = (uint16_t)off;
-                if ((uint16_t)off + 15 <= pVCpu->iem.s.cbInstrBufTotal)
-                    pVCpu->iem.s.cbInstrBuf = (uint16_t)off + 15;
+                ICORE(pVCpu).offInstrNextByte = (uint32_t)off;
+                ICORE(pVCpu).offCurInstrStart = (uint16_t)off;
+                if ((uint16_t)off + 15 <= ICORE(pVCpu).cbInstrBufTotal)
+                    ICORE(pVCpu).cbInstrBuf = (uint16_t)off + 15;
                 else
-                    pVCpu->iem.s.cbInstrBuf = pVCpu->iem.s.cbInstrBufTotal;
-                GCPhysPc = pVCpu->iem.s.GCPhysInstrBuf + off;
+                    ICORE(pVCpu).cbInstrBuf = ICORE(pVCpu).cbInstrBufTotal;
+                GCPhysPc = ICORE(pVCpu).GCPhysInstrBuf + off;
             }
             else
             {
-                pVCpu->iem.s.pbInstrBuf       = NULL;
-                pVCpu->iem.s.offCurInstrStart = 0;
-                pVCpu->iem.s.offInstrNextByte = 0;
+                ICORE(pVCpu).pbInstrBuf       = NULL;
+                ICORE(pVCpu).offCurInstrStart = 0;
+                ICORE(pVCpu).offInstrNextByte = 0;
                 iemOpcodeFetchBytesJmp(pVCpu, 0, NULL);
-                GCPhysPc = pVCpu->iem.s.pbInstrBuf ? pVCpu->iem.s.GCPhysInstrBuf + pVCpu->iem.s.offCurInstrStart : NIL_RTGCPHYS;
+                GCPhysPc = ICORE(pVCpu).pbInstrBuf ? ICORE(pVCpu).GCPhysInstrBuf + ICORE(pVCpu).offCurInstrStart : NIL_RTGCPHYS;
             }
 
             if (pNewTb->GCPhysPc == GCPhysPc)
@@ -338,7 +338,7 @@ IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookupWithTlb,(PVMC
                 if (!a_fWithIrqCheck || !iemNativeHlpReturnBreakViaLookupIsIrqOrForceFlagPending(pVCpu) )
                 {
                     /* Do polling. */
-                    if (   RT_LIKELY((int32_t)--pVCpu->iem.s.cTbsTillNextTimerPoll > 0)
+                    if (   RT_LIKELY((int32_t)--IRECM(pVCpu).cTbsTillNextTimerPoll > 0)
                         || iemPollTimers(pVCpu->CTX_SUFF(pVM), pVCpu) == VINF_SUCCESS)
                     {
                         /*
@@ -350,10 +350,10 @@ IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookupWithTlb,(PVMC
                             STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatNativeTbExitDirectLinking2NoIrq);
 
                         pNewTb->cUsed                 += 1;
-                        pNewTb->msLastUsed             = pVCpu->iem.s.msRecompilerPollNow;
-                        pVCpu->iem.s.pCurTbR3          = pNewTb;
-                        pVCpu->iem.s.ppTbLookupEntryR3 = IEMTB_GET_TB_LOOKUP_TAB_ENTRY(pNewTb, 0);
-                        pVCpu->iem.s.cTbExecNative    += 1;
+                        pNewTb->msLastUsed             = IRECM(pVCpu).msRecompilerPollNow;
+                        IRECM(pVCpu).pCurTbR3          = pNewTb;
+                        IRECM(pVCpu).ppTbLookupEntryR3 = IEMTB_GET_TB_LOOKUP_TAB_ENTRY(pNewTb, 0);
+                        IRECM(pVCpu).cTbExecNative    += 1;
                         Log10(("iemNativeHlpReturnBreakViaLookupWithTlb: match at %04x:%08RX64 (%RGp): pTb=%p[%#x]-> %p\n",
                                pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, GCPhysPc, pTb, idxTbLookup, pNewTb));
                         return (uintptr_t)pNewTb->Native.paInstructions;
@@ -383,7 +383,7 @@ IEM_DECL_NATIVE_HLP_DEF(uintptr_t, iemNativeHlpReturnBreakViaLookupWithTlb,(PVMC
     STAM_COUNTER_INC(&pVCpu->iem.s.StatNativeTbExitDirectLinking2NoTb); /* just for some stats, even if misleading */
 #endif
 
-    pVCpu->iem.s.ppTbLookupEntryR3 = ppNewTb;
+    IRECM(pVCpu).ppTbLookupEntryR3 = ppNewTb;
     return 0;
 }
 
@@ -532,9 +532,9 @@ IEM_DECL_NATIVE_HLP_DEF(int, iemNativeHlpObsoleteTb,(PVMCPUCC pVCpu))
        of a TB callback function, which for native TBs means we cannot release
        the executable memory till we've returned our way back to iemTbExec as
        that return path codes via the native code generated for the TB. */
-    Log7(("TB obsolete: %p at %04x:%08RX64\n", pVCpu->iem.s.pCurTbR3, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip));
+    Log7(("TB obsolete: %p at %04x:%08RX64\n", IRECM(pVCpu).pCurTbR3, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip));
     STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatNativeTbExitObsoleteTb);
-    iemThreadedTbObsolete(pVCpu, pVCpu->iem.s.pCurTbR3, false /*fSafeToFree*/);
+    iemThreadedTbObsolete(pVCpu, IRECM(pVCpu).pCurTbR3, false /*fSafeToFree*/);
     return VINF_IEM_REEXEC_BREAK;
 }
 
@@ -545,7 +545,7 @@ IEM_DECL_NATIVE_HLP_DEF(int, iemNativeHlpObsoleteTb,(PVMCPUCC pVCpu))
 IEM_DECL_NATIVE_HLP_DEF(int, iemNativeHlpNeedCsLimChecking,(PVMCPUCC pVCpu))
 {
     Log7(("TB need CS.LIM: %p at %04x:%08RX64; offFromLim=%#RX64 CS.LIM=%#RX32 CS.BASE=%#RX64\n",
-          pVCpu->iem.s.pCurTbR3, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip,
+          IRECM(pVCpu).pCurTbR3, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip,
           (int64_t)pVCpu->cpum.GstCtx.cs.u32Limit - (int64_t)pVCpu->cpum.GstCtx.rip,
           pVCpu->cpum.GstCtx.cs.u32Limit, pVCpu->cpum.GstCtx.cs.u64Base));
     STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatCheckNeedCsLimChecking);
@@ -559,9 +559,9 @@ IEM_DECL_NATIVE_HLP_DEF(int, iemNativeHlpNeedCsLimChecking,(PVMCPUCC pVCpu))
 IEM_DECL_NATIVE_HLP_DEF(int, iemNativeHlpCheckBranchMiss,(PVMCPUCC pVCpu))
 {
     Log7(("TB jmp miss: %p at %04x:%08RX64; GCPhysWithOffset=%RGp, pbInstrBuf=%p\n",
-          pVCpu->iem.s.pCurTbR3, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip,
-          pVCpu->iem.s.GCPhysInstrBuf + pVCpu->cpum.GstCtx.rip + pVCpu->cpum.GstCtx.cs.u64Base - pVCpu->iem.s.uInstrBufPc,
-          pVCpu->iem.s.pbInstrBuf));
+          IRECM(pVCpu).pCurTbR3, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip,
+          ICORE(pVCpu).GCPhysInstrBuf + pVCpu->cpum.GstCtx.rip + pVCpu->cpum.GstCtx.cs.u64Base - ICORE(pVCpu).uInstrBufPc,
+          ICORE(pVCpu).pbInstrBuf));
     STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatCheckBranchMisses);
     return VINF_IEM_REEXEC_BREAK;
 }
@@ -5958,7 +5958,7 @@ DECL_HIDDEN_THROW(uint32_t) iemNativeEmitPcDebugCheckWithReg(PIEMRECOMPILERSTATE
     Assert(idxPcReg != IEMNATIVE_REG_FIXED_TMP0);
     Assert(pReNative->Core.fDebugPcInitialized);
 
-    /* cmp [pVCpu->iem.s.uPcUpdatingDebug], pcreg */
+    /* cmp [IRECM(pVCpu).uPcUpdatingDebug], pcreg */
 #  ifdef RT_ARCH_AMD64
     PIEMNATIVEINSTR const pCodeBuf = iemNativeInstrBufEnsure(pReNative, off, 32);
     pCodeBuf[off++] = X86_OP_REX_W | (idxPcReg >= 8 ? X86_OP_REX_R : 0);
@@ -6547,7 +6547,7 @@ DECL_HIDDEN_THROW(uint32_t)
 iemNativeEmitExecFlagsCheck(PIEMRECOMPILERSTATE pReNative, uint32_t off, uint32_t fExec)
 {
     uint8_t const idxRegTmp = iemNativeRegAllocTmp(pReNative, &off);
-    off = iemNativeEmitLoadGprFromVCpuU32(pReNative, off, idxRegTmp, RT_UOFFSETOF(VMCPUCC, iem.s.fExec));
+    off = iemNativeEmitLoadGprFromVCpuU32(pReNative, off, idxRegTmp, ICORE_OFFSETOF(fExec));
     off = iemNativeEmitAndGpr32ByImm(pReNative, off, idxRegTmp, IEMTB_F_IEM_F_MASK & IEMTB_F_KEY_MASK);
     off = iemNativeEmitCmpGpr32WithImm(pReNative, off, idxRegTmp, fExec & IEMTB_F_KEY_MASK);
 
@@ -6588,7 +6588,7 @@ iemNativeEmitExecFlagsCheck(PIEMRECOMPILERSTATE pReNative, uint32_t off, uint32_
 DECL_HIDDEN_THROW(uint32_t)
 iemNativeEmitEFlagsSkippingCheck(PIEMRECOMPILERSTATE pReNative, uint32_t off, uint32_t fEflNeeded)
 {
-    uint32_t const offVCpu = RT_UOFFSETOF(VMCPU, iem.s.fSkippingEFlags);
+    uint32_t const offVCpu = IRECM_OFFSETOF(fSkippingEFlags);
 
     fEflNeeded &= X86_EFL_STATUS_BITS;
     if (fEflNeeded)
@@ -6648,7 +6648,7 @@ iemNativeEmitCheckCallRetAndPassUp(PIEMRECOMPILERSTATE pReNative, uint32_t off, 
      */
 
     /* edx = rcPassUp */
-    off = iemNativeEmitLoadGprFromVCpuU32(pReNative, off, X86_GREG_xDX, RT_UOFFSETOF(VMCPUCC, iem.s.rcPassUp));
+    off = iemNativeEmitLoadGprFromVCpuU32(pReNative, off, X86_GREG_xDX, ICORE_OFFSETOF(rcPassUp));
 # ifdef IEMNATIVE_WITH_INSTRUCTION_COUNTING
     off = iemNativeEmitLoadGpr8Imm(pReNative, off, X86_GREG_xCX, idxInstr);
 # endif
@@ -6674,7 +6674,7 @@ iemNativeEmitCheckCallRetAndPassUp(PIEMRECOMPILERSTATE pReNative, uint32_t off, 
     AssertCompile(ARMV8_A64_REG_X2 == IEMNATIVE_CALL_ARG2_GREG);
     off = iemNativeEmitLoadGprImmEx(pCodeBuf, off, ARMV8_A64_REG_X2, idxInstr);
 # endif
-    off = iemNativeEmitLoadGprFromVCpuU32Ex(pCodeBuf, off, ARMV8_A64_REG_X3, RT_UOFFSETOF(VMCPUCC, iem.s.rcPassUp));
+    off = iemNativeEmitLoadGprFromVCpuU32Ex(pCodeBuf, off, ARMV8_A64_REG_X3, ICORE_OFFSETOF(rcPassUp));
 
     pCodeBuf[off++] = Armv8A64MkInstrOrr(ARMV8_A64_REG_X4, ARMV8_A64_REG_X3, ARMV8_A64_REG_X0, false /*f64Bit*/);
 
@@ -6790,7 +6790,7 @@ iemNativeEmitThreadedCall(PIEMRECOMPILERSTATE pReNative, uint32_t off, PCIEMTHRD
 #ifdef IEMNATIVE_WITH_INSTRUCTION_COUNTING
     /* The threaded function may throw / long jmp, so set current instruction
        number if we're counting. */
-    off = iemNativeEmitStoreImmToVCpuU8(pReNative, off, pCallEntry->idxInstr, RT_UOFFSETOF(VMCPUCC, iem.s.idxTbCurInstr));
+    off = iemNativeEmitStoreImmToVCpuU8(pReNative, off, pCallEntry->idxInstr, IRECM_OFFSETOF(idxTbCurInstr));
 #endif
 
     uint8_t const cParams = g_acIemThreadedFunctionUsedArgs[pCallEntry->enmFunction];
@@ -8828,9 +8828,9 @@ DECLASM(void) iemNativeHlpCheckTlbLookup(PVMCPU pVCpu, uintptr_t uResult, uint64
     /* Do the lookup manually. */
     RTGCPTR const      GCPtrFlat = (iSegReg == UINT8_MAX ? GCPtr : GCPtr + pVCpu->cpum.GstCtx.aSRegs[iSegReg].u64Base) + offDisp;
     uint64_t const     uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, GCPtrFlat);
-    PCIEMTLBENTRY      pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&pVCpu->iem.s.DataTlb, uTagNoRev);
-    if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)
-                  || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)))
+    PCIEMTLBENTRY      pTlbe     = IEMTLB_TAG_TO_EVEN_ENTRY(&ITLBS(pVCpu).Data, uTagNoRev);
+    if (RT_LIKELY(   pTlbe->uTag               == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)
+                  || (pTlbe = pTlbe + 1)->uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)))
     {
         /*
          * Check TLB page table level access flags.
@@ -8843,7 +8843,7 @@ DECLASM(void) iemNativeHlpCheckTlbLookup(PVMCPU pVCpu, uintptr_t uResult, uint64
                                                                      | IEMTLBE_F_PG_UNASSIGNED
                                                                      | IEMTLBE_F_PT_NO_ACCESSED
                                                                      | fNoWriteNoDirty          | fNoUser);
-        uint64_t const uTlbPhysRev      = pVCpu->iem.s.DataTlb.uTlbPhysRev;
+        uint64_t const uTlbPhysRev      = ITLBS(pVCpu).Data.uTlbPhysRev;
         if (RT_LIKELY(fFlagsAndPhysRev == uTlbPhysRev))
         {
             /*
@@ -8888,16 +8888,17 @@ DECLHIDDEN(const char *) iemNativeDbgVCpuOffsetToName(uint32_t off)
     {
 #define ENTRY(a_Member) { (uint32_t)RT_UOFFSETOF(VMCPUCC, a_Member), #a_Member } /* cast is for stupid MSC */
         ENTRY(fLocalForcedActions),
-        ENTRY(iem.s.rcPassUp),
-        ENTRY(iem.s.fExec),
-        ENTRY(iem.s.pbInstrBuf),
-        ENTRY(iem.s.uInstrBufPc),
-        ENTRY(iem.s.GCPhysInstrBuf),
-        ENTRY(iem.s.cbInstrBufTotal),
-        ENTRY(iem.s.idxTbCurInstr),
-        ENTRY(iem.s.fSkippingEFlags),
+        ENTRY(IEM_CORE_MEMBER.rcPassUp),
+        ENTRY(IEM_CORE_MEMBER.fExec),
+        ENTRY(IEM_CORE_MEMBER.pbInstrBuf),
+        ENTRY(IEM_CORE_MEMBER.uInstrBufPc),
+        ENTRY(IEM_CORE_MEMBER.GCPhysInstrBuf),
+        ENTRY(IEM_CORE_MEMBER.cbInstrBufTotal),
+
+        ENTRY(IEM_RECM_MEMBER.idxTbCurInstr),
+        ENTRY(IEM_RECM_MEMBER.fSkippingEFlags),
 #ifdef IEMNATIVE_WITH_DELAYED_PC_UPDATING_DEBUG
-        ENTRY(iem.s.uPcUpdatingDebug),
+        ENTRY(IEM_RECM_MEMBER.uPcUpdatingDebug),
 #endif
 #ifdef VBOX_WITH_STATISTICS
         ENTRY(iem.s.StatNativeTlbHitsForFetch),
@@ -8909,25 +8910,25 @@ DECLHIDDEN(const char *) iemNativeDbgVCpuOffsetToName(uint32_t off)
         ENTRY(iem.s.StatNativeCodeTlbMissesNewPageWithOffset),
         ENTRY(iem.s.StatNativeCodeTlbHitsForNewPageWithOffset),
 #endif
-        ENTRY(iem.s.DataTlb.uTlbRevision),
-        ENTRY(iem.s.DataTlb.uTlbPhysRev),
-        ENTRY(iem.s.DataTlb.cTlbCoreHits),
-        ENTRY(iem.s.DataTlb.cTlbInlineCodeHits),
-        ENTRY(iem.s.DataTlb.cTlbNativeMissTag),
-        ENTRY(iem.s.DataTlb.cTlbNativeMissFlagsAndPhysRev),
-        ENTRY(iem.s.DataTlb.cTlbNativeMissAlignment),
-        ENTRY(iem.s.DataTlb.cTlbNativeMissCrossPage),
-        ENTRY(iem.s.DataTlb.cTlbNativeMissNonCanonical),
-        ENTRY(iem.s.DataTlb.aEntries),
-        ENTRY(iem.s.CodeTlb.uTlbRevision),
-        ENTRY(iem.s.CodeTlb.uTlbPhysRev),
-        ENTRY(iem.s.CodeTlb.cTlbCoreHits),
-        ENTRY(iem.s.CodeTlb.cTlbNativeMissTag),
-        ENTRY(iem.s.CodeTlb.cTlbNativeMissFlagsAndPhysRev),
-        ENTRY(iem.s.CodeTlb.cTlbNativeMissAlignment),
-        ENTRY(iem.s.CodeTlb.cTlbNativeMissCrossPage),
-        ENTRY(iem.s.CodeTlb.cTlbNativeMissNonCanonical),
-        ENTRY(iem.s.CodeTlb.aEntries),
+        ENTRY(iem.s.Tlbs.Data.uTlbRevision),
+        ENTRY(iem.s.Tlbs.Data.uTlbPhysRev),
+        ENTRY(iem.s.Tlbs.Data.cTlbCoreHits),
+        ENTRY(iem.s.Tlbs.Data.cTlbInlineCodeHits),
+        ENTRY(iem.s.Tlbs.Data.cTlbNativeMissTag),
+        ENTRY(iem.s.Tlbs.Data.cTlbNativeMissFlagsAndPhysRev),
+        ENTRY(iem.s.Tlbs.Data.cTlbNativeMissAlignment),
+        ENTRY(iem.s.Tlbs.Data.cTlbNativeMissCrossPage),
+        ENTRY(iem.s.Tlbs.Data.cTlbNativeMissNonCanonical),
+        ENTRY(iem.s.Tlbs.Data.aEntries),
+        ENTRY(iem.s.Tlbs.Code.uTlbRevision),
+        ENTRY(iem.s.Tlbs.Code.uTlbPhysRev),
+        ENTRY(iem.s.Tlbs.Code.cTlbCoreHits),
+        ENTRY(iem.s.Tlbs.Code.cTlbNativeMissTag),
+        ENTRY(iem.s.Tlbs.Code.cTlbNativeMissFlagsAndPhysRev),
+        ENTRY(iem.s.Tlbs.Code.cTlbNativeMissAlignment),
+        ENTRY(iem.s.Tlbs.Code.cTlbNativeMissCrossPage),
+        ENTRY(iem.s.Tlbs.Code.cTlbNativeMissNonCanonical),
+        ENTRY(iem.s.Tlbs.Code.aEntries),
         ENTRY(pVMR3),
         ENTRY(cpum.GstCtx.rax),
         ENTRY(cpum.GstCtx.ah),
@@ -10115,14 +10116,14 @@ l_profile_again:
      * The first time thru, we allocate the recompiler state and save it,
      * all the other times we'll just reuse the saved one after a quick reset.
      */
-    PIEMRECOMPILERSTATE pReNative = pVCpu->iem.s.pNativeRecompilerStateR3;
+    PIEMRECOMPILERSTATE pReNative = IRECM(pVCpu).pNativeRecompilerStateR3;
     if (RT_LIKELY(pReNative))
         iemNativeReInit(pReNative, pTb);
     else
     {
         pReNative = iemNativeInit(pVCpu, pTb);
         AssertReturn(pReNative, pTb);
-        pVCpu->iem.s.pNativeRecompilerStateR3 = pReNative; /* save it */
+        IRECM(pVCpu).pNativeRecompilerStateR3 = pReNative; /* save it */
     }
 
 #ifdef IEMNATIVE_WITH_LIVENESS_ANALYSIS
@@ -10399,9 +10400,9 @@ l_profile_again:
     /*
      * Allocate executable memory, copy over the code we've generated.
      */
-    PIEMTBALLOCATOR const  pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+    PIEMTBALLOCATOR const  pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
     if (pTbAllocator->pDelayedFreeHead)
-        iemTbAllocatorProcessDelayedFrees(pVCpu, pVCpu->iem.s.pTbAllocatorR3);
+        iemTbAllocatorProcessDelayedFrees(pVCpu, IRECM(pVCpu).pTbAllocatorR3);
 
     PIEMNATIVEINSTR        paFinalInstrBufRx = NULL;
     PCIEMNATIVEPERCHUNKCTX pCtx              = NULL;

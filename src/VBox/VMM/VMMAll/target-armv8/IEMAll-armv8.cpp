@@ -1,4 +1,4 @@
-/* $Id: IEMAll-armv8.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAll-armv8.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - ARMv8 target, miscellaneous.
  */
@@ -62,10 +62,10 @@ uint32_t iemCalcExecDbgFlagsSlow(PVMCPUCC pVCpu)
         uTagNoRev = IEMTLB_CALC_TAG_NO_REV(pVCpu, uTagNoRev); \
         /** @todo do large page accounting */ \
         uintptr_t const idxEven = IEMTLB_TAG_TO_EVEN_INDEX(uTagNoRev); \
-        if (pVCpu->iem.s.DataTlb.aEntries[idxEven].uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevision)) \
-            pVCpu->iem.s.DataTlb.aEntries[idxEven].uTag = 0; \
-        if (pVCpu->iem.s.DataTlb.aEntries[idxEven + 1].uTag == (uTagNoRev | pVCpu->iem.s.DataTlb.uTlbRevisionGlobal)) \
-            pVCpu->iem.s.DataTlb.aEntries[idxEven + 1].uTag = 0; \
+        if (ITLBS(pVCpu).Data.aEntries[idxEven].uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevision)) \
+            ITLBS(pVCpu).Data.aEntries[idxEven].uTag = 0; \
+        if (ITLBS(pVCpu).Data.aEntries[idxEven + 1].uTag == (uTagNoRev | ITLBS(pVCpu).Data.uTlbRevisionGlobal)) \
+            ITLBS(pVCpu).Data.aEntries[idxEven + 1].uTag = 0; \
     } while (0)
 #else
 # define INVALID_TLB_ENTRY_FOR_BP(a_uValue) do { } while (0)

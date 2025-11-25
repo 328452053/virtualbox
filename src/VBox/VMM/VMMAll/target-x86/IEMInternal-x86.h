@@ -1,4 +1,4 @@
-/* $Id: IEMInternal-x86.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMInternal-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Internal header file, x86 target specifics.
  */
@@ -2386,9 +2386,9 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
 /** @def IEM_GET_INSTR_LEN
  * Gets the instruction length. */
 #ifdef IEM_WITH_CODE_TLB
-# define IEM_GET_INSTR_LEN(a_pVCpu)         ((a_pVCpu)->iem.s.offInstrNextByte - (uint32_t)(int32_t)(a_pVCpu)->iem.s.offCurInstrStart)
+# define IEM_GET_INSTR_LEN(a_pVCpu)         (ICORE(a_pVCpu).offInstrNextByte - (uint32_t)(int32_t)ICORE(a_pVCpu).offCurInstrStart)
 #else
-# define IEM_GET_INSTR_LEN(a_pVCpu)         ((a_pVCpu)->iem.s.offOpcode)
+# define IEM_GET_INSTR_LEN(a_pVCpu)         (ICORE(a_pVCpu).offOpcode)
 #endif
 
 /**
@@ -2397,7 +2397,7 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
  * @returns IEMMODE
  * @param   a_pVCpu         The cross context virtual CPU structure of the calling thread.
  */
-#define IEM_GET_CPU_MODE(a_pVCpu)           ((a_pVCpu)->iem.s.fExec & IEM_F_MODE_X86_CPUMODE_MASK)
+#define IEM_GET_CPU_MODE(a_pVCpu)           (ICORE(a_pVCpu).fExec & IEM_F_MODE_X86_CPUMODE_MASK)
 
 /**
  * Check if we're currently executing in real or virtual 8086 mode.
@@ -2405,7 +2405,7 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
  * @returns @c true if it is, @c false if not.
  * @param   a_pVCpu         The cross context virtual CPU structure of the calling thread.
  */
-#define IEM_IS_REAL_OR_V86_MODE(a_pVCpu)    ((  ((a_pVCpu)->iem.s.fExec  ^ IEM_F_MODE_X86_PROT_MASK) \
+#define IEM_IS_REAL_OR_V86_MODE(a_pVCpu)    ((  (ICORE(a_pVCpu).fExec    ^ IEM_F_MODE_X86_PROT_MASK) \
                                               & (IEM_F_MODE_X86_V86_MASK | IEM_F_MODE_X86_PROT_MASK)) != 0)
 
 /**
@@ -2414,7 +2414,7 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
  * @returns @c true if it is, @c false if not.
  * @param   a_pVCpu         The cross context virtual CPU structure of the calling thread.
  */
-#define IEM_IS_V86_MODE(a_pVCpu)            (((a_pVCpu)->iem.s.fExec & IEM_F_MODE_X86_V86_MASK) != 0)
+#define IEM_IS_V86_MODE(a_pVCpu)            ((ICORE(a_pVCpu).fExec & IEM_F_MODE_X86_V86_MASK) != 0)
 
 /**
  * Check if we're currently executing in long mode.
@@ -2454,7 +2454,7 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
  * @returns @c true if it is, @c false if not.
  * @param   a_pVCpu         The cross context virtual CPU structure of the calling thread.
  */
-#define IEM_IS_REAL_MODE(a_pVCpu)           (!((a_pVCpu)->iem.s.fExec & IEM_F_MODE_X86_PROT_MASK))
+#define IEM_IS_REAL_MODE(a_pVCpu)           (!(ICORE(a_pVCpu).fExec & IEM_F_MODE_X86_PROT_MASK))
 
 /**
  * Gets the current protection level (CPL).
@@ -2462,7 +2462,7 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
  * @returns 0..3
  * @param   a_pVCpu         The cross context virtual CPU structure of the calling thread.
  */
-#define IEM_GET_CPL(a_pVCpu)                (((a_pVCpu)->iem.s.fExec >> IEM_F_X86_CPL_SHIFT) & IEM_F_X86_CPL_SMASK)
+#define IEM_GET_CPL(a_pVCpu)                ((ICORE(a_pVCpu).fExec >> IEM_F_X86_CPL_SHIFT) & IEM_F_X86_CPL_SMASK)
 
 /**
  * Sets the current protection level (CPL).
@@ -2470,17 +2470,17 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
  * @param   a_pVCpu         The cross context virtual CPU structure of the calling thread.
  */
 #define IEM_SET_CPL(a_pVCpu, a_uCpl) \
-    do { (a_pVCpu)->iem.s.fExec = ((a_pVCpu)->iem.s.fExec & ~IEM_F_X86_CPL_MASK) | ((a_uCpl) << IEM_F_X86_CPL_SHIFT); } while (0)
+    do { ICORE(a_pVCpu).fExec = (ICORE(a_pVCpu).fExec & ~IEM_F_X86_CPL_MASK) | ((a_uCpl) << IEM_F_X86_CPL_SHIFT); } while (0)
 
 /**
  * Evaluates to true if we're presenting an Intel CPU to the guest.
  */
-#define IEM_IS_GUEST_CPU_INTEL(a_pVCpu)     ( (a_pVCpu)->iem.s.enmCpuVendor == CPUMCPUVENDOR_INTEL )
+#define IEM_IS_GUEST_CPU_INTEL(a_pVCpu)     ( ICORE(a_pVCpu).enmCpuVendor == CPUMCPUVENDOR_INTEL )
 
 /**
  * Evaluates to true if we're presenting an AMD CPU to the guest.
  */
-#define IEM_IS_GUEST_CPU_AMD(a_pVCpu)       ( (a_pVCpu)->iem.s.enmCpuVendor == CPUMCPUVENDOR_AMD || (a_pVCpu)->iem.s.enmCpuVendor == CPUMCPUVENDOR_HYGON )
+#define IEM_IS_GUEST_CPU_AMD(a_pVCpu)       ( ICORE(a_pVCpu).enmCpuVendor == CPUMCPUVENDOR_AMD || ICORE(a_pVCpu).enmCpuVendor == CPUMCPUVENDOR_HYGON )
 
 /**
  * Check if the address is canonical.
@@ -2497,13 +2497,13 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
  *
  * For use during decoding.
  */
-#define IEM_GET_MODRM_REG(a_pVCpu, a_bRm)   ( (((a_bRm) >> X86_MODRM_REG_SHIFT) & X86_MODRM_REG_SMASK) | (a_pVCpu)->iem.s.uRexReg )
+#define IEM_GET_MODRM_REG(a_pVCpu, a_bRm)   ( (((a_bRm) >> X86_MODRM_REG_SHIFT) & X86_MODRM_REG_SMASK) | ICORE(a_pVCpu).uRexReg )
 /**
  * Gets the r/m part of a ModR/M encoding as a register index, with REX.B added in.
  *
  * For use during decoding.
  */
-#define IEM_GET_MODRM_RM(a_pVCpu, a_bRm)    ( ((a_bRm) & X86_MODRM_RM_MASK) | (a_pVCpu)->iem.s.uRexB )
+#define IEM_GET_MODRM_RM(a_pVCpu, a_bRm)    ( ((a_bRm) & X86_MODRM_RM_MASK) | ICORE(a_pVCpu).uRexB )
 
 /**
  * Gets the register (reg) part of a ModR/M encoding, without REX.R.
@@ -2527,7 +2527,7 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
  * @see iemGRegRefU8Ex, iemGRegFetchU8Ex, iemGRegStoreU8Ex
  */
 #define IEM_GET_MODRM_REG_EX8(a_pVCpu, a_bRm) \
-    (   (pVCpu->iem.s.fPrefixes & IEM_OP_PRF_REX) \
+    (   (ICORE(a_pVCpu).fPrefixes & IEM_OP_PRF_REX) \
      || !((a_bRm) & (4 << X86_MODRM_REG_SHIFT)) /* IEM_GET_MODRM_REG(pVCpu, a_bRm) < 4 */ \
      ? IEM_GET_MODRM_REG(pVCpu, a_bRm) : (((a_bRm) >> X86_MODRM_REG_SHIFT) & 3) | 16)
 /**
@@ -2539,7 +2539,7 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
  * @see iemGRegRefU8Ex, iemGRegFetchU8Ex, iemGRegStoreU8Ex
  */
 #define IEM_GET_MODRM_RM_EX8(a_pVCpu, a_bRm) \
-    (   (pVCpu->iem.s.fPrefixes & IEM_OP_PRF_REX) \
+    (   (ICORE(a_pVCpu).fPrefixes & IEM_OP_PRF_REX) \
      || !((a_bRm) & 4) /* IEM_GET_MODRM_RM(pVCpu, a_bRm) < 4 */ \
      ? IEM_GET_MODRM_RM(pVCpu, a_bRm) : ((a_bRm) & 3) | 16)
 
@@ -2555,7 +2555,7 @@ IEM_DECL_IMPL_PROTO(uint32_t, iemAImpl_vcvtpd2dq_u128_u256_fallback,(uint32_t uM
  */
 #define IEM_GET_MODRM_EX(a_pVCpu, a_bRm) \
     (  ((a_bRm) & ~X86_MODRM_REG_MASK) \
-     | (uint8_t)( (pVCpu->iem.s.fPrefixes & (IEM_OP_PRF_REX_B | IEM_OP_PRF_REX_X)) >> (25 - 3) ) )
+     | (uint8_t)( (ICORE(a_pVCpu).fPrefixes & (IEM_OP_PRF_REX_B | IEM_OP_PRF_REX_X)) >> (25 - 3) ) )
 AssertCompile(IEM_OP_PRF_REX_B == RT_BIT_32(25));
 AssertCompile(IEM_OP_PRF_REX_X == RT_BIT_32(26));
 
@@ -2567,7 +2567,7 @@ AssertCompile(IEM_OP_PRF_REX_X == RT_BIT_32(26));
  * @param   a_pVCpu         The cross context virtual CPU structure of the calling thread.
  */
 #define IEM_GET_EFFECTIVE_VVVV(a_pVCpu) \
-    (IEM_IS_64BIT_CODE(a_pVCpu) ? (a_pVCpu)->iem.s.uVex3rdReg : (a_pVCpu)->iem.s.uVex3rdReg & 7)
+    (IEM_IS_64BIT_CODE(a_pVCpu) ? ICORE(a_pVCpu).uVex3rdReg : ICORE(a_pVCpu).uVex3rdReg & 7)
 
 
 /**
@@ -2584,7 +2584,7 @@ AssertCompile(IEM_OP_PRF_REX_X == RT_BIT_32(26));
  * Checks if we're executing inside an AMD-V or VT-x guest.
  */
 #if defined(VBOX_WITH_NESTED_HWVIRT_VMX) || defined(VBOX_WITH_NESTED_HWVIRT_SVM)
-# define IEM_IS_IN_GUEST(a_pVCpu)       RT_BOOL((a_pVCpu)->iem.s.fExec & IEM_F_X86_CTX_IN_GUEST)
+# define IEM_IS_IN_GUEST(a_pVCpu)       RT_BOOL(ICORE(a_pVCpu).fExec & IEM_F_X86_CTX_IN_GUEST)
 #else
 # define IEM_IS_IN_GUEST(a_pVCpu)       false
 #endif
@@ -2600,8 +2600,8 @@ AssertCompile(IEM_OP_PRF_REX_X == RT_BIT_32(26));
 /**
  * Check if the guest has entered VMX non-root operation.
  */
-# define IEM_VMX_IS_NON_ROOT_MODE(a_pVCpu)  (   ((a_pVCpu)->iem.s.fExec & (IEM_F_X86_CTX_VMX | IEM_F_X86_CTX_IN_GUEST)) \
-                                             ==                           (IEM_F_X86_CTX_VMX | IEM_F_X86_CTX_IN_GUEST) )
+# define IEM_VMX_IS_NON_ROOT_MODE(a_pVCpu)  (   (ICORE(a_pVCpu).fExec & (IEM_F_X86_CTX_VMX | IEM_F_X86_CTX_IN_GUEST)) \
+                                             ==                         (IEM_F_X86_CTX_VMX | IEM_F_X86_CTX_IN_GUEST) )
 
 /**
  * Check if the nested-guest has the given Pin-based VM-execution control set.
@@ -2705,7 +2705,7 @@ AssertCompile(IEM_OP_PRF_REX_X == RT_BIT_32(26));
 /**
  * Checks if we're executing a guest using AMD-V.
  */
-# define IEM_SVM_IS_IN_GUEST(a_pVCpu) (   (a_pVCpu->iem.s.fExec & (IEM_F_X86_CTX_SVM | IEM_F_X86_CTX_IN_GUEST)) \
+# define IEM_SVM_IS_IN_GUEST(a_pVCpu) (   (ICORE(a_pVCpu).fExec & (IEM_F_X86_CTX_SVM | IEM_F_X86_CTX_IN_GUEST)) \
                                        ==                         (IEM_F_X86_CTX_SVM | IEM_F_X86_CTX_IN_GUEST))
 /**
  * Check if an SVM control/instruction intercept is set.

@@ -1,4 +1,4 @@
-/* $Id: IEMAllThrdRecompiler.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllThrdRecompiler.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Instruction Decoding and Threaded Recompilation.
  *
@@ -140,14 +140,14 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmpEx(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAn
 # define SET_SS_DEF() \
     do \
     { \
-        if (!(pVCpu->iem.s.fPrefixes & IEM_OP_PRF_SEG_MASK)) \
-            pVCpu->iem.s.iEffSeg = X86_SREG_SS; \
+        if (!(ICORE(pVCpu).fPrefixes & IEM_OP_PRF_SEG_MASK)) \
+            ICORE(pVCpu).iEffSeg = X86_SREG_SS; \
     } while (0)
 
     if (!IEM_IS_64BIT_CODE(pVCpu))
     {
 /** @todo Check the effective address size crap! */
-        if (pVCpu->iem.s.enmEffAddrMode == IEMMODE_16BIT)
+        if (ICORE(pVCpu).enmEffAddrMode == IEMMODE_16BIT)
         {
             uint16_t u16EffAddr;
 
@@ -187,7 +187,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmpEx(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAn
             return u16EffAddr;
         }
 
-        Assert(pVCpu->iem.s.enmEffAddrMode == IEMMODE_32BIT);
+        Assert(ICORE(pVCpu).enmEffAddrMode == IEMMODE_32BIT);
         uint32_t u32EffAddr;
         uint64_t uInfo;
 
@@ -304,7 +304,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmpEx(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAn
     {
         /* Get the register (or SIB) value. */
         uInfo = 0;
-        switch ((bRm & X86_MODRM_RM_MASK) | pVCpu->iem.s.uRexB)
+        switch ((bRm & X86_MODRM_RM_MASK) | ICORE(pVCpu).uRexB)
         {
             case  0: u64EffAddr = pVCpu->cpum.GstCtx.rax; break;
             case  1: u64EffAddr = pVCpu->cpum.GstCtx.rcx; break;
@@ -328,7 +328,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmpEx(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAn
                 uInfo = (uint64_t)bSib << 32;
 
                 /* Get the index and scale it. */
-                switch (((bSib >> X86_SIB_INDEX_SHIFT) & X86_SIB_INDEX_SMASK) | pVCpu->iem.s.uRexIndex)
+                switch (((bSib >> X86_SIB_INDEX_SHIFT) & X86_SIB_INDEX_SMASK) | ICORE(pVCpu).uRexIndex)
                 {
                     case  0: u64EffAddr = pVCpu->cpum.GstCtx.rax; break;
                     case  1: u64EffAddr = pVCpu->cpum.GstCtx.rcx; break;
@@ -351,7 +351,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmpEx(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAn
                 u64EffAddr <<= (bSib >> X86_SIB_SCALE_SHIFT) & X86_SIB_SCALE_SMASK;
 
                 /* add base */
-                switch ((bSib & X86_SIB_BASE_MASK) | pVCpu->iem.s.uRexB)
+                switch ((bSib & X86_SIB_BASE_MASK) | ICORE(pVCpu).uRexB)
                 {
                     case  0: u64EffAddr += pVCpu->cpum.GstCtx.rax; break;
                     case  1: u64EffAddr += pVCpu->cpum.GstCtx.rcx; break;
@@ -372,7 +372,7 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmpEx(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAn
                     case 13:
                         if ((bRm & X86_MODRM_MOD_MASK) != 0)
                         {
-                            if (!pVCpu->iem.s.uRexB)
+                            if (!ICORE(pVCpu).uRexB)
                             {
                                 u64EffAddr += pVCpu->cpum.GstCtx.rbp;
                                 SET_SS_DEF();
@@ -422,12 +422,12 @@ RTGCPTR iemOpHlpCalcRmEffAddrJmpEx(PVMCPUCC pVCpu, uint8_t bRm, uint32_t cbImmAn
     }
 
     *puInfo = uInfo;
-    if (pVCpu->iem.s.enmEffAddrMode == IEMMODE_64BIT)
+    if (ICORE(pVCpu).enmEffAddrMode == IEMMODE_64BIT)
     {
         Log5(("iemOpHlpCalcRmEffAddrJmp: EffAddr=%#010RGv uInfo=%#RX64\n", u64EffAddr, uInfo));
         return u64EffAddr;
     }
-    Assert(pVCpu->iem.s.enmEffAddrMode == IEMMODE_32BIT);
+    Assert(ICORE(pVCpu).enmEffAddrMode == IEMMODE_32BIT);
     Log5(("iemOpHlpCalcRmEffAddrJmp: EffAddr=%#010RGv uInfo=%#RX64\n", u64EffAddr & UINT32_MAX, uInfo));
     return u64EffAddr & UINT32_MAX;
 }
@@ -507,7 +507,7 @@ DECL_NO_INLINE(static, void) iemTbCacheAddWithPruning(PVMCPUCC pVCpu, PIEMTBCACH
     /*
      * Sort it by most recently used and usage count.
      */
-    RTSortApvShell((void **)apSortedTbs, cInserted, iemTbCachePruneCmpTb, (void *)(uintptr_t)pVCpu->iem.s.msRecompilerPollNow);
+    RTSortApvShell((void **)apSortedTbs, cInserted, iemTbCachePruneCmpTb, (void *)(uintptr_t)IRECM(pVCpu).msRecompilerPollNow);
 
     /* We keep half the list for now. Perhaps a bit aggressive... */
     uintptr_t const cKeep = cInserted / 2;
@@ -629,12 +629,12 @@ static bool iemTbCacheRemove(PIEMTBCACHE pTbCache, PIEMTB pTb)
 static PIEMTB iemTbCacheLookup(PVMCPUCC pVCpu, PIEMTBCACHE pTbCache,
                                RTGCPHYS GCPhysPc, uint32_t fExtraFlags) IEM_NOEXCEPT_MAY_LONGJMP /** @todo r=bird: no longjumping here, right? iemNativeRecompile is noexcept. */
 {
-    uint32_t const fFlags     = ((pVCpu->iem.s.fExec & IEMTB_F_IEM_F_MASK) | fExtraFlags) & IEMTB_F_KEY_MASK;
+    uint32_t const fFlags     = ((ICORE(pVCpu).fExec & IEMTB_F_IEM_F_MASK) | fExtraFlags) & IEMTB_F_KEY_MASK;
 
     /*
      * First consult the lookup table entry.
      */
-    PIEMTB * const ppTbLookup = pVCpu->iem.s.ppTbLookupEntryR3;
+    PIEMTB * const ppTbLookup = IRECM(pVCpu).ppTbLookupEntryR3;
     PIEMTB         pTb        = *ppTbLookup;
     if (pTb)
     {
@@ -646,10 +646,10 @@ static PIEMTB iemTbCacheLookup(PVMCPUCC pVCpu, PIEMTBCACHE pTbCache,
                 if (pTb->x86.fAttr == (uint16_t)pVCpu->cpum.GstCtx.cs.Attr.u)
                 {
                     STAM_COUNTER_INC(&pTbCache->cLookupHitsViaTbLookupTable);
-                    pTb->msLastUsed = pVCpu->iem.s.msRecompilerPollNow;
+                    pTb->msLastUsed = IRECM(pVCpu).msRecompilerPollNow;
                     pTb->cUsed++;
 #ifdef VBOX_WITH_IEM_NATIVE_RECOMPILER
-                    if ((pTb->fFlags & IEMTB_F_TYPE_NATIVE) || pTb->cUsed != pVCpu->iem.s.uTbNativeRecompileAtUsedCount)
+                    if ((pTb->fFlags & IEMTB_F_TYPE_NATIVE) || pTb->cUsed != IRECM(pVCpu).uTbNativeRecompileAtUsedCount)
                     {
                         Log10(("TB lookup: fFlags=%#x GCPhysPc=%RGp: %p (@ %p)\n", fFlags, GCPhysPc, pTb, ppTbLookup));
                         return pTb;
@@ -688,10 +688,10 @@ static PIEMTB iemTbCacheLookup(PVMCPUCC pVCpu, PIEMTBCACHE pTbCache,
                     AssertMsg(cLeft > 0, ("%d\n", cLeft));
 
                     *ppTbLookup = pTb;
-                    pTb->msLastUsed = pVCpu->iem.s.msRecompilerPollNow;
+                    pTb->msLastUsed = IRECM(pVCpu).msRecompilerPollNow;
                     pTb->cUsed++;
 #ifdef VBOX_WITH_IEM_NATIVE_RECOMPILER
-                    if ((pTb->fFlags & IEMTB_F_TYPE_NATIVE) || pTb->cUsed != pVCpu->iem.s.uTbNativeRecompileAtUsedCount)
+                    if ((pTb->fFlags & IEMTB_F_TYPE_NATIVE) || pTb->cUsed != IRECM(pVCpu).uTbNativeRecompileAtUsedCount)
                     {
                         Log10(("TB lookup: fFlags=%#x GCPhysPc=%RGp idxHash=%#x: %p (@ %d / %d)\n",
                                fFlags, GCPhysPc, idxHash, pTb, IEMTBCACHE_PTR_GET_COUNT(pTbCache->apHash[idxHash]) - cLeft,
@@ -775,8 +775,8 @@ DECLCALLBACK(int) iemTbInit(PVMCC pVM, uint32_t cInitialTbs, uint32_t cMaxTbs,
                             uint64_t cbInitialExec, uint64_t cbMaxExec, uint32_t cbChunkExec)
 {
     PVMCPUCC pVCpu = VMMGetCpu(pVM);
-    Assert(!pVCpu->iem.s.pTbCacheR3);
-    Assert(!pVCpu->iem.s.pTbAllocatorR3);
+    Assert(!IRECM(pVCpu).pTbCacheR3);
+    Assert(!IRECM(pVCpu).pTbAllocatorR3);
 
     /*
      * Calculate the chunk size of the TB allocator.
@@ -792,7 +792,7 @@ DECLCALLBACK(int) iemTbInit(PVMCC pVM, uint32_t cInitialTbs, uint32_t cMaxTbs,
 #endif
     for (;;)
     {
-        if (cMaxTbs <= cTbsPerChunk * (uint64_t)RT_ELEMENTS(pVCpu->iem.s.pTbAllocatorR3->aChunks))
+        if (cMaxTbs <= cTbsPerChunk * (uint64_t)RT_ELEMENTS(IRECM(pVCpu).pTbAllocatorR3->aChunks))
             break;
         cbPerChunk  *= 2;
         cTbsPerChunk = cbPerChunk / sizeof(IEMTB);
@@ -803,7 +803,7 @@ DECLCALLBACK(int) iemTbInit(PVMCC pVM, uint32_t cInitialTbs, uint32_t cMaxTbs,
 
     uint32_t cMaxChunks = (cMaxTbs + cTbsPerChunk - 1) / cTbsPerChunk;
     Assert(cMaxChunks * cTbsPerChunk >= cMaxTbs);
-    Assert(cMaxChunks <= RT_ELEMENTS(pVCpu->iem.s.pTbAllocatorR3->aChunks));
+    Assert(cMaxChunks <= RT_ELEMENTS(IRECM(pVCpu).pTbAllocatorR3->aChunks));
 
     cMaxTbs = cMaxChunks * cTbsPerChunk;
 
@@ -827,7 +827,7 @@ DECLCALLBACK(int) iemTbInit(PVMCC pVM, uint32_t cInitialTbs, uint32_t cMaxTbs,
     Assert(RT_BIT_32(cChunkShift) == cTbsPerChunk);
 #endif
 
-    pVCpu->iem.s.pTbAllocatorR3 = pTbAllocator;
+    IRECM(pVCpu).pTbAllocatorR3 = pTbAllocator;
 
     /*
      * Allocate the initial chunks.
@@ -879,7 +879,7 @@ DECLCALLBACK(int) iemTbInit(PVMCC pVM, uint32_t cInitialTbs, uint32_t cMaxTbs,
     pTbCache->cHash     = cCacheEntries;
     pTbCache->uHashMask = cCacheEntries - 1;
     Assert(pTbCache->cHash > pTbCache->uHashMask);
-    pVCpu->iem.s.pTbCacheR3 = pTbCache;
+    IRECM(pVCpu).pTbCacheR3 = pTbCache;
 
     /*
      * Initialize the native executable memory allocator.
@@ -921,7 +921,7 @@ iemTbAllocatorFreeInner(PVMCPUCC pVCpu, PIEMTBALLOCATOR pTbAllocator, PIEMTB pTb
     /*
      * Unlink the TB from the hash table.
      */
-    iemTbCacheRemove(pVCpu->iem.s.pTbCacheR3, pTb);
+    iemTbCacheRemove(IRECM(pVCpu).pTbCacheR3, pTb);
 
     /*
      * Free the TB itself.
@@ -993,7 +993,7 @@ DECLHIDDEN(void) iemTbAllocatorFree(PVMCPUCC pVCpu, PIEMTB pTb)
     /*
      * Validate state.
      */
-    PIEMTBALLOCATOR const pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+    PIEMTBALLOCATOR const pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
     Assert(pTbAllocator && pTbAllocator->uMagic == IEMTBALLOCATOR_MAGIC);
     uint8_t const idxChunk = pTb->idxAllocChunk;
     AssertLogRelReturnVoid(idxChunk < pTbAllocator->cAllocatedChunks);
@@ -1003,7 +1003,7 @@ DECLHIDDEN(void) iemTbAllocatorFree(PVMCPUCC pVCpu, PIEMTB pTb)
     /*
      * Invalidate the TB lookup pointer and call the inner worker.
      */
-    pVCpu->iem.s.ppTbLookupEntryR3 = &pVCpu->iem.s.pTbLookupEntryDummyR3;
+    IRECM(pVCpu).ppTbLookupEntryR3 = &IRECM(pVCpu).pTbLookupEntryDummyR3;
     iemTbAllocatorFreeInner<0>(pVCpu, pTbAllocator, pTb, idxChunk, (uint32_t)idxInChunk);
 }
 
@@ -1030,13 +1030,13 @@ DECLHIDDEN(void) iemTbAllocatorFreeBulk(PVMCPUCC pVCpu, PIEMTBALLOCATOR pTbAlloc
  */
 DECLHIDDEN(PIEMTBALLOCATOR) iemTbAllocatorFreeBulkStart(PVMCPUCC pVCpu)
 {
-    PIEMTBALLOCATOR const pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+    PIEMTBALLOCATOR const pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
     Assert(pTbAllocator && pTbAllocator->uMagic == IEMTBALLOCATOR_MAGIC);
 
     iemTbAllocatorProcessDelayedFrees(pVCpu, pTbAllocator);
 
     /* It should be sufficient to do this once. */
-    pVCpu->iem.s.ppTbLookupEntryR3 = &pVCpu->iem.s.pTbLookupEntryDummyR3;
+    IRECM(pVCpu).ppTbLookupEntryR3 = &IRECM(pVCpu).pTbLookupEntryDummyR3;
 
     return pTbAllocator;
 }
@@ -1060,7 +1060,7 @@ static void iemTbAlloctorScheduleForFree(PVMCPUCC pVCpu, PIEMTB pTb)
     /*
      * Validate state.
      */
-    PIEMTBALLOCATOR const pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+    PIEMTBALLOCATOR const pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
     Assert(pTbAllocator && pTbAllocator->uMagic == IEMTBALLOCATOR_MAGIC);
     Assert(pTb->idxAllocChunk < pTbAllocator->cAllocatedChunks);
     Assert((uintptr_t)(pTb - pTbAllocator->aChunks[pTb->idxAllocChunk].paTbs) < pTbAllocator->cTbsPerChunk);
@@ -1077,7 +1077,7 @@ static void iemTbAlloctorScheduleForFree(PVMCPUCC pVCpu, PIEMTB pTb)
      * Note! It could still be in various lookup tables, so we trash the GCPhys
      *       and CS attribs to ensure it won't be reused.
      */
-    iemTbCacheRemove(pVCpu->iem.s.pTbCacheR3, pTb);
+    iemTbCacheRemove(IRECM(pVCpu).pTbCacheR3, pTb);
     pTb->GCPhysPc  = NIL_RTGCPHYS;
     pTb->x86.fAttr = UINT16_MAX;
 
@@ -1101,7 +1101,7 @@ void iemTbAllocatorProcessDelayedFrees(PVMCPUCC pVCpu, PIEMTBALLOCATOR pTbAlloca
     while (pTb)
     {
         PIEMTB const pTbNext = pTb->pNext;
-        Assert(pVCpu->iem.s.pCurTbR3 != pTb);
+        Assert(IRECM(pVCpu).pCurTbR3 != pTb);
         iemTbAllocatorFree(pVCpu, pTb);
         pTb = pTbNext;
     }
@@ -1114,7 +1114,7 @@ void iemTbAllocatorProcessDelayedFrees(PVMCPUCC pVCpu, PIEMTBALLOCATOR pTbAlloca
  */
 static int iemTbAllocatorFreeAll(PVMCPUCC pVCpu)
 {
-    PIEMTBALLOCATOR const pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+    PIEMTBALLOCATOR const pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
     AssertReturn(pTbAllocator, VERR_WRONG_ORDER);
     AssertReturn(pTbAllocator->uMagic == IEMTBALLOCATOR_MAGIC, VERR_INVALID_MAGIC);
 
@@ -1133,7 +1133,7 @@ static int iemTbAllocatorFreeAll(PVMCPUCC pVCpu)
         }
     }
 
-    pVCpu->iem.s.ppTbLookupEntryR3 = &pVCpu->iem.s.pTbLookupEntryDummyR3;
+    IRECM(pVCpu).ppTbLookupEntryR3 = &IRECM(pVCpu).pTbLookupEntryDummyR3;
 
 # if 1
     /* Reset the free list. */
@@ -1155,7 +1155,7 @@ static int iemTbAllocatorFreeAll(PVMCPUCC pVCpu)
 
 # if 1
     /* Completely reset the TB cache. */
-    RT_BZERO(pVCpu->iem.s.pTbCacheR3->apHash, sizeof(pVCpu->iem.s.pTbCacheR3->apHash[0]) * pVCpu->iem.s.pTbCacheR3->cHash);
+    RT_BZERO(IRECM(pVCpu).pTbCacheR3->apHash, sizeof(IRECM(pVCpu).pTbCacheR3->apHash[0]) * IRECM(pVCpu).pTbCacheR3->cHash);
 # endif
 
     return VINF_SUCCESS;
@@ -1171,7 +1171,7 @@ static int iemTbAllocatorGrow(PVMCPUCC pVCpu)
     /*
      * Validate state.
      */
-    PIEMTBALLOCATOR const pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+    PIEMTBALLOCATOR const pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
     AssertReturn(pTbAllocator, VERR_WRONG_ORDER);
     AssertReturn(pTbAllocator->uMagic == IEMTBALLOCATOR_MAGIC, VERR_INVALID_MAGIC);
     uint32_t const idxChunk = pTbAllocator->cAllocatedChunks;
@@ -1247,7 +1247,7 @@ static PIEMTB iemTbAllocatorAllocSlow(PVMCPUCC pVCpu, PIEMTBALLOCATOR const pTbA
      * in out of groups of 4 TBs, resulting in 32 free TBs.
      */
     STAM_PROFILE_START(&pTbAllocator->StatPrune, a);
-    uint32_t const msNow          = pVCpu->iem.s.msRecompilerPollNow;
+    uint32_t const msNow          = IRECM(pVCpu).msRecompilerPollNow;
     uint32_t const cTbsToPrune    = 128;
     uint32_t const cTbsPerGroup   = 4;
     uint32_t       cFreedTbs      = 0;
@@ -1300,7 +1300,7 @@ static PIEMTB iemTbAllocatorAllocSlow(PVMCPUCC pVCpu, PIEMTBALLOCATOR const pTbA
     STAM_PROFILE_STOP(&pTbAllocator->StatPrune, a);
 
     /* Flush the TB lookup entry pointer. */
-    pVCpu->iem.s.ppTbLookupEntryR3 = &pVCpu->iem.s.pTbLookupEntryDummyR3;
+    IRECM(pVCpu).ppTbLookupEntryR3 = &IRECM(pVCpu).pTbLookupEntryDummyR3;
 
     /*
      * Allocate a TB from the ones we've pruned.
@@ -1323,7 +1323,7 @@ static PIEMTB iemTbAllocatorAllocSlow(PVMCPUCC pVCpu, PIEMTBALLOCATOR const pTbA
  */
 DECL_FORCE_INLINE(PIEMTB) iemTbAllocatorAlloc(PVMCPUCC pVCpu, bool fThreaded)
 {
-    PIEMTBALLOCATOR const pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+    PIEMTBALLOCATOR const pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
     Assert(pTbAllocator && pTbAllocator->uMagic == IEMTBALLOCATOR_MAGIC);
 
     /* Free any pending TBs before we proceed. */
@@ -1353,7 +1353,7 @@ DECL_FORCE_INLINE(PIEMTB) iemTbAllocatorAlloc(PVMCPUCC pVCpu, bool fThreaded)
  */
 void iemTbAllocatorFreeupNativeSpace(PVMCPUCC pVCpu, uint32_t cNeededInstrs)
 {
-    PIEMTBALLOCATOR const pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+    PIEMTBALLOCATOR const pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
     AssertReturnVoid(pTbAllocator && pTbAllocator->uMagic == IEMTBALLOCATOR_MAGIC);
 
     STAM_REL_PROFILE_START(&pTbAllocator->StatPruneNative, a);
@@ -1366,7 +1366,7 @@ void iemTbAllocatorFreeupNativeSpace(PVMCPUCC pVCpu, uint32_t cNeededInstrs)
     /*
      * Scan and free TBs.
      */
-    uint32_t const msNow          = pVCpu->iem.s.msRecompilerPollNow;
+    uint32_t const msNow          = IRECM(pVCpu).msRecompilerPollNow;
     uint32_t const cTbsToPrune    = 128 * 8;
     uint32_t const cTbsPerGroup   = 4   * 4;
     uint32_t       cFreedTbs      = 0;
@@ -1717,17 +1717,17 @@ static PIEMTB iemThreadedTbAlloc(PVMCC pVM, PVMCPUCC pVCpu, RTGCPHYS GCPhysPc, u
             pTb->pabOpcodes = (uint8_t *)RTMemAlloc(cCalls * 16);
             if (pTb->pabOpcodes)
             {
-                pVCpu->iem.s.cbOpcodesAllocated = cCalls * 16;
+                IRECM(pVCpu).cbOpcodesAllocated = cCalls * 16;
                 pTb->Thrd.cAllocated        = cCalls;
                 pTb->Thrd.cCalls            = 0;
                 pTb->cbOpcodes              = 0;
                 pTb->pNext                  = NULL;
                 pTb->cUsed                  = 0;
-                pTb->msLastUsed             = pVCpu->iem.s.msRecompilerPollNow;
+                pTb->msLastUsed             = IRECM(pVCpu).msRecompilerPollNow;
                 pTb->idxAllocChunk          = UINT8_MAX;
                 pTb->GCPhysPc               = GCPhysPc;
                 pTb->x86.fAttr              = (uint16_t)pVCpu->cpum.GstCtx.cs.Attr.u;
-                pTb->fFlags                 = (pVCpu->iem.s.fExec & IEMTB_F_IEM_F_MASK) | fExtraFlags;
+                pTb->fFlags                 = (ICORE(pVCpu).fExec & IEMTB_F_IEM_F_MASK) | fExtraFlags;
                 pTb->cInstructions          = 0;
                 pTb->cTbLookupEntries       = 1; /* Entry zero is for anything w/o a specific entry. */
 
@@ -1764,7 +1764,7 @@ static PIEMTB iemThreadedTbAlloc(PVMCC pVM, PVMCPUCC pVCpu, RTGCPHYS GCPhysPc, u
 static void iemThreadedTbReuse(PVMCPUCC pVCpu, PIEMTB pTb, RTGCPHYS GCPhysPc, uint32_t fExtraFlags)
 {
     pTb->GCPhysPc               = GCPhysPc;
-    pTb->fFlags                 = (pVCpu->iem.s.fExec & IEMTB_F_IEM_F_MASK) | fExtraFlags;
+    pTb->fFlags                 = (ICORE(pVCpu).fExec & IEMTB_F_IEM_F_MASK) | fExtraFlags;
     pTb->x86.fAttr              = (uint16_t)pVCpu->cpum.GstCtx.cs.Attr.u;
     pTb->Thrd.cCalls            = 0;
     pTb->cbOpcodes              = 0;
@@ -1823,7 +1823,7 @@ static PIEMTB iemThreadedTbDuplicate(PVMCC pVM, PVMCPUCC pVCpu, PCIEMTB pTbSrc)
                 pTb->Thrd.cAllocated    = cCalls;
                 pTb->pNext              = NULL;
                 pTb->cUsed              = 0;
-                pTb->msLastUsed         = pVCpu->iem.s.msRecompilerPollNow;
+                pTb->msLastUsed         = IRECM(pVCpu).msRecompilerPollNow;
                 pTb->fFlags             = pTbSrc->fFlags;
 
                 return pTb;
@@ -1913,7 +1913,7 @@ static void iemThreadedLogCurInstr(PVMCPUCC pVCpu, const char *pszFunction, uint
               " cs=%04x ss=%04x ds=%04x es=%04x fs=%04x gs=%04x efl=%08x\n"
               " fsw=%04x fcw=%04x ftw=%02x mxcsr=%04x/%04x\n"
               " %s\n"
-              , pszFunction, pVCpu->iem.s.fExec, pVCpu->iem.s.pCurTbR3, pVCpu->iem.s.pCurTbR3 ? pVCpu->iem.s.pCurTbR3->cUsed : 0, idxInstr,
+              , pszFunction, ICORE(pVCpu).fExec, IRECM(pVCpu).pCurTbR3, IRECM(pVCpu).pCurTbR3 ? IRECM(pVCpu).pCurTbR3->cUsed : 0, idxInstr,
               pVCpu->cpum.GstCtx.eax, pVCpu->cpum.GstCtx.ebx, pVCpu->cpum.GstCtx.ecx, pVCpu->cpum.GstCtx.edx, pVCpu->cpum.GstCtx.esi, pVCpu->cpum.GstCtx.edi,
               pVCpu->cpum.GstCtx.eip, pVCpu->cpum.GstCtx.esp, pVCpu->cpum.GstCtx.ebp, pVCpu->cpum.GstCtx.eflags.Bits.u2IOPL, pVCpu->cpum.GstCtx.tr.Sel,
               pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.ss.Sel, pVCpu->cpum.GstCtx.ds.Sel, pVCpu->cpum.GstCtx.es.Sel,
@@ -1962,60 +1962,60 @@ DECL_FORCE_INLINE(void) iemThreadedCompileInitDecoder(PVMCPUCC pVCpu, bool const
 {
     /* ASSUMES: That iemInitExec was already called and that anyone changing
        CPU state affecting the fExec bits since then will have updated fExec!  */
-    AssertMsg((pVCpu->iem.s.fExec & ~IEM_F_USER_OPTS) == iemCalcExecFlags(pVCpu),
-              ("fExec=%#x iemCalcExecModeFlags=%#x\n", pVCpu->iem.s.fExec, iemCalcExecFlags(pVCpu)));
+    AssertMsg((ICORE(pVCpu).fExec & ~IEM_F_USER_OPTS) == iemCalcExecFlags(pVCpu),
+              ("fExec=%#x iemCalcExecModeFlags=%#x\n", ICORE(pVCpu).fExec, iemCalcExecFlags(pVCpu)));
 
     IEMMODE const enmMode = IEM_GET_CPU_MODE(pVCpu);
 
     /* Decoder state: */
-    pVCpu->iem.s.enmDefAddrMode     = enmMode;  /** @todo check if this is correct... */
-    pVCpu->iem.s.enmEffAddrMode     = enmMode;
+    ICORE(pVCpu).enmDefAddrMode     = enmMode;  /** @todo check if this is correct... */
+    ICORE(pVCpu).enmEffAddrMode     = enmMode;
     if (enmMode != IEMMODE_64BIT)
     {
-        pVCpu->iem.s.enmDefOpSize   = enmMode;  /** @todo check if this is correct... */
-        pVCpu->iem.s.enmEffOpSize   = enmMode;
+        ICORE(pVCpu).enmDefOpSize   = enmMode;  /** @todo check if this is correct... */
+        ICORE(pVCpu).enmEffOpSize   = enmMode;
     }
     else
     {
-        pVCpu->iem.s.enmDefOpSize   = IEMMODE_32BIT;
-        pVCpu->iem.s.enmEffOpSize   = IEMMODE_32BIT;
+        ICORE(pVCpu).enmDefOpSize   = IEMMODE_32BIT;
+        ICORE(pVCpu).enmEffOpSize   = IEMMODE_32BIT;
     }
-    pVCpu->iem.s.fPrefixes          = 0;
-    pVCpu->iem.s.uRexReg            = 0;
-    pVCpu->iem.s.uRexB              = 0;
-    pVCpu->iem.s.uRexIndex          = 0;
-    pVCpu->iem.s.idxPrefix          = 0;
-    pVCpu->iem.s.uVex3rdReg         = 0;
-    pVCpu->iem.s.uVexLength         = 0;
-    pVCpu->iem.s.fEvexStuff         = 0;
-    pVCpu->iem.s.iEffSeg            = X86_SREG_DS;
-    pVCpu->iem.s.offModRm           = 0;
-    pVCpu->iem.s.iNextMapping       = 0;
+    ICORE(pVCpu).fPrefixes          = 0;
+    ICORE(pVCpu).uRexReg            = 0;
+    ICORE(pVCpu).uRexB              = 0;
+    ICORE(pVCpu).uRexIndex          = 0;
+    ICORE(pVCpu).idxPrefix          = 0;
+    ICORE(pVCpu).uVex3rdReg         = 0;
+    ICORE(pVCpu).uVexLength         = 0;
+    ICORE(pVCpu).fEvexStuff         = 0;
+    ICORE(pVCpu).iEffSeg            = X86_SREG_DS;
+    ICORE(pVCpu).offModRm           = 0;
+    ICORE(pVCpu).iNextMapping       = 0;
 
     if (!fReInit)
     {
-        pVCpu->iem.s.cActiveMappings        = 0;
-        pVCpu->iem.s.rcPassUp               = VINF_SUCCESS;
-        pVCpu->iem.s.fEndTb                 = false;
-        pVCpu->iem.s.fTbCheckOpcodes        = true; /* (check opcodes for before executing the first instruction) */
-        pVCpu->iem.s.fTbBranched            = IEMBRANCHED_F_NO;
-        pVCpu->iem.s.fTbCrossedPage         = false;
-        pVCpu->iem.s.cInstrTillIrqCheck     = !(fExtraFlags & IEMTB_F_X86_INHIBIT_SHADOW) ? 32 : 0;
-        pVCpu->iem.s.idxLastCheckIrqCallNo  = UINT16_MAX;
-        pVCpu->iem.s.fTbCurInstrIsSti       = false;
+        ICORE(pVCpu).cActiveMappings        = 0;
+        ICORE(pVCpu).rcPassUp               = VINF_SUCCESS;
+        IRECM(pVCpu).fEndTb                 = false;
+        IRECM(pVCpu).fTbCheckOpcodes        = true; /* (check opcodes for before executing the first instruction) */
+        IRECM(pVCpu).fTbBranched            = IEMBRANCHED_F_NO;
+        IRECM(pVCpu).fTbCrossedPage         = false;
+        IRECM(pVCpu).cInstrTillIrqCheck     = !(fExtraFlags & IEMTB_F_X86_INHIBIT_SHADOW) ? 32 : 0;
+        IRECM(pVCpu).idxLastCheckIrqCallNo  = UINT16_MAX;
+        IRECM(pVCpu).fTbCurInstrIsSti       = false;
         /* Force RF clearing and TF checking on first instruction in the block
            as we don't really know what came before and should assume the worst: */
-        pVCpu->iem.s.fTbPrevInstr           = IEM_CIMPL_F_RFLAGS | IEM_CIMPL_F_END_TB;
+        IRECM(pVCpu).fTbPrevInstr           = IEM_CIMPL_F_RFLAGS | IEM_CIMPL_F_END_TB;
     }
     else
     {
-        Assert(pVCpu->iem.s.cActiveMappings == 0);
-        Assert(pVCpu->iem.s.rcPassUp        == VINF_SUCCESS);
-        Assert(pVCpu->iem.s.fEndTb          == false);
-        Assert(pVCpu->iem.s.fTbCrossedPage  == false);
-        pVCpu->iem.s.fTbPrevInstr           = pVCpu->iem.s.fTbCurInstr;
+        Assert(ICORE(pVCpu).cActiveMappings == 0);
+        Assert(ICORE(pVCpu).rcPassUp        == VINF_SUCCESS);
+        Assert(IRECM(pVCpu).fEndTb          == false);
+        Assert(IRECM(pVCpu).fTbCrossedPage  == false);
+        IRECM(pVCpu).fTbPrevInstr           = IRECM(pVCpu).fTbCurInstr;
     }
-    pVCpu->iem.s.fTbCurInstr                = 0;
+    IRECM(pVCpu).fTbCurInstr                = 0;
 
 #ifdef DBGFTRACE_ENABLED
     switch (IEM_GET_CPU_MODE(pVCpu))
@@ -2044,7 +2044,7 @@ DECL_FORCE_INLINE(void) iemThreadedCompileInitOpcodeFetching(PVMCPUCC pVCpu)
 {
     /* Almost everything is done by iemGetPcWithPhysAndCode() already.  We just need to initialize the index into abOpcode. */
 #ifdef IEM_WITH_CODE_TLB_AND_OPCODE_BUF
-    pVCpu->iem.s.offOpcode          = 0;
+    ICORE(pVCpu).offOpcode          = 0;
 #else
     RT_NOREF(pVCpu);
 #endif
@@ -2059,43 +2059,43 @@ DECL_FORCE_INLINE(void) iemThreadedCompileInitOpcodeFetching(PVMCPUCC pVCpu)
  */
 DECL_FORCE_INLINE(void) iemThreadedCompileReInitOpcodeFetching(PVMCPUCC pVCpu)
 {
-    if (pVCpu->iem.s.pbInstrBuf)
+    if (ICORE(pVCpu).pbInstrBuf)
     {
         uint64_t off = pVCpu->cpum.GstCtx.rip;
         Assert(pVCpu->cpum.GstCtx.cs.u64Base == 0 || !IEM_IS_64BIT_CODE(pVCpu));
         off += pVCpu->cpum.GstCtx.cs.u64Base;
-        off -= pVCpu->iem.s.uInstrBufPc;
-        if (off < pVCpu->iem.s.cbInstrBufTotal)
+        off -= ICORE(pVCpu).uInstrBufPc;
+        if (off < ICORE(pVCpu).cbInstrBufTotal)
         {
-            pVCpu->iem.s.offInstrNextByte = (uint32_t)off;
-            pVCpu->iem.s.offCurInstrStart = (uint16_t)off;
-            if ((uint16_t)off + 15 <= pVCpu->iem.s.cbInstrBufTotal)
-                pVCpu->iem.s.cbInstrBuf = (uint16_t)off + 15;
+            ICORE(pVCpu).offInstrNextByte = (uint32_t)off;
+            ICORE(pVCpu).offCurInstrStart = (uint16_t)off;
+            if ((uint16_t)off + 15 <= ICORE(pVCpu).cbInstrBufTotal)
+                ICORE(pVCpu).cbInstrBuf = (uint16_t)off + 15;
             else
-                pVCpu->iem.s.cbInstrBuf = pVCpu->iem.s.cbInstrBufTotal;
+                ICORE(pVCpu).cbInstrBuf = ICORE(pVCpu).cbInstrBufTotal;
         }
         else
         {
-            pVCpu->iem.s.pbInstrBuf       = NULL;
-            pVCpu->iem.s.offInstrNextByte = 0;
-            pVCpu->iem.s.offCurInstrStart = 0;
-            pVCpu->iem.s.cbInstrBuf       = 0;
-            pVCpu->iem.s.cbInstrBufTotal  = 0;
-            pVCpu->iem.s.GCPhysInstrBuf   = NIL_RTGCPHYS;
+            ICORE(pVCpu).pbInstrBuf       = NULL;
+            ICORE(pVCpu).offInstrNextByte = 0;
+            ICORE(pVCpu).offCurInstrStart = 0;
+            ICORE(pVCpu).cbInstrBuf       = 0;
+            ICORE(pVCpu).cbInstrBufTotal  = 0;
+            ICORE(pVCpu).GCPhysInstrBuf   = NIL_RTGCPHYS;
         }
     }
     else
     {
-        pVCpu->iem.s.offInstrNextByte = 0;
-        pVCpu->iem.s.offCurInstrStart = 0;
-        pVCpu->iem.s.cbInstrBuf       = 0;
-        pVCpu->iem.s.cbInstrBufTotal  = 0;
+        ICORE(pVCpu).offInstrNextByte = 0;
+        ICORE(pVCpu).offCurInstrStart = 0;
+        ICORE(pVCpu).cbInstrBuf       = 0;
+        ICORE(pVCpu).cbInstrBufTotal  = 0;
 #ifdef VBOX_STRICT
-        pVCpu->iem.s.GCPhysInstrBuf   = NIL_RTGCPHYS;
+        ICORE(pVCpu).GCPhysInstrBuf   = NIL_RTGCPHYS;
 #endif
     }
 #ifdef IEM_WITH_CODE_TLB_AND_OPCODE_BUF
-    pVCpu->iem.s.offOpcode          = 0;
+    ICORE(pVCpu).offOpcode          = 0;
 #endif
 }
 
@@ -2161,21 +2161,21 @@ DECLINLINE(void) iemThreadedCopyOpcodeBytesInline(PCVMCPUCC pVCpu, uint8_t *pbDs
     switch (cbInstr)
     {
         default: AssertMsgFailed(("%#x\n", cbInstr)); RT_FALL_THROUGH();
-        case 15:    pbDst[14] = pVCpu->iem.s.abOpcode[14]; RT_FALL_THROUGH();
-        case 14:    pbDst[13] = pVCpu->iem.s.abOpcode[13]; RT_FALL_THROUGH();
-        case 13:    pbDst[12] = pVCpu->iem.s.abOpcode[12]; RT_FALL_THROUGH();
-        case 12:    pbDst[11] = pVCpu->iem.s.abOpcode[11]; RT_FALL_THROUGH();
-        case 11:    pbDst[10] = pVCpu->iem.s.abOpcode[10]; RT_FALL_THROUGH();
-        case 10:    pbDst[9]  = pVCpu->iem.s.abOpcode[9];  RT_FALL_THROUGH();
-        case 9:     pbDst[8]  = pVCpu->iem.s.abOpcode[8];  RT_FALL_THROUGH();
-        case 8:     pbDst[7]  = pVCpu->iem.s.abOpcode[7];  RT_FALL_THROUGH();
-        case 7:     pbDst[6]  = pVCpu->iem.s.abOpcode[6];  RT_FALL_THROUGH();
-        case 6:     pbDst[5]  = pVCpu->iem.s.abOpcode[5];  RT_FALL_THROUGH();
-        case 5:     pbDst[4]  = pVCpu->iem.s.abOpcode[4];  RT_FALL_THROUGH();
-        case 4:     pbDst[3]  = pVCpu->iem.s.abOpcode[3];  RT_FALL_THROUGH();
-        case 3:     pbDst[2]  = pVCpu->iem.s.abOpcode[2];  RT_FALL_THROUGH();
-        case 2:     pbDst[1]  = pVCpu->iem.s.abOpcode[1];  RT_FALL_THROUGH();
-        case 1:     pbDst[0]  = pVCpu->iem.s.abOpcode[0];  break;
+        case 15:    pbDst[14] = ICORE(pVCpu).abOpcode[14]; RT_FALL_THROUGH();
+        case 14:    pbDst[13] = ICORE(pVCpu).abOpcode[13]; RT_FALL_THROUGH();
+        case 13:    pbDst[12] = ICORE(pVCpu).abOpcode[12]; RT_FALL_THROUGH();
+        case 12:    pbDst[11] = ICORE(pVCpu).abOpcode[11]; RT_FALL_THROUGH();
+        case 11:    pbDst[10] = ICORE(pVCpu).abOpcode[10]; RT_FALL_THROUGH();
+        case 10:    pbDst[9]  = ICORE(pVCpu).abOpcode[9];  RT_FALL_THROUGH();
+        case 9:     pbDst[8]  = ICORE(pVCpu).abOpcode[8];  RT_FALL_THROUGH();
+        case 8:     pbDst[7]  = ICORE(pVCpu).abOpcode[7];  RT_FALL_THROUGH();
+        case 7:     pbDst[6]  = ICORE(pVCpu).abOpcode[6];  RT_FALL_THROUGH();
+        case 6:     pbDst[5]  = ICORE(pVCpu).abOpcode[5];  RT_FALL_THROUGH();
+        case 5:     pbDst[4]  = ICORE(pVCpu).abOpcode[4];  RT_FALL_THROUGH();
+        case 4:     pbDst[3]  = ICORE(pVCpu).abOpcode[3];  RT_FALL_THROUGH();
+        case 3:     pbDst[2]  = ICORE(pVCpu).abOpcode[2];  RT_FALL_THROUGH();
+        case 2:     pbDst[1]  = ICORE(pVCpu).abOpcode[1];  RT_FALL_THROUGH();
+        case 1:     pbDst[0]  = ICORE(pVCpu).abOpcode[0];  break;
     }
 }
 
@@ -2201,7 +2201,7 @@ static bool iemThreadedCompileFullTbJump(PVMCPUCC pVCpu, PIEMTB pTb)
 
         /* Always check timers as we risk getting stuck in a loop otherwise.  We
            combine it with an IRQ check if that's not performed in the TB already. */
-        pCall->enmFunction = pVCpu->iem.s.idxLastCheckIrqCallNo < idxCall
+        pCall->enmFunction = IRECM(pVCpu).idxLastCheckIrqCallNo < idxCall
                            ? kIemThreadedFunc_BltIn_CheckTimers
                            : kIemThreadedFunc_BltIn_CheckTimersAndIrq;
         pCall->idxInstr    = 0;
@@ -2241,7 +2241,7 @@ static bool iemThreadedCompileFullTbJump(PVMCPUCC pVCpu, PIEMTB pTb)
 DECLHIDDEN(int) iemThreadedCompileBackAtFirstInstruction(PVMCPU pVCpu, PIEMTB pTb) RT_NOEXCEPT
 {
     /* Check if the mode matches. */
-    if (   (pVCpu->iem.s.fExec & IEMTB_F_IEM_F_MASK & IEMTB_F_KEY_MASK)
+    if (   (ICORE(pVCpu).fExec & IEMTB_F_IEM_F_MASK & IEMTB_F_KEY_MASK)
         == (pTb->fFlags        & IEMTB_F_KEY_MASK   & ~IEMTB_F_X86_CS_LIM_CHECKS))
     {
         STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatTbLoopFullTbDetected2);
@@ -2270,7 +2270,7 @@ DECLHIDDEN(int) iemThreadedCompileBackAtFirstInstruction(PVMCPU pVCpu, PIEMTB pT
 bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
 {
     Log6(("%04x:%08RX64: iemThreadedCompileBeginEmitCallsComplications\n", pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip));
-    Assert((pVCpu->iem.s.GCPhysInstrBuf & GUEST_PAGE_OFFSET_MASK) == 0);
+    Assert((ICORE(pVCpu).GCPhysInstrBuf & GUEST_PAGE_OFFSET_MASK) == 0);
 #if 0
     if (pVCpu->cpum.GstCtx.rip >= 0xc0000000 && !LogIsEnabled())
         RTLogChangeFlags(NULL, 0, RTLOGFLAGS_DISABLED);
@@ -2281,7 +2281,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
      * see if it's needed to start checking.
      */
     bool           fConsiderCsLimChecking;
-    uint32_t const fMode = pVCpu->iem.s.fExec & IEM_F_MODE_MASK;
+    uint32_t const fMode = ICORE(pVCpu).fExec & IEM_F_MODE_MASK;
     if (   fMode == IEM_F_MODE_X86_64BIT
         || (pTb->fFlags & IEMTB_F_X86_CS_LIM_CHECKS)
         || fMode == IEM_F_MODE_X86_32BIT_PROT_FLAT
@@ -2314,7 +2314,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
     pCall->uTbLookup   = 0;
     pCall->fFlags      = 0;
     pCall->auParams[0] = (uint32_t)cbInstr
-                       | (uint32_t)(pVCpu->iem.s.fExec << 8) /* liveness: Enough of fExec for IEM_F_MODE_X86_IS_FLAT. */
+                       | (uint32_t)(ICORE(pVCpu).fExec << 8) /* liveness: Enough of fExec for IEM_F_MODE_X86_IS_FLAT. */
                        /* The upper dword is sometimes used for cbStartPage. */;
     pCall->auParams[1] = idxRange;
     pCall->auParams[2] = offOpcode - pTb->aRanges[idxRange].offOpcodes;
@@ -2362,16 +2362,16 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
      *        load CS which should technically be considered indirect since the
      *        GDT/LDT entry's base address can be modified independently from
      *        the code. */
-    if (pVCpu->iem.s.fTbBranched != IEMBRANCHED_F_NO)
+    if (IRECM(pVCpu).fTbBranched != IEMBRANCHED_F_NO)
     {
-        if (   !pVCpu->iem.s.fTbCrossedPage       /* 1a */
-            || pVCpu->iem.s.offCurInstrStart >= 0 /* 1b */ )
+        if (   !IRECM(pVCpu).fTbCrossedPage       /* 1a */
+            || ICORE(pVCpu).offCurInstrStart >= 0 /* 1b */ )
         {
             /* 1a + 1b - instruction fully within the branched to page. */
-            Assert(pVCpu->iem.s.offCurInstrStart >= 0);
-            Assert(pVCpu->iem.s.offCurInstrStart + cbInstr <= GUEST_PAGE_SIZE);
+            Assert(ICORE(pVCpu).offCurInstrStart >= 0);
+            Assert(ICORE(pVCpu).offCurInstrStart + cbInstr <= GUEST_PAGE_SIZE);
 
-            if (!(pVCpu->iem.s.fTbBranched & IEMBRANCHED_F_ZERO))
+            if (!(IRECM(pVCpu).fTbBranched & IEMBRANCHED_F_ZERO))
             {
                 /* Check that we've got a free range. */
                 idxRange += 1;
@@ -2387,7 +2387,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
 
                 /* Check that we've got a free page slot. */
                 AssertCompile(RT_ELEMENTS(pTb->aGCPhysPages) == 2);
-                RTGCPHYS const GCPhysNew = pVCpu->iem.s.GCPhysInstrBuf & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK;
+                RTGCPHYS const GCPhysNew = ICORE(pVCpu).GCPhysInstrBuf & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK;
                 uint8_t        idxPhysPage;
                 if ((pTb->GCPhysPc & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK) == GCPhysNew)
                     pTb->aRanges[idxRange].idxPhysPage = idxPhysPage = 0;
@@ -2416,7 +2416,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
                 /* Loop check: We weave the loop check in here to optimize the lookup. */
                 if (idxPhysPage != UINT8_MAX)
                 {
-                    uint32_t const offPhysPc = pVCpu->iem.s.offCurInstrStart;
+                    uint32_t const offPhysPc = ICORE(pVCpu).offCurInstrStart;
                     for (uint8_t idxLoopRange = 0; idxLoopRange < idxRange; idxLoopRange++)
                         if (   pTb->aRanges[idxLoopRange].idxPhysPage == idxPhysPage
                             &&   offPhysPc - (uint32_t)pTb->aRanges[idxLoopRange].offPhysPage
@@ -2429,9 +2429,9 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
                                as that implies TLB loading and such. */
                             if (   idxLoopRange == 0
                                 && offPhysPc == pTb->aRanges[0].offPhysPage
-                                &&    (pVCpu->iem.s.fExec & IEMTB_F_IEM_F_MASK & IEMTB_F_KEY_MASK)
+                                &&    (ICORE(pVCpu).fExec & IEMTB_F_IEM_F_MASK & IEMTB_F_KEY_MASK)
                                    == (pTb->fFlags        & IEMTB_F_KEY_MASK   & ~IEMTB_F_X86_CS_LIM_CHECKS)
-                                &&    (pVCpu->iem.s.fTbBranched & (  IEMBRANCHED_F_INDIRECT | IEMBRANCHED_F_FAR
+                                &&    (IRECM(pVCpu).fTbBranched & (  IEMBRANCHED_F_INDIRECT | IEMBRANCHED_F_FAR
                                                                    | IEMBRANCHED_F_STACK | IEMBRANCHED_F_RELATIVE))
                                    == IEMBRANCHED_F_RELATIVE)
                             {
@@ -2445,7 +2445,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
                 }
 
                 /* Finish setting up the new range. */
-                pTb->aRanges[idxRange].offPhysPage = pVCpu->iem.s.offCurInstrStart;
+                pTb->aRanges[idxRange].offPhysPage = ICORE(pVCpu).offCurInstrStart;
                 pTb->aRanges[idxRange].offOpcodes  = offOpcode;
                 pTb->aRanges[idxRange].cbOpcodes   = cbInstr;
                 pTb->aRanges[idxRange].u2Unused    = 0;
@@ -2464,14 +2464,14 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
                Note! For jumps to a new page, we'll set both fTbBranched and
                      fTbCrossedPage to avoid unnecessary TLB work for intra
                      page branching */
-            if (   (pVCpu->iem.s.fTbBranched & (IEMBRANCHED_F_INDIRECT | IEMBRANCHED_F_FAR)) /* Far is basically indirect. */
-                || pVCpu->iem.s.fTbCrossedPage)
+            if (   (IRECM(pVCpu).fTbBranched & (IEMBRANCHED_F_INDIRECT | IEMBRANCHED_F_FAR)) /* Far is basically indirect. */
+                || IRECM(pVCpu).fTbCrossedPage)
                 pCall->enmFunction = pTb->fFlags & IEMTB_F_X86_CS_LIM_CHECKS
                                    ? kIemThreadedFunc_BltIn_CheckCsLimAndOpcodesLoadingTlb
                                    : !fConsiderCsLimChecking
                                    ? kIemThreadedFunc_BltIn_CheckOpcodesLoadingTlb
                                    : kIemThreadedFunc_BltIn_CheckOpcodesLoadingTlbConsiderCsLim;
-            else if (pVCpu->iem.s.fTbBranched & (IEMBRANCHED_F_CONDITIONAL | /* paranoia: */ IEMBRANCHED_F_DIRECT))
+            else if (IRECM(pVCpu).fTbBranched & (IEMBRANCHED_F_CONDITIONAL | /* paranoia: */ IEMBRANCHED_F_DIRECT))
                 pCall->enmFunction = pTb->fFlags & IEMTB_F_X86_CS_LIM_CHECKS
                                    ? kIemThreadedFunc_BltIn_CheckCsLimAndPcAndOpcodes
                                    : !fConsiderCsLimChecking
@@ -2479,7 +2479,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
                                    : kIemThreadedFunc_BltIn_CheckPcAndOpcodesConsiderCsLim;
             else
             {
-                Assert(pVCpu->iem.s.fTbBranched & IEMBRANCHED_F_RELATIVE);
+                Assert(IRECM(pVCpu).fTbBranched & IEMBRANCHED_F_RELATIVE);
                 pCall->enmFunction = pTb->fFlags & IEMTB_F_X86_CS_LIM_CHECKS
                                    ? kIemThreadedFunc_BltIn_CheckCsLimAndOpcodes
                                    : !fConsiderCsLimChecking
@@ -2490,8 +2490,8 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
         else
         {
             /* 1c + 1d - instruction crosses pages. */
-            Assert(pVCpu->iem.s.offCurInstrStart < 0);
-            Assert(pVCpu->iem.s.offCurInstrStart + cbInstr > 0);
+            Assert(ICORE(pVCpu).offCurInstrStart < 0);
+            Assert(ICORE(pVCpu).offCurInstrStart + cbInstr > 0);
 
             /* Lazy bird: Check that this isn't case 1c, since we've already
                           load the first physical address.  End the TB and
@@ -2501,7 +2501,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
                           with case 1d as well. */
 #if 0       /** @todo get back to this later when we've got the actual branch code in
              *        place. */
-            uint8_t const cbStartPage = (uint8_t)-pVCpu->iem.s.offCurInstrStart;
+            uint8_t const cbStartPage = (uint8_t)-ICORE(pVCpu).offCurInstrStart;
 
             /* Check that we've got two free ranges. */
             if (idxRange + 2 < RT_ELEMENTS(pTb->aRanges))
@@ -2533,7 +2533,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
      * page entry.  The difference is in which functions to emit and whether to
      * add bytes to the current range.
      */
-    else if (pVCpu->iem.s.fTbCrossedPage)
+    else if (IRECM(pVCpu).fTbCrossedPage)
     {
         /* Check that we've got a free range. */
         idxRange += 1;
@@ -2547,7 +2547,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
 
         /* Check that we've got a free page slot. */
         AssertCompile(RT_ELEMENTS(pTb->aGCPhysPages) == 2);
-        RTGCPHYS const GCPhysNew = pVCpu->iem.s.GCPhysInstrBuf & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK;
+        RTGCPHYS const GCPhysNew = ICORE(pVCpu).GCPhysInstrBuf & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK;
         if ((pTb->GCPhysPc & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK) == GCPhysNew)
             pTb->aRanges[idxRange].idxPhysPage = 0;
         else if (   pTb->aGCPhysPages[0] == NIL_RTGCPHYS
@@ -2570,12 +2570,12 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
 
         if (((pTb->aRanges[idxRange - 1].offPhysPage + pTb->aRanges[idxRange - 1].cbOpcodes) & GUEST_PAGE_OFFSET_MASK) == 0)
         {
-            Assert(pVCpu->iem.s.offCurInstrStart == 0);
+            Assert(ICORE(pVCpu).offCurInstrStart == 0);
             pCall->auParams[1] = idxRange;
             pCall->auParams[2] = 0;
 
             /* Finish setting up the new range. */
-            pTb->aRanges[idxRange].offPhysPage = pVCpu->iem.s.offCurInstrStart;
+            pTb->aRanges[idxRange].offPhysPage = ICORE(pVCpu).offCurInstrStart;
             pTb->aRanges[idxRange].offOpcodes  = offOpcode;
             pTb->aRanges[idxRange].cbOpcodes   = cbInstr;
             pTb->aRanges[idxRange].u2Unused    = 0;
@@ -2593,9 +2593,9 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
         }
         else
         {
-            Assert(pVCpu->iem.s.offCurInstrStart < 0);
-            Assert(pVCpu->iem.s.offCurInstrStart + cbInstr > 0);
-            uint8_t const cbStartPage = (uint8_t)-pVCpu->iem.s.offCurInstrStart;
+            Assert(ICORE(pVCpu).offCurInstrStart < 0);
+            Assert(ICORE(pVCpu).offCurInstrStart + cbInstr > 0);
+            uint8_t const cbStartPage = (uint8_t)-ICORE(pVCpu).offCurInstrStart;
             pCall->auParams[0] |= (uint64_t)cbStartPage << 32;
 
             /* We've good. Split the instruction over the old and new range table entries. */
@@ -2611,7 +2611,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
                   pTb->aRanges[idxRange].offPhysPage, pTb->aRanges[idxRange].offOpcodes));
 
             /* Determin which function we need to load & check. */
-            if (pVCpu->iem.s.fTbCheckOpcodes)
+            if (IRECM(pVCpu).fTbCheckOpcodes)
                 pCall->enmFunction = pTb->fFlags & IEMTB_F_X86_CS_LIM_CHECKS
                                    ? kIemThreadedFunc_BltIn_CheckCsLimAndOpcodesAcrossPageLoadingTlb
                                    : !fConsiderCsLimChecking
@@ -2631,8 +2631,8 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
      */
     else
     {
-        Assert(pVCpu->iem.s.fTbCheckOpcodes || (pTb->fFlags & IEMTB_F_X86_CS_LIM_CHECKS));
-        if (pVCpu->iem.s.fTbCheckOpcodes)
+        Assert(IRECM(pVCpu).fTbCheckOpcodes || (pTb->fFlags & IEMTB_F_X86_CS_LIM_CHECKS));
+        if (IRECM(pVCpu).fTbCheckOpcodes)
             pCall->enmFunction = pTb->fFlags & IEMTB_F_X86_CS_LIM_CHECKS
                                ? kIemThreadedFunc_BltIn_CheckCsLimAndOpcodes
                                : kIemThreadedFunc_BltIn_CheckOpcodes;
@@ -2642,7 +2642,7 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
         iemThreadedCopyOpcodeBytesInline(pVCpu, &pTb->pabOpcodes[offOpcode], cbInstr);
         pTb->cbOpcodes                    = offOpcode + cbInstr;
         pTb->aRanges[idxRange].cbOpcodes += cbInstr;
-        Assert(pTb->cbOpcodes <= pVCpu->iem.s.cbOpcodesAllocated);
+        Assert(pTb->cbOpcodes <= IRECM(pVCpu).cbOpcodesAllocated);
     }
 
     /*
@@ -2653,16 +2653,16 @@ bool iemThreadedCompileBeginEmitCallsComplications(PVMCPUCC pVCpu, PIEMTB pTb)
     /*
      * Clear state.
      */
-    pVCpu->iem.s.fTbBranched     = IEMBRANCHED_F_NO;
-    pVCpu->iem.s.fTbCrossedPage  = false;
-    pVCpu->iem.s.fTbCheckOpcodes = false;
+    IRECM(pVCpu).fTbBranched     = IEMBRANCHED_F_NO;
+    IRECM(pVCpu).fTbCrossedPage  = false;
+    IRECM(pVCpu).fTbCheckOpcodes = false;
 
     /*
      * Copy opcode bytes.
      */
     iemThreadedCopyOpcodeBytesInline(pVCpu, &pTb->pabOpcodes[offOpcode], cbInstr);
     pTb->cbOpcodes = offOpcode + cbInstr;
-    Assert(pTb->cbOpcodes <= pVCpu->iem.s.cbOpcodesAllocated);
+    Assert(pTb->cbOpcodes <= IRECM(pVCpu).cbOpcodesAllocated);
 
     return true;
 }
@@ -2716,10 +2716,10 @@ static bool iemThreadedCompileEmitCheckMode(PVMCPUCC pVCpu, PIEMTB pTb)
     pCall->offOpcode   = 0;
     pCall->uTbLookup   = 0;
     pCall->fFlags      = 0;
-    pCall->auParams[0] = pVCpu->iem.s.fExec;
+    pCall->auParams[0] = ICORE(pVCpu).fExec;
     pCall->auParams[1] = 0;
     pCall->auParams[2] = 0;
-    LogFunc(("%04x:%08RX64 fExec=%#x\n", pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, pVCpu->iem.s.fExec));
+    LogFunc(("%04x:%08RX64 fExec=%#x\n", pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, ICORE(pVCpu).fExec));
     return true;
 }
 
@@ -2747,7 +2747,7 @@ bool iemThreadedCompileEmitIrqCheckBefore(PVMCPUCC pVCpu, PIEMTB pTb)
     {
         /* Emit the call. */
         AssertReturn(idxCall < pTb->Thrd.cAllocated, false);
-        pVCpu->iem.s.idxLastCheckIrqCallNo = (uint16_t)idxCall;
+        IRECM(pVCpu).idxLastCheckIrqCallNo = (uint16_t)idxCall;
         pTb->Thrd.cCalls                   = (uint16_t)(idxCall + 1);
         PIEMTHRDEDCALLENTRY pCall = &pTb->Thrd.paCalls[idxCall];
         pCall->enmFunction = kIemThreadedFunc_BltIn_CheckIrq;
@@ -2762,7 +2762,7 @@ bool iemThreadedCompileEmitIrqCheckBefore(PVMCPUCC pVCpu, PIEMTB pTb)
         LogFunc(("%04x:%08RX64\n", pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip));
 
         /* Reset the IRQ check value. */
-        pVCpu->iem.s.cInstrTillIrqCheck = !CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx) ? 32 : 0;
+        IRECM(pVCpu).cInstrTillIrqCheck = !CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx) ? 32 : 0;
 
         /*
          * Check for deliverable IRQs and pending force flags.
@@ -2790,12 +2790,12 @@ static bool iemThreadedCompileCheckIrqAfter(PVMCPUCC pVCpu, PIEMTB pTb)
        as well in case it's executed with interrupt inhibition.  We could
        otherwise miss the interrupt window. See the irq2 wait2 varaiant in
        bs3-timers-1 which is doing sti + sti + cli. */
-    if (!pVCpu->iem.s.fTbCurInstrIsSti)
-        pVCpu->iem.s.cInstrTillIrqCheck = 32;
+    if (!IRECM(pVCpu).fTbCurInstrIsSti)
+        IRECM(pVCpu).cInstrTillIrqCheck = 32;
     else
     {
-        pVCpu->iem.s.fTbCurInstrIsSti   = false;
-        pVCpu->iem.s.cInstrTillIrqCheck = 0;
+        IRECM(pVCpu).fTbCurInstrIsSti   = false;
+        IRECM(pVCpu).cInstrTillIrqCheck = 0;
     }
     LogFunc(("%04x:%08RX64\n", pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip));
 
@@ -2804,7 +2804,7 @@ static bool iemThreadedCompileCheckIrqAfter(PVMCPUCC pVCpu, PIEMTB pTb)
      */
     uint32_t const idxCall = pTb->Thrd.cCalls;
     AssertReturn(idxCall < pTb->Thrd.cAllocated, false);
-    pVCpu->iem.s.idxLastCheckIrqCallNo = (uint16_t)idxCall;
+    IRECM(pVCpu).idxLastCheckIrqCallNo = (uint16_t)idxCall;
     pTb->Thrd.cCalls                   = (uint16_t)(idxCall + 1);
     PIEMTHRDEDCALLENTRY pCall = &pTb->Thrd.paCalls[idxCall];
     pCall->enmFunction = kIemThreadedFunc_BltIn_CheckIrq;
@@ -2851,20 +2851,20 @@ iemThreadedCompile(PVMCC pVM, PVMCPUCC pVCpu, RTGCPHYS GCPhysPc, uint32_t fExtra
      * Get the TB we use for the recompiling.  This is a maxed-out TB so
      * that'll we'll make a more efficient copy of when we're done compiling.
      */
-    PIEMTB pTb = pVCpu->iem.s.pThrdCompileTbR3;
+    PIEMTB pTb = IRECM(pVCpu).pThrdCompileTbR3;
     if (pTb)
         iemThreadedTbReuse(pVCpu, pTb, GCPhysPc, fExtraFlags);
     else
     {
         pTb = iemThreadedTbAlloc(pVM, pVCpu, GCPhysPc, fExtraFlags);
         AssertReturn(pTb, VERR_IEM_TB_ALLOC_FAILED);
-        pVCpu->iem.s.pThrdCompileTbR3 = pTb;
+        IRECM(pVCpu).pThrdCompileTbR3 = pTb;
     }
-    pTb->FlatPc = pVCpu->iem.s.uInstrBufPc | (GCPhysPc & GUEST_PAGE_OFFSET_MASK);
+    pTb->FlatPc = ICORE(pVCpu).uInstrBufPc | (GCPhysPc & GUEST_PAGE_OFFSET_MASK);
 
     /* Set the current TB so iemThreadedCompileLongJumped and the CIMPL
        functions may get at it. */
-    pVCpu->iem.s.pCurTbR3 = pTb;
+    IRECM(pVCpu).pCurTbR3 = pTb;
 
 #if 0
     /* Make sure the CheckIrq condition matches the one in EM. */
@@ -2899,8 +2899,8 @@ iemThreadedCompile(PVMCC pVM, PVMCPUCC pVCpu, RTGCPHYS GCPhysPc, uint32_t fExtra
                   g_apszIemThreadedFunctions[pTb->Thrd.paCalls[i].enmFunction]));
 #endif
         if (   rcStrict == VINF_SUCCESS
-            && pVCpu->iem.s.rcPassUp == VINF_SUCCESS
-            && !pVCpu->iem.s.fEndTb)
+            && ICORE(pVCpu).rcPassUp == VINF_SUCCESS
+            && !IRECM(pVCpu).fEndTb)
         {
             Assert(pTb->Thrd.cCalls > cCallsPrev);
             Assert(cCallsPrev - pTb->Thrd.cCalls < 5);
@@ -2909,7 +2909,7 @@ iemThreadedCompile(PVMCC pVM, PVMCPUCC pVCpu, RTGCPHYS GCPhysPc, uint32_t fExtra
 
             /* Check for mode change _after_ certain CIMPL calls, so check that
                we continue executing with the same mode value. */
-            if (!(pVCpu->iem.s.fTbCurInstr & (IEM_CIMPL_F_MODE | IEM_CIMPL_F_XCPT | IEM_CIMPL_F_VMEXIT)))
+            if (!(IRECM(pVCpu).fTbCurInstr & (IEM_CIMPL_F_MODE | IEM_CIMPL_F_XCPT | IEM_CIMPL_F_VMEXIT)))
             { /* probable */ }
             else if (RT_LIKELY(iemThreadedCompileEmitCheckMode(pVCpu, pTb)))
             { /* extremely likely */ }
@@ -2935,19 +2935,19 @@ iemThreadedCompile(PVMCC pVM, PVMCPUCC pVCpu, RTGCPHYS GCPhysPc, uint32_t fExtra
                 break;
             }
 
-            pVCpu->iem.s.pCurTbR3 = NULL;
+            IRECM(pVCpu).pCurTbR3 = NULL;
             return iemExecStatusCodeFiddling(pVCpu, rcStrict);
         }
 
         /* Check for IRQs? */
-        if (pVCpu->iem.s.cInstrTillIrqCheck > 0)
-            pVCpu->iem.s.cInstrTillIrqCheck--;
+        if (IRECM(pVCpu).cInstrTillIrqCheck > 0)
+            IRECM(pVCpu).cInstrTillIrqCheck--;
         else if (!iemThreadedCompileCheckIrqAfter(pVCpu, pTb))
             break;
 
         /* Still space in the TB? */
         if (   pTb->Thrd.cCalls + 5 < pTb->Thrd.cAllocated
-            && pTb->cbOpcodes + 16 <= pVCpu->iem.s.cbOpcodesAllocated
+            && pTb->cbOpcodes + 16 <= IRECM(pVCpu).cbOpcodesAllocated
             && pTb->cTbLookupEntries < 127)
             iemThreadedCompileInitDecoder(pVCpu, true /*fReInit*/, 0);
         else
@@ -2984,7 +2984,7 @@ iemThreadedCompile(PVMCC pVM, PVMCPUCC pVCpu, RTGCPHYS GCPhysPc, uint32_t fExtra
     pTb = iemThreadedTbDuplicate(pVM, pVCpu, pTb);
     AssertReturn(pTb, VERR_IEM_TB_ALLOC_FAILED);
 
-    iemThreadedTbAdd(pVCpu, pVCpu->iem.s.pTbCacheR3, pTb);
+    iemThreadedTbAdd(pVCpu, IRECM(pVCpu).pTbCacheR3, pTb);
 
 #ifdef IEM_COMPILE_ONLY_MODE
     /*
@@ -3117,7 +3117,7 @@ VMMR3DECL(int) IEMR3ThreadedProfileRecompilingSavedTbs(PVM pVM, const char *pszF
     PVMCPU const pVCpu = pVM->apCpusR3[0];
 
     /* We need to keep an eye on the TB allocator. */
-    PIEMTBALLOCATOR const pTbAllocator = pVCpu->iem.s.pTbAllocatorR3;
+    PIEMTBALLOCATOR const pTbAllocator = IRECM(pVCpu).pTbAllocatorR3;
 
     /*
      * Load the TBs from the file.
@@ -3417,9 +3417,9 @@ DECLHIDDEN(int) iemPollTimers(PVMCC pVM, PVMCPUCC pVCpu) RT_NOEXCEPT
     /*
      * Calc interval and update the timestamps.
      */
-    uint64_t const cNsSinceLast = nsNow - pVCpu->iem.s.nsRecompilerPollNow;
-    pVCpu->iem.s.nsRecompilerPollNow = nsNow;
-    pVCpu->iem.s.msRecompilerPollNow = (uint32_t)(nsNow / RT_NS_1MS);
+    uint64_t const cNsSinceLast = nsNow - IRECM(pVCpu).nsRecompilerPollNow;
+    IRECM(pVCpu).nsRecompilerPollNow = nsNow;
+    IRECM(pVCpu).msRecompilerPollNow = (uint32_t)(nsNow / RT_NS_1MS);
 
     /*
      * Set the next polling count down value.
@@ -3430,7 +3430,7 @@ DECLHIDDEN(int) iemPollTimers(PVMCC pVM, PVMCPUCC pVCpu) RT_NOEXCEPT
      * on the guest code.
      */
 #ifdef IEM_WITH_ADAPTIVE_TIMER_POLLING
-    uint32_t cItersTillNextPoll = pVCpu->iem.s.cTbsTillNextTimerPollPrev;
+    uint32_t cItersTillNextPoll = IRECM(pVCpu).cTbsTillNextTimerPollPrev;
     if (cNsDelta >= RT_NS_1SEC / 4)
     {
         /*
@@ -3492,12 +3492,12 @@ DECLHIDDEN(int) iemPollTimers(PVMCC pVM, PVMCPUCC pVCpu) RT_NOEXCEPT
             else
                 STAM_COUNTER_INC(&pVCpu->iem.s.StatTimerPollUnchanged);
         }
-        pVCpu->iem.s.cTbsTillNextTimerPollPrev = cItersTillNextPoll;
+        IRECM(pVCpu).cTbsTillNextTimerPollPrev = cItersTillNextPoll;
     }
 #else
 /** Poll timers every 400 us / 2500 Hz. (source: thin air) */
 # define IEM_TIMER_POLL_IDEAL_NS     (400U * RT_NS_1US)
-    uint32_t       cItersTillNextPoll   = pVCpu->iem.s.cTbsTillNextTimerPollPrev;
+    uint32_t       cItersTillNextPoll   = IRECM(pVCpu).cTbsTillNextTimerPollPrev;
     uint32_t const cNsIdealPollInterval = IEM_TIMER_POLL_IDEAL_NS;
     int64_t const  nsFromIdeal          = cNsSinceLast - cNsIdealPollInterval;
     if (nsFromIdeal < 0)
@@ -3505,7 +3505,7 @@ DECLHIDDEN(int) iemPollTimers(PVMCC pVM, PVMCPUCC pVCpu) RT_NOEXCEPT
         if ((uint64_t)-nsFromIdeal > cNsIdealPollInterval / 8 && cItersTillNextPoll < _64K)
         {
             cItersTillNextPoll += cItersTillNextPoll / 8;
-            pVCpu->iem.s.cTbsTillNextTimerPollPrev = cItersTillNextPoll;
+            IRECM(pVCpu).cTbsTillNextTimerPollPrev = cItersTillNextPoll;
         }
     }
     else
@@ -3513,11 +3513,11 @@ DECLHIDDEN(int) iemPollTimers(PVMCC pVM, PVMCPUCC pVCpu) RT_NOEXCEPT
         if ((uint64_t)nsFromIdeal > cNsIdealPollInterval / 8 && cItersTillNextPoll > 256)
         {
             cItersTillNextPoll -= cItersTillNextPoll / 8;
-            pVCpu->iem.s.cTbsTillNextTimerPollPrev = cItersTillNextPoll;
+            IRECM(pVCpu).cTbsTillNextTimerPollPrev = cItersTillNextPoll;
         }
     }
 #endif
-    pVCpu->iem.s.cTbsTillNextTimerPoll = cItersTillNextPoll;
+    IRECM(pVCpu).cTbsTillNextTimerPoll = cItersTillNextPoll;
 
     /*
      * Repeat the IRQ and FF checks.
@@ -3563,13 +3563,13 @@ DECL_FORCE_INLINE(PIEMTB *) iemTbGetTbLookupEntryWithRip(PCIEMTB pTb, uint8_t uT
  */
 static IEM_DECL_MSC_GUARD_IGNORE VBOXSTRICTRC iemTbExec(PVMCPUCC pVCpu, PIEMTB pTb) IEM_NOEXCEPT_MAY_LONGJMP
 {
-    Assert(!(pVCpu->iem.s.GCPhysInstrBuf & (RTGCPHYS)GUEST_PAGE_OFFSET_MASK));
+    Assert(!(ICORE(pVCpu).GCPhysInstrBuf & (RTGCPHYS)GUEST_PAGE_OFFSET_MASK));
 
     /*
      * Set the current TB so CIMPL functions may get at it.
      */
-    pVCpu->iem.s.pCurTbR3 = pTb;
-    pVCpu->iem.s.ppTbLookupEntryR3 = IEMTB_GET_TB_LOOKUP_TAB_ENTRY(pTb, 0);
+    IRECM(pVCpu).pCurTbR3 = pTb;
+    IRECM(pVCpu).ppTbLookupEntryR3 = IEMTB_GET_TB_LOOKUP_TAB_ENTRY(pTb, 0);
 
     /*
      * Execute the block.
@@ -3577,7 +3577,7 @@ static IEM_DECL_MSC_GUARD_IGNORE VBOXSTRICTRC iemTbExec(PVMCPUCC pVCpu, PIEMTB p
 #ifdef VBOX_WITH_IEM_NATIVE_RECOMPILER
     if (pTb->fFlags & IEMTB_F_TYPE_NATIVE)
     {
-        pVCpu->iem.s.cTbExecNative++;
+        IRECM(pVCpu).cTbExecNative++;
         IEMTLBTRACE_TB_EXEC_N8VE(pVCpu, pTb);
 # ifdef LOG_ENABLED
         iemThreadedLogCurInstr(pVCpu, "EXn", 0);
@@ -3597,23 +3597,23 @@ static IEM_DECL_MSC_GUARD_IGNORE VBOXSTRICTRC iemTbExec(PVMCPUCC pVCpu, PIEMTB p
 # endif
 # ifdef IEMNATIVE_WITH_SIMD_FP_NATIVE_EMITTERS
         /* Restore FPCR/MXCSR if the TB modified it. */
-        if (pVCpu->iem.s.uRegFpCtrl != IEMNATIVE_SIMD_FP_CTRL_REG_NOT_MODIFIED)
+        if (IRECM(pVCpu).uRegFpCtrl != IEMNATIVE_SIMD_FP_CTRL_REG_NOT_MODIFIED)
         {
-            iemNativeFpCtrlRegRestore(pVCpu->iem.s.uRegFpCtrl);
+            iemNativeFpCtrlRegRestore(IRECM(pVCpu).uRegFpCtrl);
             /* Reset for the next round saving us an unconditional instruction on next TB entry. */
-            pVCpu->iem.s.uRegFpCtrl = IEMNATIVE_SIMD_FP_CTRL_REG_NOT_MODIFIED;
+            IRECM(pVCpu).uRegFpCtrl = IEMNATIVE_SIMD_FP_CTRL_REG_NOT_MODIFIED;
         }
 # endif
 # ifdef IEMNATIVE_STRICT_EFLAGS_SKIPPING
-        Assert(pVCpu->iem.s.fSkippingEFlags == 0);
+        Assert(IRECM(pVCpu).fSkippingEFlags == 0);
 # endif
         if (RT_LIKELY(   rcStrict == VINF_SUCCESS
-                      && pVCpu->iem.s.rcPassUp == VINF_SUCCESS /** @todo this isn't great. */))
+                      && ICORE(pVCpu).rcPassUp == VINF_SUCCESS /** @todo this isn't great. */))
         { /* likely */ }
         else
         {
             /* pVCpu->iem.s.cInstructions is incremented by iemNativeHlpExecStatusCodeFiddling. */
-            pVCpu->iem.s.pCurTbR3 = NULL;
+            IRECM(pVCpu).pCurTbR3 = NULL;
 
             /* VINF_IEM_REEXEC_BREAK should be treated as VINF_SUCCESS as it's
                only to break out of TB execution early. */
@@ -3649,7 +3649,7 @@ static IEM_DECL_MSC_GUARD_IGNORE VBOXSTRICTRC iemTbExec(PVMCPUCC pVCpu, PIEMTB p
         /*
          * The threaded execution loop.
          */
-        pVCpu->iem.s.cTbExecThreaded++;
+        IRECM(pVCpu).cTbExecThreaded++;
         IEMTLBTRACE_TB_EXEC_THRD(pVCpu, pTb);
 #ifdef LOG_ENABLED
         uint64_t             uRipPrev   = UINT64_MAX;
@@ -3677,11 +3677,11 @@ static IEM_DECL_MSC_GUARD_IGNORE VBOXSTRICTRC iemTbExec(PVMCPUCC pVCpu, PIEMTB p
                                                                                               pCallEntry->auParams[1],
                                                                                               pCallEntry->auParams[2]);
             if (RT_LIKELY(   rcStrict == VINF_SUCCESS
-                          && pVCpu->iem.s.rcPassUp == VINF_SUCCESS /** @todo this isn't great. */))
+                          && ICORE(pVCpu).rcPassUp == VINF_SUCCESS /** @todo this isn't great. */))
                 pCallEntry++;
             else if (rcStrict == VINF_IEM_REEXEC_JUMP)
             {
-                Assert(pVCpu->iem.s.rcPassUp == VINF_SUCCESS);
+                Assert(ICORE(pVCpu).rcPassUp == VINF_SUCCESS);
                 Assert(cCallsLeft == 0);
                 uint32_t const idxTarget = (uint32_t)pCallEntry->auParams[0];
                 cCallsLeft = pTb->Thrd.cCalls;
@@ -3693,9 +3693,9 @@ static IEM_DECL_MSC_GUARD_IGNORE VBOXSTRICTRC iemTbExec(PVMCPUCC pVCpu, PIEMTB p
             else
             {
                 pVCpu->iem.s.cInstructions += pCallEntry->idxInstr; /* This may be one short, but better than zero. */
-                pVCpu->iem.s.pCurTbR3       = NULL;
+                IRECM(pVCpu).pCurTbR3       = NULL;
                 STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatTbThreadedExecBreaks);
-                pVCpu->iem.s.ppTbLookupEntryR3 = iemTbGetTbLookupEntryWithRip(pTb, pCallEntry->uTbLookup, pVCpu->cpum.GstCtx.rip);
+                IRECM(pVCpu).ppTbLookupEntryR3 = iemTbGetTbLookupEntryWithRip(pTb, pCallEntry->uTbLookup, pVCpu->cpum.GstCtx.rip);
 
                 /* VINF_IEM_REEXEC_BREAK should be treated as VINF_SUCCESS as it's
                    only to break out of TB execution early. */
@@ -3714,11 +3714,11 @@ static IEM_DECL_MSC_GUARD_IGNORE VBOXSTRICTRC iemTbExec(PVMCPUCC pVCpu, PIEMTB p
         }
 
         /* Update the lookup entry. */
-        pVCpu->iem.s.ppTbLookupEntryR3 = iemTbGetTbLookupEntryWithRip(pTb, pCallEntry[-1].uTbLookup, pVCpu->cpum.GstCtx.rip);
+        IRECM(pVCpu).ppTbLookupEntryR3 = iemTbGetTbLookupEntryWithRip(pTb, pCallEntry[-1].uTbLookup, pVCpu->cpum.GstCtx.rip);
     }
 
     pVCpu->iem.s.cInstructions += pTb->cInstructions;
-    pVCpu->iem.s.pCurTbR3 = NULL;
+    IRECM(pVCpu).pCurTbR3 = NULL;
     return VINF_SUCCESS;
 }
 
@@ -3732,11 +3732,11 @@ static IEM_DECL_MSC_GUARD_IGNORE VBOXSTRICTRC iemTbExec(PVMCPUCC pVCpu, PIEMTB p
  */
 static RTGCPHYS iemGetPcWithPhysAndCodeMissed(PVMCPUCC pVCpu)
 {
-    pVCpu->iem.s.pbInstrBuf       = NULL;
-    pVCpu->iem.s.offCurInstrStart = 0;
-    pVCpu->iem.s.offInstrNextByte = 0;
+    ICORE(pVCpu).pbInstrBuf       = NULL;
+    ICORE(pVCpu).offCurInstrStart = 0;
+    ICORE(pVCpu).offInstrNextByte = 0;
     iemOpcodeFetchBytesJmp(pVCpu, 0, NULL);
-    return pVCpu->iem.s.GCPhysInstrBuf + pVCpu->iem.s.offCurInstrStart;
+    return ICORE(pVCpu).GCPhysInstrBuf + ICORE(pVCpu).offCurInstrStart;
 }
 
 
@@ -3756,19 +3756,19 @@ DECL_FORCE_INLINE_THROW(RTGCPHYS) iemGetPcWithPhysAndCode(PVMCPUCC pVCpu)
     /*
      * Advance within the current buffer (PAGE) when possible.
      */
-    if (pVCpu->iem.s.pbInstrBuf)
+    if (ICORE(pVCpu).pbInstrBuf)
     {
-        uint64_t off = uPc - pVCpu->iem.s.uInstrBufPc;
-        if (off < pVCpu->iem.s.cbInstrBufTotal)
+        uint64_t off = uPc - ICORE(pVCpu).uInstrBufPc;
+        if (off < ICORE(pVCpu).cbInstrBufTotal)
         {
-            pVCpu->iem.s.offInstrNextByte = (uint32_t)off;
-            pVCpu->iem.s.offCurInstrStart = (uint16_t)off;
-            if ((uint16_t)off + 15 <= pVCpu->iem.s.cbInstrBufTotal)
-                pVCpu->iem.s.cbInstrBuf = (uint16_t)off + 15;
+            ICORE(pVCpu).offInstrNextByte = (uint32_t)off;
+            ICORE(pVCpu).offCurInstrStart = (uint16_t)off;
+            if ((uint16_t)off + 15 <= ICORE(pVCpu).cbInstrBufTotal)
+                ICORE(pVCpu).cbInstrBuf = (uint16_t)off + 15;
             else
-                pVCpu->iem.s.cbInstrBuf = pVCpu->iem.s.cbInstrBufTotal;
+                ICORE(pVCpu).cbInstrBuf = ICORE(pVCpu).cbInstrBufTotal;
 
-            return pVCpu->iem.s.GCPhysInstrBuf + off;
+            return ICORE(pVCpu).GCPhysInstrBuf + off;
         }
     }
     return iemGetPcWithPhysAndCodeMissed(pVCpu);
@@ -3804,7 +3804,7 @@ DECL_FORCE_INLINE(uint32_t) iemGetTbFlagsForCurrentPc(PVMCPUCC pVCpu)
      * Return IEMTB_F_X86_CS_LIM_CHECKS if the current PC is invalid or if it is
      * likely to go invalid before the end of the translation block.
      */
-    if (IEM_F_MODE_X86_IS_FLAT(pVCpu->iem.s.fExec))
+    if (IEM_F_MODE_X86_IS_FLAT(ICORE(pVCpu).fExec))
         return fRet;
 
     int64_t const offFromLim = (int64_t)pVCpu->cpum.GstCtx.cs.u32Limit - (int64_t)pVCpu->cpum.GstCtx.eip;
@@ -3841,7 +3841,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecRecompiler(PVMCC pVM, PVMCPUCC pVCpu, bool fWa
 #endif
         iemInitExec(pVCpu, 0 /*fExecOpts*/);
 
-    if (RT_LIKELY(!fWasHalted && pVCpu->iem.s.msRecompilerPollNow != 0))
+    if (RT_LIKELY(!fWasHalted && IRECM(pVCpu).msRecompilerPollNow != 0))
     { }
     else
     {
@@ -3849,15 +3849,15 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecRecompiler(PVMCC pVM, PVMCPUCC pVCpu, bool fWa
 #ifdef IEM_WITH_ADAPTIVE_TIMER_POLLING
         uint64_t       nsNow      = 0;
         uint32_t const cItersTillPoll = iemPollTimersCalcDefaultCountdown(TMTimerPollBoolWithNanoTS(pVM, pVCpu, &nsNow));
-        pVCpu->iem.s.cTbsTillNextTimerPollPrev = cItersTillPoll;
-        pVCpu->iem.s.cTbsTillNextTimerPoll     = cItersTillPoll;
+        IRECM(pVCpu).cTbsTillNextTimerPollPrev = cItersTillPoll;
+        IRECM(pVCpu).cTbsTillNextTimerPoll     = cItersTillPoll;
 #else
         uint64_t const nsNow = TMVirtualGetNoCheck(pVM);
 #endif
-        pVCpu->iem.s.nsRecompilerPollNow = nsNow;
-        pVCpu->iem.s.msRecompilerPollNow = (uint32_t)(nsNow / RT_NS_1MS);
+        IRECM(pVCpu).nsRecompilerPollNow = nsNow;
+        IRECM(pVCpu).msRecompilerPollNow = (uint32_t)(nsNow / RT_NS_1MS);
     }
-    pVCpu->iem.s.ppTbLookupEntryR3 = &pVCpu->iem.s.pTbLookupEntryDummyR3;
+    IRECM(pVCpu).ppTbLookupEntryR3 = &IRECM(pVCpu).pTbLookupEntryDummyR3;
 
     /*
      * Run-loop.
@@ -3865,7 +3865,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecRecompiler(PVMCC pVM, PVMCPUCC pVCpu, bool fWa
      * If we're using setjmp/longjmp we combine all the catching here to avoid
      * having to call setjmp for each block we're executing.
      */
-    PIEMTBCACHE const pTbCache = pVCpu->iem.s.pTbCacheR3;
+    PIEMTBCACHE const pTbCache = IRECM(pVCpu).pTbCacheR3;
     for (;;)
     {
         VBOXSTRICTRC rcStrict;
@@ -3875,7 +3875,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecRecompiler(PVMCC pVM, PVMCPUCC pVCpu, bool fWa
             {
                 /* Translate PC to physical address, we'll need this for both lookup and compilation. */
                 RTGCPHYS const GCPhysPc = iemGetPcWithPhysAndCode(pVCpu);
-                if (RT_LIKELY(pVCpu->iem.s.pbInstrBuf != NULL))
+                if (RT_LIKELY(ICORE(pVCpu).pbInstrBuf != NULL))
                 {
                     uint32_t const fExtraFlags = iemGetTbFlagsForCurrentPc(pVCpu);
                     PIEMTB const   pTb         = iemTbCacheLookup(pVCpu, pTbCache, GCPhysPc, fExtraFlags);
@@ -3897,7 +3897,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecRecompiler(PVMCC pVM, PVMCPUCC pVCpu, bool fWa
                 }
                 if (rcStrict == VINF_SUCCESS)
                 {
-                    Assert(pVCpu->iem.s.cActiveMappings == 0);
+                    Assert(ICORE(pVCpu).cActiveMappings == 0);
 
                     /* Note! This IRQ/FF check is repeated in iemPollTimers, iemThreadedFunc_BltIn_CheckIrq
                              and emitted by iemNativeRecompFunc_BltIn_CheckIrq. */
@@ -3914,7 +3914,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecRecompiler(PVMCC pVM, PVMCPUCC pVCpu, bool fWa
                                   && !VM_FF_IS_ANY_SET(pVM, VM_FF_ALL_MASK) ))
                     {
                         /* Once in a while we need to poll timers here. */
-                        if ((int32_t)--pVCpu->iem.s.cTbsTillNextTimerPoll > 0)
+                        if ((int32_t)--IRECM(pVCpu).cTbsTillNextTimerPoll > 0)
                         { /* likely */ }
                         else
                         {
@@ -3937,26 +3937,26 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecRecompiler(PVMCC pVM, PVMCPUCC pVCpu, bool fWa
 #ifdef VBOX_WITH_IEM_NATIVE_RECOMPILER_LONGJMP
             pVCpu->iem.s.pvTbFramePointerR3 = NULL;
 #endif
-            if (pVCpu->iem.s.cActiveMappings > 0)
+            if (ICORE(pVCpu).cActiveMappings > 0)
                 iemMemRollback(pVCpu);
 
 #ifdef VBOX_WITH_IEM_NATIVE_RECOMPILER
-            PIEMTB const pTb = pVCpu->iem.s.pCurTbR3;
+            PIEMTB const pTb = IRECM(pVCpu).pCurTbR3;
             if (pTb && (pTb->fFlags & IEMTB_F_TYPE_MASK) == IEMTB_F_TYPE_NATIVE)
             {
                 STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatNativeTbExitLongJump);
 # ifdef IEMNATIVE_WITH_INSTRUCTION_COUNTING
-                Assert(pVCpu->iem.s.idxTbCurInstr < pTb->cInstructions);
-                pVCpu->iem.s.cInstructions += pVCpu->iem.s.idxTbCurInstr;
+                Assert(IRECM(pVCpu).idxTbCurInstr < pTb->cInstructions);
+                pVCpu->iem.s.cInstructions += IRECM(pVCpu).idxTbCurInstr;
 # endif
 
 #ifdef IEMNATIVE_WITH_SIMD_FP_NATIVE_EMITTERS
                 /* Restore FPCR/MXCSR if the TB modified it. */
-                if (pVCpu->iem.s.uRegFpCtrl != IEMNATIVE_SIMD_FP_CTRL_REG_NOT_MODIFIED)
+                if (IRECM(pVCpu).uRegFpCtrl != IEMNATIVE_SIMD_FP_CTRL_REG_NOT_MODIFIED)
                 {
-                    iemNativeFpCtrlRegRestore(pVCpu->iem.s.uRegFpCtrl);
+                    iemNativeFpCtrlRegRestore(IRECM(pVCpu).uRegFpCtrl);
                     /* Reset for the next round saving us an unconditional instruction on next TB entry. */
-                    pVCpu->iem.s.uRegFpCtrl = IEMNATIVE_SIMD_FP_CTRL_REG_NOT_MODIFIED;
+                    IRECM(pVCpu).uRegFpCtrl = IEMNATIVE_SIMD_FP_CTRL_REG_NOT_MODIFIED;
                 }
 #endif
             }
@@ -3967,16 +3967,16 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecRecompiler(PVMCC pVM, PVMCPUCC pVCpu, bool fWa
             if (!pTb)
             {
                 /* If pCurTbR3 is NULL, we're in iemGetPcWithPhysAndCode.*/
-                pTb = pVCpu->iem.s.pCurTbR3;
+                pTb = IRECM(pVCpu).pCurTbR3;
                 if (pTb)
                 {
-                    if (pTb == pVCpu->iem.s.pThrdCompileTbR3)
+                    if (pTb == IRECM(pVCpu).pThrdCompileTbR3)
                         return iemThreadedCompileLongJumped(pVM, pVCpu, rcStrict);
                     Assert(pTb != pVCpu->iem.s.pNativeCompileTbR3);
                 }
             }
 #endif
-            pVCpu->iem.s.pCurTbR3 = NULL;
+            IRECM(pVCpu).pCurTbR3 = NULL;
             return rcStrict;
         }
         IEM_CATCH_LONGJMP_END(pVCpu);

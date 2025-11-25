@@ -1,4 +1,4 @@
-/* $Id: IEMAllThrdFuncsBltIn.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllThrdFuncsBltIn.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Instruction Decoding and Emulation, Built-in Threaded Functions.
  *
@@ -82,7 +82,7 @@ static VBOXSTRICTRC iemThreadeFuncWorkerObsoleteTb(PVMCPUCC pVCpu)
        of a TB callback function, which for native TBs means we cannot release
        the executable memory till we've returned our way back to iemTbExec as
        that return path codes via the native code generated for the TB. */
-    iemThreadedTbObsolete(pVCpu, pVCpu->iem.s.pCurTbR3, false /*fSafeToFree*/);
+    iemThreadedTbObsolete(pVCpu, IRECM(pVCpu).pCurTbR3, false /*fSafeToFree*/);
     return VINF_IEM_REEXEC_BREAK;
 }
 
@@ -107,14 +107,14 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_Nop)
 DECLASM(void) iemThreadedFunc_BltIn_LogCpuStateWorker(PVMCPU pVCpu)
 {
 #ifdef LOG_ENABLED
-    PCIEMTB const      pTb     = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const      pTb     = IRECM(pVCpu).pCurTbR3;
     PCX86FXSTATE const pFpuCtx = &pVCpu->cpum.GstCtx.XState.x87;
     Log2(("**** LG%c fExec=%x pTb=%p cUsed=%u\n"
           " eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n"
           " eip=%08x esp=%08x ebp=%08x iopl=%d tr=%04x\n"
           " cs=%04x ss=%04x ds=%04x es=%04x fs=%04x gs=%04x efl=%08x\n"
           " fsw=%04x fcw=%04x ftw=%02x mxcsr=%04x/%04x\n"
-          , pTb && (pTb->fFlags & IEMTB_F_TYPE_NATIVE) ? 'n' : 't', pVCpu->iem.s.fExec, pTb, pTb ? pTb->cUsed : 0,
+          , pTb && (pTb->fFlags & IEMTB_F_TYPE_NATIVE) ? 'n' : 't', ICORE(pVCpu).fExec, pTb, pTb ? pTb->cUsed : 0,
           pVCpu->cpum.GstCtx.eax, pVCpu->cpum.GstCtx.ebx, pVCpu->cpum.GstCtx.ecx, pVCpu->cpum.GstCtx.edx, pVCpu->cpum.GstCtx.esi, pVCpu->cpum.GstCtx.edi,
           pVCpu->cpum.GstCtx.eip, pVCpu->cpum.GstCtx.esp, pVCpu->cpum.GstCtx.ebp, pVCpu->cpum.GstCtx.eflags.Bits.u2IOPL, pVCpu->cpum.GstCtx.tr.Sel,
           pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.ss.Sel, pVCpu->cpum.GstCtx.ds.Sel, pVCpu->cpum.GstCtx.es.Sel,
@@ -209,7 +209,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckIrq)
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckTimers)
 {
-    if (RT_LIKELY(--pVCpu->iem.s.cTbsTillNextTimerPoll > 0))
+    if (RT_LIKELY(--IRECM(pVCpu).cTbsTillNextTimerPoll > 0))
         return VINF_SUCCESS;
 
     Log(("%04x:%08RX32: Check timers\n", pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.eip));
@@ -224,7 +224,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckTimers)
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckTimersAndIrq)
 {
-    if (RT_LIKELY(--pVCpu->iem.s.cTbsTillNextTimerPoll > 0))
+    if (RT_LIKELY(--IRECM(pVCpu).cTbsTillNextTimerPoll > 0))
         return iemThreadedFunc_BltIn_CheckIrqCommon(pVCpu);
 
     Log(("%04x:%08RX32: Check timers\n", pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.eip));
@@ -243,11 +243,11 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckTimersAndIrq)
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckMode)
 {
     uint32_t const fExpectedExec = (uint32_t)uParam0;
-    if ((pVCpu->iem.s.fExec & IEMTB_F_KEY_MASK) == (fExpectedExec & IEMTB_F_KEY_MASK))
+    if ((ICORE(pVCpu).fExec & IEMTB_F_KEY_MASK) == (fExpectedExec & IEMTB_F_KEY_MASK))
         return VINF_SUCCESS;
     LogFlow(("Mode changed at %04x:%08RX64: %#x -> %#x (xor: %#x, xor-key: %#x)\n",
              pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, fExpectedExec,
-             pVCpu->iem.s.fExec, fExpectedExec ^ pVCpu->iem.s.fExec, (fExpectedExec ^ pVCpu->iem.s.fExec) & IEMTB_F_KEY_MASK));
+             ICORE(pVCpu).fExec, fExpectedExec ^ ICORE(pVCpu).fExec, (fExpectedExec ^ ICORE(pVCpu).fExec) & IEMTB_F_KEY_MASK));
     RT_NOREF(uParam1, uParam2);
     STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatCheckModeBreaks);
     return VINF_IEM_REEXEC_BREAK;
@@ -323,7 +323,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckHwInstrBps)
         Assert((a_idxRange) < (a_pTb)->cRanges && (a_pTb)->cRanges <= RT_ELEMENTS((a_pTb)->aRanges)); \
         Assert((a_offRange) < (a_pTb)->aRanges[(a_idxRange)].cbOpcodes); \
         /* We can use pbInstrBuf here as it will be updated when branching (and prior to executing a TB). */ \
-        if (RT_LIKELY(memcmp(&pVCpu->iem.s.pbInstrBuf[(a_pTb)->aRanges[(a_idxRange)].offPhysPage + (a_offRange)], \
+        if (RT_LIKELY(memcmp(&ICORE(pVCpu).pbInstrBuf[(a_pTb)->aRanges[(a_idxRange)].offPhysPage + (a_offRange)], \
                              &(a_pTb)->pabOpcodes[    (a_pTb)->aRanges[(a_idxRange)].offOpcodes  + (a_offRange)], \
                                                       (a_pTb)->aRanges[(a_idxRange)].cbOpcodes   - (a_offRange)) == 0)) \
         { /* likely */ } \
@@ -344,20 +344,20 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckHwInstrBps)
  * This may long jump if we're raising a \#PF, \#GP or similar trouble.
  */
 #define BODY_LOAD_TLB_FOR_NEW_PAGE(a_pTb, a_offInstr, a_idxRange, a_cbInstr) do { \
-        pVCpu->iem.s.pbInstrBuf       = NULL; \
-        pVCpu->iem.s.offCurInstrStart = GUEST_PAGE_SIZE - (a_offInstr); \
-        pVCpu->iem.s.offInstrNextByte = GUEST_PAGE_SIZE; \
+        ICORE(pVCpu).pbInstrBuf       = NULL; \
+        ICORE(pVCpu).offCurInstrStart = GUEST_PAGE_SIZE - (a_offInstr); \
+        ICORE(pVCpu).offInstrNextByte = GUEST_PAGE_SIZE; \
         iemOpcodeFetchBytesJmp(pVCpu, 0, NULL); \
         \
         RTGCPHYS const GCPhysNewPage = iemTbGetRangePhysPageAddr(a_pTb, a_idxRange); \
-        if (RT_LIKELY(   pVCpu->iem.s.GCPhysInstrBuf == GCPhysNewPage \
-                      && pVCpu->iem.s.pbInstrBuf)) \
+        if (RT_LIKELY(   ICORE(pVCpu).GCPhysInstrBuf == GCPhysNewPage \
+                      && ICORE(pVCpu).pbInstrBuf)) \
         { /* likely */ } \
         else \
         { \
             Log7(("TB obsolete: %p at %04x:%08RX64 LB %u; crossing at %#x; GCPhys=%RGp expected %RGp, pbInstrBuf=%p - #%u\n", \
                   (a_pTb), pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, (a_cbInstr), (a_offInstr), \
-                  pVCpu->iem.s.GCPhysInstrBuf, GCPhysNewPage, pVCpu->iem.s.pbInstrBuf, __LINE__)); \
+                  ICORE(pVCpu).GCPhysInstrBuf, GCPhysNewPage, ICORE(pVCpu).pbInstrBuf, __LINE__)); \
             RT_NOREF(a_cbInstr); \
             return iemThreadeFuncWorkerObsoleteTb(pVCpu); \
         } \
@@ -376,14 +376,14 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckHwInstrBps)
         /* Is RIP within the current code page? */ \
         Assert(pVCpu->cpum.GstCtx.cs.u64Base == 0 || !IEM_IS_64BIT_CODE(pVCpu)); \
         uint64_t const uPc = pVCpu->cpum.GstCtx.rip + pVCpu->cpum.GstCtx.cs.u64Base; \
-        uint64_t const off = uPc - pVCpu->iem.s.uInstrBufPc; \
-        if (off < pVCpu->iem.s.cbInstrBufTotal) \
+        uint64_t const off = uPc - ICORE(pVCpu).uInstrBufPc; \
+        if (off < ICORE(pVCpu).cbInstrBufTotal) \
         { \
-            Assert(!(pVCpu->iem.s.GCPhysInstrBuf & GUEST_PAGE_OFFSET_MASK)); \
-            Assert(pVCpu->iem.s.pbInstrBuf); \
+            Assert(!(ICORE(pVCpu).GCPhysInstrBuf & GUEST_PAGE_OFFSET_MASK)); \
+            Assert(ICORE(pVCpu).pbInstrBuf); \
             RTGCPHYS const GCPhysRangePageWithOffset = iemTbGetRangePhysPageAddr(a_pTb, a_idxRange) \
                                                      | pTb->aRanges[(a_idxRange)].offPhysPage; \
-            if (GCPhysRangePageWithOffset == pVCpu->iem.s.GCPhysInstrBuf + off) \
+            if (GCPhysRangePageWithOffset == ICORE(pVCpu).GCPhysInstrBuf + off) \
             { /* we're good */ } \
             /** @todo r=bird: Not sure if we need the TB obsolete complication here. \
              * If we're preceded by an indirect jump, there is no reason why the TB \
@@ -394,7 +394,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckHwInstrBps)
             { \
                 Log7(("TB jmp miss: %p at %04x:%08RX64 LB %u; branching/1; GCPhysWithOffset=%RGp expected %RGp, pbInstrBuf=%p - #%u\n", \
                       (a_pTb), pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, (a_cbInstr), \
-                      pVCpu->iem.s.GCPhysInstrBuf + off, GCPhysRangePageWithOffset, pVCpu->iem.s.pbInstrBuf, __LINE__)); \
+                      ICORE(pVCpu).GCPhysInstrBuf + off, GCPhysRangePageWithOffset, ICORE(pVCpu).pbInstrBuf, __LINE__)); \
                 RT_NOREF(a_cbInstr); \
                 STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatCheckBranchMisses); \
                 return VINF_IEM_REEXEC_BREAK; \
@@ -403,7 +403,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckHwInstrBps)
             { \
                 Log7(("TB obsolete: %p at %04x:%08RX64 LB %u; branching/1; GCPhysWithOffset=%RGp expected %RGp, pbInstrBuf=%p - #%u\n", \
                       (a_pTb), pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, (a_cbInstr), \
-                      pVCpu->iem.s.GCPhysInstrBuf + off, GCPhysRangePageWithOffset, pVCpu->iem.s.pbInstrBuf, __LINE__)); \
+                      ICORE(pVCpu).GCPhysInstrBuf + off, GCPhysRangePageWithOffset, ICORE(pVCpu).pbInstrBuf, __LINE__)); \
                 RT_NOREF(a_cbInstr); \
                 return iemThreadeFuncWorkerObsoleteTb(pVCpu); \
             } \
@@ -411,24 +411,24 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckHwInstrBps)
         else \
         { \
             /* Must translate new RIP. */ \
-            pVCpu->iem.s.pbInstrBuf       = NULL; \
-            pVCpu->iem.s.offCurInstrStart = 0; \
-            pVCpu->iem.s.offInstrNextByte = 0; \
+            ICORE(pVCpu).pbInstrBuf       = NULL; \
+            ICORE(pVCpu).offCurInstrStart = 0; \
+            ICORE(pVCpu).offInstrNextByte = 0; \
             iemOpcodeFetchBytesJmp(pVCpu, 0, NULL); \
-            Assert(!(pVCpu->iem.s.GCPhysInstrBuf & GUEST_PAGE_OFFSET_MASK) || !pVCpu->iem.s.pbInstrBuf); \
+            Assert(!(ICORE(pVCpu).GCPhysInstrBuf & GUEST_PAGE_OFFSET_MASK) || !ICORE(pVCpu).pbInstrBuf); \
             \
             RTGCPHYS const GCPhysRangePageWithOffset = iemTbGetRangePhysPageAddr(a_pTb, a_idxRange) \
                                                      | pTb->aRanges[(a_idxRange)].offPhysPage; \
-            uint64_t const offNew                    = uPc - pVCpu->iem.s.uInstrBufPc; \
-            if (   GCPhysRangePageWithOffset == pVCpu->iem.s.GCPhysInstrBuf + offNew \
-                && pVCpu->iem.s.pbInstrBuf) \
+            uint64_t const offNew                    = uPc - ICORE(pVCpu).uInstrBufPc; \
+            if (   GCPhysRangePageWithOffset == ICORE(pVCpu).GCPhysInstrBuf + offNew \
+                && ICORE(pVCpu).pbInstrBuf) \
             { /* likely */ } \
             else if (   pTb->aRanges[(a_idxRange)].offPhysPage != offNew \
-                     && pVCpu->iem.s.pbInstrBuf) \
+                     && ICORE(pVCpu).pbInstrBuf) \
             { \
                 Log7(("TB jmp miss: %p at %04x:%08RX64 LB %u; branching/2; GCPhysWithOffset=%RGp expected %RGp, pbInstrBuf=%p - #%u\n", \
                       (a_pTb), pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, (a_cbInstr), \
-                      pVCpu->iem.s.GCPhysInstrBuf + offNew, GCPhysRangePageWithOffset, pVCpu->iem.s.pbInstrBuf, __LINE__)); \
+                      ICORE(pVCpu).GCPhysInstrBuf + offNew, GCPhysRangePageWithOffset, ICORE(pVCpu).pbInstrBuf, __LINE__)); \
                 RT_NOREF(a_cbInstr); \
                 STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatCheckBranchMisses); \
                 return VINF_IEM_REEXEC_BREAK; \
@@ -437,7 +437,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckHwInstrBps)
             { \
                 Log7(("TB obsolete: %p at %04x:%08RX64 LB %u; branching/2; GCPhysWithOffset=%RGp expected %RGp, pbInstrBuf=%p - #%u\n", \
                       (a_pTb), pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, (a_cbInstr), \
-                      pVCpu->iem.s.GCPhysInstrBuf + offNew, GCPhysRangePageWithOffset, pVCpu->iem.s.pbInstrBuf, __LINE__)); \
+                      ICORE(pVCpu).GCPhysInstrBuf + offNew, GCPhysRangePageWithOffset, ICORE(pVCpu).pbInstrBuf, __LINE__)); \
                 RT_NOREF(a_cbInstr); \
                 return iemThreadeFuncWorkerObsoleteTb(pVCpu); \
             } \
@@ -451,19 +451,19 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckHwInstrBps)
         /* Is RIP within the current code page? */ \
         Assert(pVCpu->cpum.GstCtx.cs.u64Base == 0 || !IEM_IS_64BIT_CODE(pVCpu)); \
         uint64_t const uPc = pVCpu->cpum.GstCtx.rip + pVCpu->cpum.GstCtx.cs.u64Base; \
-        uint64_t const off = uPc - pVCpu->iem.s.uInstrBufPc; \
-        Assert(!(pVCpu->iem.s.GCPhysInstrBuf & GUEST_PAGE_OFFSET_MASK)); \
+        uint64_t const off = uPc - ICORE(pVCpu).uInstrBufPc; \
+        Assert(!(ICORE(pVCpu).GCPhysInstrBuf & GUEST_PAGE_OFFSET_MASK)); \
         RTGCPHYS const GCPhysRangePageWithOffset = (  iemTbGetRangePhysPageAddr(a_pTb, a_idxRange) \
                                                     | (a_pTb)->aRanges[(a_idxRange)].offPhysPage) \
                                                  + (a_offRange); \
-        if (   GCPhysRangePageWithOffset == pVCpu->iem.s.GCPhysInstrBuf + off \
-            && off < /*pVCpu->iem.s.cbInstrBufTotal - ignore flushes and CS.LIM is check elsewhere*/ X86_PAGE_SIZE) \
+        if (   GCPhysRangePageWithOffset == ICORE(pVCpu).GCPhysInstrBuf + off \
+            && off < /*ICORE(pVCpu).cbInstrBufTotal - ignore flushes and CS.LIM is check elsewhere*/ X86_PAGE_SIZE) \
         { /* we're good */ } \
         else \
         { \
             Log7(("TB jmp miss: %p at %04x:%08RX64 LB %u; GCPhysWithOffset=%RGp hoped for %RGp, pbInstrBuf=%p - #%u\n", \
                   (a_pTb), pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip, (a_cbInstr), \
-                  pVCpu->iem.s.GCPhysInstrBuf + off, GCPhysRangePageWithOffset, pVCpu->iem.s.pbInstrBuf, __LINE__)); \
+                  ICORE(pVCpu).GCPhysInstrBuf + off, GCPhysRangePageWithOffset, ICORE(pVCpu).pbInstrBuf, __LINE__)); \
             RT_NOREF(a_cbInstr); \
             STAM_REL_COUNTER_INC(&pVCpu->iem.s.StatCheckBranchMisses); \
             return VINF_IEM_REEXEC_BREAK; \
@@ -491,7 +491,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLim)
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndOpcodes)
 {
-    PCIEMTB const  pTb      = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb      = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr  = (uint8_t)uParam0;
     uint32_t const idxRange = (uint32_t)uParam1;
     uint32_t const offRange = (uint32_t)uParam2;
@@ -507,7 +507,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndOpcodes)
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodes)
 {
-    PCIEMTB const  pTb      = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb      = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr  = (uint8_t)uParam0;
     uint32_t const idxRange = (uint32_t)uParam1;
     uint32_t const offRange = (uint32_t)uParam2;
@@ -522,7 +522,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodes)
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesConsiderCsLim)
 {
-    PCIEMTB const  pTb      = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb      = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr  = (uint8_t)uParam0;
     uint32_t const idxRange = (uint32_t)uParam1;
     uint32_t const offRange = (uint32_t)uParam2;
@@ -544,7 +544,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesConsiderCsLim)
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndPcAndOpcodes)
 {
-    PCIEMTB const  pTb      = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb      = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr  = (uint8_t)uParam0;
     uint32_t const idxRange = (uint32_t)uParam1;
     uint32_t const offRange = (uint32_t)uParam2;
@@ -565,7 +565,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndPcAndOpcodes)
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckPcAndOpcodes)
 {
-    PCIEMTB const  pTb      = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb      = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr  = (uint8_t)uParam0;
     uint32_t const idxRange = (uint32_t)uParam1;
     uint32_t const offRange = (uint32_t)uParam2;
@@ -586,7 +586,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckPcAndOpcodes)
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckPcAndOpcodesConsiderCsLim)
 {
-    PCIEMTB const  pTb      = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb      = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr  = (uint8_t)uParam0;
     uint32_t const idxRange = (uint32_t)uParam1;
     uint32_t const offRange = (uint32_t)uParam2;
@@ -610,7 +610,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckPcAndOpcodesConsiderCsLi
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndOpcodesLoadingTlb)
 {
-    PCIEMTB const  pTb      = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb      = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr  = (uint8_t)uParam0;
     uint32_t const idxRange = (uint32_t)uParam1;
     uint32_t const offRange = (uint32_t)uParam2;
@@ -634,7 +634,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndOpcodesLoadingTl
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesLoadingTlb)
 {
-    PCIEMTB const  pTb      = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb      = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr  = (uint8_t)uParam0;
     uint32_t const idxRange = (uint32_t)uParam1;
     uint32_t const offRange = (uint32_t)uParam2;
@@ -657,7 +657,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesLoadingTlb)
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesLoadingTlbConsiderCsLim)
 {
-    PCIEMTB const  pTb      = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb      = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr  = (uint8_t)uParam0;
     uint32_t const idxRange = (uint32_t)uParam1;
     uint32_t const offRange = (uint32_t)uParam2;
@@ -687,7 +687,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesLoadingTlbConside
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndOpcodesAcrossPageLoadingTlb)
 {
-    PCIEMTB const  pTb         = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb         = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr     = (uint8_t)uParam0;
     uint32_t const cbStartPage = (uint32_t)(uParam0 >> 32);
     uint32_t const idxRange1   = (uint32_t)uParam1;
@@ -713,7 +713,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndOpcodesAcrossPag
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesAcrossPageLoadingTlb)
 {
-    PCIEMTB const  pTb         = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb         = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr     = (uint8_t)uParam0;
     uint32_t const cbStartPage = (uint32_t)(uParam0 >> 32);
     uint32_t const idxRange1   = (uint32_t)uParam1;
@@ -739,7 +739,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesAcrossPageLoading
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesAcrossPageLoadingTlbConsiderCsLim)
 {
-    PCIEMTB const  pTb         = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb         = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr     = (uint8_t)uParam0;
     uint32_t const cbStartPage = (uint32_t)(uParam0 >> 32);
     uint32_t const idxRange1   = (uint32_t)uParam1;
@@ -763,7 +763,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesAcrossPageLoading
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndOpcodesOnNextPageLoadingTlb)
 {
-    PCIEMTB const  pTb         = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb         = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr     = (uint8_t)uParam0;
     uint32_t const cbStartPage = (uint32_t)(uParam0 >> 32);
     uint32_t const idxRange1   = (uint32_t)uParam1;
@@ -787,7 +787,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndOpcodesOnNextPag
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesOnNextPageLoadingTlb)
 {
-    PCIEMTB const  pTb         = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb         = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr     = (uint8_t)uParam0;
     uint32_t const cbStartPage = (uint32_t)(uParam0 >> 32);
     uint32_t const idxRange1   = (uint32_t)uParam1;
@@ -810,7 +810,7 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesOnNextPageLoading
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesOnNextPageLoadingTlbConsiderCsLim)
 {
-    PCIEMTB const  pTb         = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb         = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr     = (uint8_t)uParam0;
     uint32_t const cbStartPage = (uint32_t)(uParam0 >> 32);
     uint32_t const idxRange1   = (uint32_t)uParam1;
@@ -832,13 +832,13 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesOnNextPageLoading
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndOpcodesOnNewPageLoadingTlb)
 {
-    PCIEMTB const  pTb         = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb         = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr     = (uint8_t)uParam0;
     uint32_t const idxRange    = (uint32_t)uParam1;
     RT_NOREF(uParam2); //Assert(uParam2 == 0 /*offRange*/);
     BODY_CHECK_CS_LIM(cbInstr);
     BODY_LOAD_TLB_FOR_NEW_PAGE(pTb, 0, idxRange, cbInstr);
-    Assert(pVCpu->iem.s.offCurInstrStart == 0);
+    Assert(ICORE(pVCpu).offCurInstrStart == 0);
     BODY_CHECK_OPCODES(pTb, idxRange, 0, cbInstr);
     return VINF_SUCCESS;
 }
@@ -852,12 +852,12 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckCsLimAndOpcodesOnNewPage
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesOnNewPageLoadingTlb)
 {
-    PCIEMTB const  pTb         = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb         = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr     = (uint8_t)uParam0;
     uint32_t const idxRange    = (uint32_t)uParam1;
     RT_NOREF(uParam2); //Assert(uParam2 == 0 /*offRange*/);
     BODY_LOAD_TLB_FOR_NEW_PAGE(pTb, 0, idxRange, cbInstr);
-    Assert(pVCpu->iem.s.offCurInstrStart == 0);
+    Assert(ICORE(pVCpu).offCurInstrStart == 0);
     BODY_CHECK_OPCODES(pTb, idxRange, 0, cbInstr);
     return VINF_SUCCESS;
 }
@@ -872,13 +872,13 @@ IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesOnNewPageLoadingT
  */
 IEM_DECL_IEMTHREADEDFUNC_DEF(iemThreadedFunc_BltIn_CheckOpcodesOnNewPageLoadingTlbConsiderCsLim)
 {
-    PCIEMTB const  pTb         = pVCpu->iem.s.pCurTbR3;
+    PCIEMTB const  pTb         = IRECM(pVCpu).pCurTbR3;
     uint32_t const cbInstr     = (uint8_t)uParam0;
     uint32_t const idxRange    = (uint32_t)uParam1;
     RT_NOREF(uParam2); //Assert(uParam2 == 0 /*offRange*/);
     BODY_CONSIDER_CS_LIM_CHECKING(pTb, cbInstr);
     BODY_LOAD_TLB_FOR_NEW_PAGE(pTb, 0, idxRange, cbInstr);
-    Assert(pVCpu->iem.s.offCurInstrStart == 0);
+    Assert(ICORE(pVCpu).offCurInstrStart == 0);
     BODY_CHECK_OPCODES(pTb, idxRange, 0, cbInstr);
     return VINF_SUCCESS;
 }

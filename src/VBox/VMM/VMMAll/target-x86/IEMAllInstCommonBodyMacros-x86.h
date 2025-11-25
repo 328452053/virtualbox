@@ -1,4 +1,4 @@
-/* $Id: IEMAllInstCommonBodyMacros-x86.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllInstCommonBodyMacros-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Instruction Decoding and Emulation, x86 target, Common Body Macros.
  *
@@ -44,7 +44,7 @@
      */ \
     if (IEM_IS_MODRM_REG_MODE(a_bRm)) \
     { \
-        switch (pVCpu->iem.s.enmEffOpSize) \
+        switch (ICORE(pVCpu).enmEffOpSize) \
         { \
             case IEMMODE_16BIT: \
                 IEM_MC_BEGIN(a_f16BitMcFlag, 0); \
@@ -124,7 +124,7 @@
         /* \
          * We're accessing memory. \
          */ \
-        switch (pVCpu->iem.s.enmEffOpSize) \
+        switch (ICORE(pVCpu).enmEffOpSize) \
         { \
             case IEMMODE_16BIT: \
                 IEM_MC_BEGIN(a_f16BitMcFlag, 0); \
@@ -132,7 +132,7 @@
                 IEM_MC_CALC_RM_EFF_ADDR(GCPtrEffDst, a_bRm, 0); \
                 IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX(); \
                 IEM_MC_ARG(uint16_t,        u16Src,     2); \
-                IEM_MC_FETCH_MEM_SEG_U16(u16Src, pVCpu->iem.s.iEffSeg, GCPtrEffDst); \
+                IEM_MC_FETCH_MEM_SEG_U16(u16Src, ICORE(pVCpu).iEffSeg, GCPtrEffDst); \
                 IEM_MC_NATIVE_IF(a_fNativeArchs) { \
                     IEM_MC_LOCAL(uint16_t,  u16Dst); \
                     IEM_MC_FETCH_GREG_U16(u16Dst, IEM_GET_MODRM_REG(pVCpu, bRm)); \
@@ -157,7 +157,7 @@
                 IEM_MC_CALC_RM_EFF_ADDR(GCPtrEffDst, a_bRm, 0); \
                 IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX(); \
                 IEM_MC_ARG(uint32_t,        u32Src,     2); \
-                IEM_MC_FETCH_MEM_SEG_U32(u32Src, pVCpu->iem.s.iEffSeg, GCPtrEffDst); \
+                IEM_MC_FETCH_MEM_SEG_U32(u32Src, ICORE(pVCpu).iEffSeg, GCPtrEffDst); \
                 IEM_MC_NATIVE_IF(a_fNativeArchs) { \
                     IEM_MC_LOCAL(uint32_t,  u32Dst); \
                     IEM_MC_FETCH_GREG_U32(u32Dst, IEM_GET_MODRM_REG(pVCpu, bRm)); \
@@ -183,7 +183,7 @@
                 IEM_MC_CALC_RM_EFF_ADDR(GCPtrEffDst, a_bRm, 0); \
                 IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX(); \
                 IEM_MC_ARG(uint64_t,        u64Src,  2); \
-                IEM_MC_FETCH_MEM_SEG_U64(u64Src, pVCpu->iem.s.iEffSeg, GCPtrEffDst); \
+                IEM_MC_FETCH_MEM_SEG_U64(u64Src, ICORE(pVCpu).iEffSeg, GCPtrEffDst); \
                 IEM_MC_NATIVE_IF(a_fNativeArchs) { \
                     IEM_MC_LOCAL(uint64_t,  u64Dst); \
                     IEM_MC_FETCH_GREG_U64(u64Dst, IEM_GET_MODRM_REG(pVCpu, bRm)); \
@@ -220,7 +220,7 @@
      */ \
     if (IEM_IS_MODRM_REG_MODE(a_bRm)) \
     { \
-        switch (pVCpu->iem.s.enmEffOpSize) \
+        switch (ICORE(pVCpu).enmEffOpSize) \
         { \
             case IEMMODE_16BIT: \
                 IEM_MC_BEGIN(a_f16BitMcFlag, 0); \
@@ -300,7 +300,7 @@
         /* \
          * We're accessing memory. \
          */ \
-        switch (pVCpu->iem.s.enmEffOpSize) \
+        switch (ICORE(pVCpu).enmEffOpSize) \
         { \
             case IEMMODE_16BIT: \
                 IEM_MC_BEGIN(a_f16BitMcFlag, 0); \
@@ -308,7 +308,7 @@
                 IEM_MC_CALC_RM_EFF_ADDR(GCPtrEffDst, a_bRm, 0); \
                 IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX(); \
                 IEM_MC_ARG(uint16_t,   u16Src,  1); \
-                IEM_MC_FETCH_MEM_SEG_U16(u16Src, pVCpu->iem.s.iEffSeg, GCPtrEffDst); \
+                IEM_MC_FETCH_MEM_SEG_U16(u16Src, ICORE(pVCpu).iEffSeg, GCPtrEffDst); \
                 IEM_MC_NATIVE_IF(a_fNativeArchs) { \
                     IEM_MC_LOCAL(uint16_t,  u16Dst); \
                     IEM_MC_FETCH_GREG_U16(u16Dst, IEM_GET_MODRM_REG(pVCpu, bRm)); \
@@ -333,7 +333,7 @@
                 IEM_MC_CALC_RM_EFF_ADDR(GCPtrEffDst, a_bRm, 0); \
                 IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX(); \
                 IEM_MC_ARG(uint32_t,   u32Src,  1); \
-                IEM_MC_FETCH_MEM_SEG_U32(u32Src, pVCpu->iem.s.iEffSeg, GCPtrEffDst); \
+                IEM_MC_FETCH_MEM_SEG_U32(u32Src, ICORE(pVCpu).iEffSeg, GCPtrEffDst); \
                 IEM_MC_NATIVE_IF(a_fNativeArchs) { \
                     IEM_MC_LOCAL(uint32_t,  u32Dst); \
                     IEM_MC_FETCH_GREG_U32(u32Dst, IEM_GET_MODRM_REG(pVCpu, bRm)); \
@@ -359,7 +359,7 @@
                 IEM_MC_CALC_RM_EFF_ADDR(GCPtrEffDst, a_bRm, 0); \
                 IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX(); \
                 IEM_MC_ARG(uint64_t,   u64Src,  1); \
-                IEM_MC_FETCH_MEM_SEG_U64(u64Src, pVCpu->iem.s.iEffSeg, GCPtrEffDst); \
+                IEM_MC_FETCH_MEM_SEG_U64(u64Src, ICORE(pVCpu).iEffSeg, GCPtrEffDst); \
                 IEM_MC_NATIVE_IF(a_fNativeArchs) { \
                     IEM_MC_LOCAL(uint64_t,  u64Dst); \
                     IEM_MC_FETCH_GREG_U64(u64Dst, IEM_GET_MODRM_REG(pVCpu, bRm)); \
