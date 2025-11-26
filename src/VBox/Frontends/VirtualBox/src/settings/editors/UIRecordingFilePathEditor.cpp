@@ -1,4 +1,4 @@
-/* $Id: UIRecordingFilePathEditor.cpp 111862 2025-11-25 11:13:46Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingFilePathEditor.cpp 111878 2025-11-26 09:42:09Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingFilePathEditor class implementation.
  */
@@ -26,26 +26,12 @@
  */
 
 /* Qt includes: */
-#include <QCheckBox>
 #include <QHBoxLayout>
 #include <QLabel>
 
 /* GUI includes: */
-#include "QIAdvancedSlider.h"
-#include "UICommon.h"
-#include "UIConverter.h"
 #include "UIFilePathSelector.h"
-#include "UIFilmContainer.h"
-#include "UIGlobalSession.h"
 #include "UIRecordingFilePathEditor.h"
-
-/* COM includes: */
-#include "CSystemProperties.h"
-
-/* Defines: */
-#define VIDEO_CAPTURE_BIT_RATE_MIN 32
-#define VIDEO_CAPTURE_BIT_RATE_MAX 2048
-
 
 UIRecordingFilePathEditor::UIRecordingFilePathEditor(QWidget *pParent /* = 0 */, bool fShowInBasicMode /* = false */)
     : UIEditor(pParent, fShowInBasicMode /* show in basic mode */)
@@ -57,36 +43,26 @@ UIRecordingFilePathEditor::UIRecordingFilePathEditor(QWidget *pParent /* = 0 */,
 
 void UIRecordingFilePathEditor::setFolder(const QString &strFolder)
 {
-    /* Update cached value and
-     * file editor if value has changed: */
-    if (m_strFolder != strFolder)
-    {
-        m_strFolder = strFolder;
-        if (m_pEditorFilePath)
-            m_pEditorFilePath->setInitialPath(m_strFolder);
-    }
+    if (!m_pEditorFilePath || m_pEditorFilePath->initialPath() == strFolder)
+        return;
+    m_pEditorFilePath->setInitialPath(strFolder);
 }
 
 QString UIRecordingFilePathEditor::folder() const
 {
-    return m_pEditorFilePath ? m_pEditorFilePath->initialPath() : m_strFolder;
+    return m_pEditorFilePath ? m_pEditorFilePath->initialPath() : QString();
 }
 
 void UIRecordingFilePathEditor::setFilePath(const QString &strFilePath)
 {
-    /* Update cached value and
-     * file editor if value has changed: */
-    if (m_strFilePath != strFilePath)
-    {
-        m_strFilePath = strFilePath;
-        if (m_pEditorFilePath)
-            m_pEditorFilePath->setPath(m_strFilePath);
-    }
+    if (!m_pEditorFilePath || m_pEditorFilePath->path() == strFilePath)
+        return;
+    m_pEditorFilePath->setPath(strFilePath);
 }
 
 QString UIRecordingFilePathEditor::filePath() const
 {
-    return m_pEditorFilePath ? m_pEditorFilePath->path() : m_strFilePath;
+    return m_pEditorFilePath ? m_pEditorFilePath->path() : QString();
 }
 
 void UIRecordingFilePathEditor::sltRetranslateUI()

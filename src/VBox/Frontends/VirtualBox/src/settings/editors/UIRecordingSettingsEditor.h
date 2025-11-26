@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.h 111862 2025-11-25 11:13:46Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.h 111878 2025-11-26 09:42:09Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class declaration.
  */
@@ -47,6 +47,8 @@ class QWidget;
 class QIAdvancedSlider;
 class UIFilmContainer;
 class UIRecordingFilePathEditor;
+class UIRecordingVideoFrameRateEditor;
+
 
 /** UIEditor sub-class used as a recording settings editor. */
 class SHARED_LIBRARY_STUFF UIRecordingSettingsEditor : public UIEditor
@@ -129,10 +131,8 @@ private slots:
     void sltHandleFrameWidthChange();
     /** Handles frame height change. */
     void sltHandleFrameHeightChange();
-    /** Handles frame rate slider change. */
-    void sltHandleFrameRateSliderChange();
-    /** Handles frame rate spinbox change. */
-    void sltHandleFrameRateSpinboxChange();
+    /** Handles frame rate change. */
+    void sltHandleFrameRateChange(int iFrameRate);
     /** Handles bit rate slider change. */
     void sltHandleBitRateSliderChange();
     /** Handles bit rate spinbox change. */
@@ -219,18 +219,8 @@ private:
         QSpinBox           *m_pSpinboxFrameWidth;
         /** Holds the frame height spinbox instance. */
         QSpinBox           *m_pSpinboxFrameHeight;
-        /** Holds the frame rate label instance. */
-        QLabel             *m_pLabelFrameRate;
-        /** Holds the frame rate settings widget instance. */
-        QWidget            *m_pWidgetFrameRateSettings;
-        /** Holds the frame rate slider instance. */
-        QIAdvancedSlider   *m_pSliderFrameRate;
-        /** Holds the frame rate spinbox instance. */
-        QSpinBox           *m_pSpinboxFrameRate;
-        /** Holds the frame rate min label instance. */
-        QLabel             *m_pLabelFrameRateMin;
-        /** Holds the frame rate max label instance. */
-        QLabel             *m_pLabelFrameRateMax;
+        /** Holds the frame rate editor instance. */
+        UIRecordingVideoFrameRateEditor *m_pFrameRateEditor;
         /** Holds the bit rate label instance. */
         QLabel             *m_pLabelBitRate;
         /** Holds the bit rate settings widget instance. */

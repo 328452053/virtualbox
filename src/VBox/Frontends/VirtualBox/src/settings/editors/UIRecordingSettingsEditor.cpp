@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.cpp 111862 2025-11-25 11:13:46Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.cpp 111878 2025-11-26 09:42:09Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class implementation.
  */
@@ -42,6 +42,7 @@
 #include "UIGlobalSession.h"
 #include "UIRecordingSettingsEditor.h"
 #include "UIRecordingFilePathEditor.h"
+#include "UIRecordingVideoFrameRateEditor.h"
 
 /* COM includes: */
 #include "CSystemProperties.h"
@@ -68,12 +69,7 @@ UIRecordingSettingsEditor::UIRecordingSettingsEditor(QWidget *pParent /* = 0 */)
     , m_pComboFrameSize(0)
     , m_pSpinboxFrameWidth(0)
     , m_pSpinboxFrameHeight(0)
-    , m_pLabelFrameRate(0)
-    , m_pWidgetFrameRateSettings(0)
-    , m_pSliderFrameRate(0)
-    , m_pSpinboxFrameRate(0)
-    , m_pLabelFrameRateMin(0)
-    , m_pLabelFrameRateMax(0)
+    , m_pFrameRateEditor(0)
     , m_pLabelBitRate(0)
     , m_pWidgetBitRateSettings(0)
     , m_pSliderBitRate(0)
@@ -223,14 +219,14 @@ void UIRecordingSettingsEditor::setFrameRate(int iRate)
     if (m_iFrameRate != iRate)
     {
         m_iFrameRate = iRate;
-        if (m_pSpinboxFrameRate)
-            m_pSpinboxFrameRate->setValue(m_iFrameRate);
+        if (m_pFrameRateEditor)
+            m_pFrameRateEditor->setFrameRate(m_iFrameRate);
     }
 }
 
 int UIRecordingSettingsEditor::frameRate() const
 {
-    return m_pSpinboxFrameRate ? m_pSpinboxFrameRate->value() : m_iFrameRate;
+    return m_pFrameRateEditor ? m_pFrameRateEditor->frameRate() : m_iFrameRate;
 }
 
 void UIRecordingSettingsEditor::setBitRate(int iRate)
@@ -332,19 +328,6 @@ void UIRecordingSettingsEditor::sltRetranslateUI()
     m_pSpinboxFrameWidth->setToolTip(tr("Horizontal resolution (frame width) of the recorded video"));
     m_pSpinboxFrameHeight->setToolTip(tr("Vertical resolution (frame height) of the recorded video"));
 
-    m_pLabelFrameRate->setText(tr("Frame R&ate"));
-    m_pSliderFrameRate->setToolTip(tr("Maximum number of frames per second. Additional frames "
-                                      "will be skipped. Reducing this value will increase the number of skipped "
-                                      "frames and reduce the file size."));
-    m_pSpinboxFrameRate->setSuffix(QString(" %1").arg(tr("fps")));
-    m_pSpinboxFrameRate->setToolTip(tr("Maximum number of frames per second. Additional frames "
-                                       "will be skipped. Reducing this value will increase the number of skipped "
-                                       "frames and reduce the file size."));
-    m_pLabelFrameRateMin->setText(tr("%1 fps").arg(m_pSliderFrameRate->minimum()));
-    m_pLabelFrameRateMin->setToolTip(tr("Minimum recording frame rate"));
-    m_pLabelFrameRateMax->setText(tr("%1 fps").arg(m_pSliderFrameRate->maximum()));
-    m_pLabelFrameRateMax->setToolTip(tr("Maximum recording frame rate"));
-
     m_pLabelBitRate->setText(tr("&Bitrate"));
     m_pSliderBitRate->setToolTip(tr("Bitrate. Increasing this value will make the video "
                                     "look better at the cost of an increased file size."));
@@ -417,22 +400,9 @@ void UIRecordingSettingsEditor::sltHandleFrameHeightChange()
     sltHandleBitRateSliderChange();
 }
 
-void UIRecordingSettingsEditor::sltHandleFrameRateSliderChange()
+void UIRecordingSettingsEditor::sltHandleFrameRateChange(int iFrameRate)
 {
-    /* Apply proposed frame-rate: */
-    m_pSpinboxFrameRate->blockSignals(true);
-    m_pSpinboxFrameRate->setValue(m_pSliderFrameRate->value());
-    m_pSpinboxFrameRate->blockSignals(false);
-    /* Update quality and bit rate: */
-    sltHandleBitRateSliderChange();
-}
-
-void UIRecordingSettingsEditor::sltHandleFrameRateSpinboxChange()
-{
-    /* Apply proposed frame-rate: */
-    m_pSliderFrameRate->blockSignals(true);
-    m_pSliderFrameRate->setValue(m_pSpinboxFrameRate->value());
-    m_pSliderFrameRate->blockSignals(false);
+    Q_UNUSED(iFrameRate);
     /* Update quality and bit rate: */
     sltHandleBitRateSliderChange();
 }
@@ -443,7 +413,7 @@ void UIRecordingSettingsEditor::sltHandleBitRateSliderChange()
     m_pSpinboxBitRate->blockSignals(true);
     m_pSpinboxBitRate->setValue(calculateBitRate(m_pSpinboxFrameWidth->value(),
                                                  m_pSpinboxFrameHeight->value(),
-                                                 m_pSpinboxFrameRate->value(),
+                                                 m_pFrameRateEditor->frameRate(),
                                                  m_pSliderBitRate->value()));
     m_pSpinboxBitRate->blockSignals(false);
     updateRecordingFileSizeHint();
@@ -455,7 +425,7 @@ void UIRecordingSettingsEditor::sltHandleBitRateSpinboxChange()
     m_pSliderBitRate->blockSignals(true);
     m_pSliderBitRate->setValue(calculateQuality(m_pSpinboxFrameWidth->value(),
                                                 m_pSpinboxFrameHeight->value(),
-                                                m_pSpinboxFrameRate->value(),
+                                                m_pFrameRateEditor->frameRate(),
                                                 m_pSpinboxBitRate->value()));
     m_pSliderBitRate->blockSignals(false);
     updateRecordingFileSizeHint();
@@ -591,75 +561,14 @@ void UIRecordingSettingsEditor::prepareWidgets()
 
                     pLayoutSettings->addWidget(m_pSpinboxFrameHeight, iLayoutSettingsRow, 3);
                 }
-
-                /* Prepare recording frame rate label: */
-                m_pLabelFrameRate = new QLabel(pWidgetSettings);
-                if (m_pLabelFrameRate)
+                /* Prepare recording frame rate editor: */
+                m_pFrameRateEditor = new UIRecordingVideoFrameRateEditor(pWidgetSettings, false);
+                if (m_pFrameRateEditor)
                 {
-                    m_pLabelFrameRate->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-                    pLayoutSettings->addWidget(m_pLabelFrameRate, ++iLayoutSettingsRow, 0);
+                    addEditor(m_pFrameRateEditor);
+                    m_pFrameRateEditor->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
+                    pLayoutSettings->addWidget(m_pFrameRateEditor, ++iLayoutSettingsRow, 0, 1, 4);
                 }
-                /* Prepare recording frame rate widget: */
-                m_pWidgetFrameRateSettings = new QWidget(pWidgetSettings);
-                if (m_pWidgetFrameRateSettings)
-                {
-                    /* Prepare recording frame rate layout: */
-                    QVBoxLayout *pLayoutRecordingFrameRate = new QVBoxLayout(m_pWidgetFrameRateSettings);
-                    if (pLayoutRecordingFrameRate)
-                    {
-                        pLayoutRecordingFrameRate->setContentsMargins(0, 0, 0, 0);
-
-                        /* Prepare recording frame rate slider: */
-                        m_pSliderFrameRate = new QIAdvancedSlider(m_pWidgetFrameRateSettings);
-                        if (m_pSliderFrameRate)
-                        {
-                            m_pSliderFrameRate->setOrientation(Qt::Horizontal);
-                            m_pSliderFrameRate->setMinimum(1);
-                            m_pSliderFrameRate->setMaximum(30);
-                            m_pSliderFrameRate->setPageStep(1);
-                            m_pSliderFrameRate->setSingleStep(1);
-                            m_pSliderFrameRate->setTickInterval(1);
-                            m_pSliderFrameRate->setSnappingEnabled(true);
-                            m_pSliderFrameRate->setOptimalHint(1, 25);
-                            m_pSliderFrameRate->setWarningHint(25, 30);
-
-                            pLayoutRecordingFrameRate->addWidget(m_pSliderFrameRate);
-                        }
-                        /* Prepare recording frame rate scale layout: */
-                        QHBoxLayout *pLayoutRecordingFrameRateScale = new QHBoxLayout;
-                        if (pLayoutRecordingFrameRateScale)
-                        {
-                            pLayoutRecordingFrameRateScale->setContentsMargins(0, 0, 0, 0);
-
-                            /* Prepare recording frame rate min label: */
-                            m_pLabelFrameRateMin = new QLabel(m_pWidgetFrameRateSettings);
-                            if (m_pLabelFrameRateMin)
-                                pLayoutRecordingFrameRateScale->addWidget(m_pLabelFrameRateMin);
-                            pLayoutRecordingFrameRateScale->addStretch();
-                            /* Prepare recording frame rate max label: */
-                            m_pLabelFrameRateMax = new QLabel(m_pWidgetFrameRateSettings);
-                            if (m_pLabelFrameRateMax)
-                                pLayoutRecordingFrameRateScale->addWidget(m_pLabelFrameRateMax);
-
-                            pLayoutRecordingFrameRate->addLayout(pLayoutRecordingFrameRateScale);
-                        }
-                    }
-
-                    pLayoutSettings->addWidget(m_pWidgetFrameRateSettings, iLayoutSettingsRow, 1, 2, 1);
-                }
-                /* Prepare recording frame rate spinbox: */
-                m_pSpinboxFrameRate = new QSpinBox(pWidgetSettings);
-                if (m_pSpinboxFrameRate)
-                {
-                    if (m_pLabelFrameRate)
-                        m_pLabelFrameRate->setBuddy(m_pSpinboxFrameRate);
-                    uiCommon().setMinimumWidthAccordingSymbolCount(m_pSpinboxFrameRate, 3);
-                    m_pSpinboxFrameRate->setMinimum(1);
-                    m_pSpinboxFrameRate->setMaximum(30);
-
-                    pLayoutSettings->addWidget(m_pSpinboxFrameRate, ++iLayoutSettingsRow, 2, 1, 2);
-                }
-
                 /* Prepare recording bit rate label: */
                 m_pLabelBitRate = new QLabel(pWidgetSettings);
                 if (m_pLabelBitRate)
@@ -904,10 +813,8 @@ void UIRecordingSettingsEditor::prepareConnections()
             this, &UIRecordingSettingsEditor::sltHandleFrameWidthChange);
     connect(m_pSpinboxFrameHeight, &QSpinBox::valueChanged,
             this, &UIRecordingSettingsEditor::sltHandleFrameHeightChange);
-    connect(m_pSliderFrameRate, &QIAdvancedSlider::valueChanged,
-            this, &UIRecordingSettingsEditor::sltHandleFrameRateSliderChange);
-    connect(m_pSpinboxFrameRate, &QSpinBox::valueChanged,
-            this, &UIRecordingSettingsEditor::sltHandleFrameRateSpinboxChange);
+    connect(m_pFrameRateEditor, &UIRecordingVideoFrameRateEditor::sigFrameRateChanged,
+            this, &UIRecordingSettingsEditor::sltHandleFrameRateChange);
     connect(m_pSliderBitRate, &QIAdvancedSlider::valueChanged,
             this, &UIRecordingSettingsEditor::sltHandleBitRateSliderChange);
     connect(m_pSpinboxBitRate, &QSpinBox::valueChanged,
@@ -984,9 +891,7 @@ void UIRecordingSettingsEditor::updateWidgetAvailability()
     m_pSpinboxFrameWidth->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
     m_pSpinboxFrameHeight->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
 
-    m_pLabelFrameRate->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
-    m_pWidgetFrameRateSettings->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
-    m_pSpinboxFrameRate->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
+    m_pFrameRateEditor->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
 
     m_pLabelBitRate->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
     m_pWidgetBitRateSettings->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);

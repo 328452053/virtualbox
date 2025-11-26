@@ -1,4 +1,4 @@
-/* $Id: UIRecordingFilePathEditor.h 111862 2025-11-25 11:13:46Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingFilePathEditor.h 111878 2025-11-26 09:42:09Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingFilePathEditor class declaration.
  */
@@ -33,9 +33,6 @@
 
 /* GUI includes: */
 #include "UIEditor.h"
-
-/* COM includes: */
-
 
 /* Forward declarations: */
 class QLabel;
@@ -74,15 +71,6 @@ private:
     void prepareWidgets();
     /** Prepares connections. */
     void prepareConnections();
-
-
-    /** @name Values
-     * @{ */
-        /** Holds the folder. */
-        QString  m_strFolder;
-        /** Holds the file path. */
-        QString  m_strFilePath;
-    /** @} */
 
     /** @name Widgets
      * @{ */
