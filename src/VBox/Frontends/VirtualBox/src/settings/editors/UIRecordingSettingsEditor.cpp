@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.cpp 111885 2025-11-26 11:43:31Z sergey.dubov@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.cpp 111886 2025-11-26 11:50:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class implementation.
  */
@@ -69,7 +69,7 @@ UIRecordingSettingsEditor::UIRecordingSettingsEditor(QWidget *pParent /* = 0 */)
     , m_pComboFrameSize(0)
     , m_pSpinboxFrameWidth(0)
     , m_pSpinboxFrameHeight(0)
-    , m_pFrameRateEditor(0)
+    , m_pEditorFrameRate(0)
     , m_pLabelBitRate(0)
     , m_pWidgetBitRateSettings(0)
     , m_pSliderBitRate(0)
@@ -202,13 +202,13 @@ int UIRecordingSettingsEditor::frameHeight() const
 
 void UIRecordingSettingsEditor::setFrameRate(int iRate)
 {
-    if (m_pFrameRateEditor)
-        m_pFrameRateEditor->setFrameRate(iRate);
+    if (m_pEditorFrameRate)
+        m_pEditorFrameRate->setFrameRate(iRate);
 }
 
 int UIRecordingSettingsEditor::frameRate() const
 {
-    return m_pFrameRateEditor ? m_pFrameRateEditor->frameRate() : 0;
+    return m_pEditorFrameRate ? m_pEditorFrameRate->frameRate() : 0;
 }
 
 void UIRecordingSettingsEditor::setBitRate(int iRate)
@@ -401,7 +401,7 @@ void UIRecordingSettingsEditor::sltHandleBitRateSliderChange()
     m_pSpinboxBitRate->blockSignals(true);
     m_pSpinboxBitRate->setValue(calculateBitRate(m_pSpinboxFrameWidth->value(),
                                                  m_pSpinboxFrameHeight->value(),
-                                                 m_pFrameRateEditor->frameRate(),
+                                                 m_pEditorFrameRate->frameRate(),
                                                  m_pSliderBitRate->value()));
     m_pSpinboxBitRate->blockSignals(false);
     updateRecordingFileSizeHint();
@@ -413,7 +413,7 @@ void UIRecordingSettingsEditor::sltHandleBitRateSpinboxChange()
     m_pSliderBitRate->blockSignals(true);
     m_pSliderBitRate->setValue(calculateQuality(m_pSpinboxFrameWidth->value(),
                                                 m_pSpinboxFrameHeight->value(),
-                                                m_pFrameRateEditor->frameRate(),
+                                                m_pEditorFrameRate->frameRate(),
                                                 m_pSpinboxBitRate->value()));
     m_pSliderBitRate->blockSignals(false);
     updateRecordingFileSizeHint();
@@ -549,11 +549,11 @@ void UIRecordingSettingsEditor::prepareWidgets()
                     m_pLayoutSettings->addWidget(m_pSpinboxFrameHeight, iLayoutSettingsRow, 3);
                 }
                 /* Prepare recording frame rate editor: */
-                m_pFrameRateEditor = new UIRecordingVideoFrameRateEditor(pWidgetSettings);
-                if (m_pFrameRateEditor)
+                m_pEditorFrameRate = new UIRecordingVideoFrameRateEditor(pWidgetSettings);
+                if (m_pEditorFrameRate)
                 {
-                    addEditor(m_pFrameRateEditor);
-                    m_pLayoutSettings->addWidget(m_pFrameRateEditor, ++iLayoutSettingsRow, 0, 1, 4);
+                    addEditor(m_pEditorFrameRate);
+                    m_pLayoutSettings->addWidget(m_pEditorFrameRate, ++iLayoutSettingsRow, 0, 1, 4);
                 }
                 /* Prepare recording bit rate label: */
                 m_pLabelBitRate = new QLabel(pWidgetSettings);
@@ -799,7 +799,7 @@ void UIRecordingSettingsEditor::prepareConnections()
             this, &UIRecordingSettingsEditor::sltHandleFrameWidthChange);
     connect(m_pSpinboxFrameHeight, &QSpinBox::valueChanged,
             this, &UIRecordingSettingsEditor::sltHandleFrameHeightChange);
-    connect(m_pFrameRateEditor, &UIRecordingVideoFrameRateEditor::sigFrameRateChanged,
+    connect(m_pEditorFrameRate, &UIRecordingVideoFrameRateEditor::sigFrameRateChanged,
             this, &UIRecordingSettingsEditor::sltHandleFrameRateChange);
     connect(m_pSliderBitRate, &QIAdvancedSlider::valueChanged,
             this, &UIRecordingSettingsEditor::sltHandleBitRateSliderChange);
@@ -877,7 +877,7 @@ void UIRecordingSettingsEditor::updateWidgetAvailability()
     m_pSpinboxFrameWidth->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
     m_pSpinboxFrameHeight->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
 
-    m_pFrameRateEditor->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
+    m_pEditorFrameRate->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
 
     m_pLabelBitRate->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
     m_pWidgetBitRateSettings->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
@@ -920,8 +920,8 @@ void UIRecordingSettingsEditor::updateMinimumLayoutHint()
     if (m_pLabelFrameSize && !m_pLabelFrameSize->isHidden())
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pLabelFrameSize->minimumSizeHint().width());
     // This editor have own label, but we want it to be properly layouted according to rest of stuff.
-//    if (m_pFrameRateEditor && !m_pFrameRateEditor->isHidden())
-//        iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pFrameRateEditor->minimumLabelHorizontalHint());
+    if (m_pEditorFrameRate && !m_pEditorFrameRate->isHidden())
+        iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pEditorFrameRate->minimumLabelHorizontalHint());
     if (m_pLabelBitRate && !m_pLabelBitRate->isHidden())
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pLabelBitRate->minimumSizeHint().width());
     if (m_pLabelVideoQuality && !m_pLabelVideoQuality->isHidden())
@@ -932,8 +932,8 @@ void UIRecordingSettingsEditor::updateMinimumLayoutHint()
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pLabelScreens->minimumSizeHint().width());
     if (m_pEditorFilePath)
         m_pEditorFilePath->setMinimumLayoutIndent(iMinimumLayoutHint);
-//    if (m_pFrameRateEditor)
-//        m_pFrameRateEditor->setMinimumLayoutIndent(iMinimumLayoutHint);
+    if (m_pEditorFrameRate)
+        m_pEditorFrameRate->setMinimumLayoutIndent(iMinimumLayoutHint);
     if (m_pLayoutSettings)
         m_pLayoutSettings->setColumnMinimumWidth(0, iMinimumLayoutHint);
 }

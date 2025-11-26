@@ -1,4 +1,4 @@
-/* $Id: UIRecordingVideoFrameRateEditor.cpp 111885 2025-11-26 11:43:31Z sergey.dubov@oracle.com $ */
+/* $Id: UIRecordingVideoFrameRateEditor.cpp 111886 2025-11-26 11:50:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingVideoFrameRateEditor class implementation.
  */
@@ -64,6 +64,17 @@ int UIRecordingVideoFrameRateEditor::frameRate() const
     return m_pSpinbox ? m_pSpinbox->value() : m_iFrameRate;
 }
 
+int UIRecordingVideoFrameRateEditor::minimumLabelHorizontalHint() const
+{
+    return m_pLabel ? m_pLabel->minimumSizeHint().width() : 0;
+}
+
+void UIRecordingVideoFrameRateEditor::setMinimumLayoutIndent(int iIndent)
+{
+    if (m_pLayout)
+        m_pLayout->setColumnMinimumWidth(0, iIndent);
+}
+
 void UIRecordingVideoFrameRateEditor::sltRetranslateUI()
 {
     m_pLabel->setText(tr("Frame R&ate"));
@@ -111,18 +122,18 @@ void UIRecordingVideoFrameRateEditor::prepare()
 void UIRecordingVideoFrameRateEditor::prepareWidgets()
 {
     /* Prepare main layout: */
-    QGridLayout *pLayout = new QGridLayout(this);
-    if (pLayout)
+    m_pLayout = new QGridLayout(this);
+    if (m_pLayout)
     {
-        pLayout->setContentsMargins(0, 0, 0, 0);
-        pLayout->setColumnStretch(2, 1); // strech between min and max labels
+        m_pLayout->setContentsMargins(0, 0, 0, 0);
+        m_pLayout->setColumnStretch(2, 1); // strech between min and max labels
 
         /* Prepare label: */
         m_pLabel = new QLabel(this);
         if (m_pLabel)
         {
             m_pLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-            pLayout->addWidget(m_pLabel, 0, 0);
+            m_pLayout->addWidget(m_pLabel, 0, 0);
         }
 
         /* Prepare slider: */
@@ -138,17 +149,17 @@ void UIRecordingVideoFrameRateEditor::prepareWidgets()
             m_pSlider->setSnappingEnabled(true);
             m_pSlider->setOptimalHint(1, 25);
             m_pSlider->setWarningHint(25, 30);
-            pLayout->addWidget(m_pSlider, 0, 1, 1, 3);
+            m_pLayout->addWidget(m_pSlider, 0, 1, 1, 3);
         }
 
         /* Prepare min label: */
         m_pLabelMin = new QLabel(this);
         if (m_pLabelMin)
-            pLayout->addWidget(m_pLabelMin, 1, 1);
+            m_pLayout->addWidget(m_pLabelMin, 1, 1);
         /* Prepare max label: */
         m_pLabelMax = new QLabel(this);
         if (m_pLabelMax)
-            pLayout->addWidget(m_pLabelMax, 1, 3);
+            m_pLayout->addWidget(m_pLabelMax, 1, 3);
 
         /* Prepare spinbox: */
         m_pSpinbox = new QSpinBox(this);
@@ -159,7 +170,7 @@ void UIRecordingVideoFrameRateEditor::prepareWidgets()
             uiCommon().setMinimumWidthAccordingSymbolCount(m_pSpinbox, 3);
             m_pSpinbox->setMinimum(1);
             m_pSpinbox->setMaximum(30);
-            pLayout->addWidget(m_pSpinbox, 0, 4);
+            m_pLayout->addWidget(m_pSpinbox, 0, 4);
         }
     }
 }

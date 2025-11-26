@@ -1,4 +1,4 @@
-/* $Id: UIRecordingVideoFrameRateEditor.h 111885 2025-11-26 11:43:31Z sergey.dubov@oracle.com $ */
+/* $Id: UIRecordingVideoFrameRateEditor.h 111886 2025-11-26 11:50:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingVideoFrameRateEditor class declaration.
  */
@@ -35,6 +35,7 @@
 #include "UIEditor.h"
 
 /* Forward declarations: */
+class QGridLayout;
 class QLabel;
 class QSpinBox;
 class QWidget;
@@ -59,6 +60,11 @@ public:
     void setFrameRate(int iRate);
     /** Returns frame rate. */
     int frameRate() const;
+
+    /** Returns minimum layout hint. */
+    int minimumLabelHorizontalHint() const;
+    /** Defines minimum layout @a iIndent. */
+    void setMinimumLayoutIndent(int iIndent);
 
 private slots:
 
@@ -86,6 +92,8 @@ private:
 
     /** @name Widgets
      * @{ */
+        /** Holds the main layout instance. */
+        QGridLayout      *m_pLayout;
         /** Holds the label instance. */
         QLabel           *m_pLabel;
         /** Holds the instance. */

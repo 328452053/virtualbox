@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.h 111885 2025-11-26 11:43:31Z sergey.dubov@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.h 111886 2025-11-26 11:50:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class declaration.
  */
@@ -223,7 +223,7 @@ private:
         /** Holds the frame height spinbox instance. */
         QSpinBox           *m_pSpinboxFrameHeight;
         /** Holds the frame rate editor instance. */
-        UIRecordingVideoFrameRateEditor *m_pFrameRateEditor;
+        UIRecordingVideoFrameRateEditor *m_pEditorFrameRate;
         /** Holds the bit rate label instance. */
         QLabel             *m_pLabelBitRate;
         /** Holds the bit rate settings widget instance. */
