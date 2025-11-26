@@ -249,53 +249,87 @@ DECLCALLBACK(int) vgsvcDisplayConfigWorker(bool volatile *pfShutdown)
     rc = VbglR3CtlFilterMask(VMMDEV_EVENT_DISPLAY_CHANGE_REQUEST, 0);
     VGSvcVerbose(3, "VbglR3CtlFilterMask set rc=%Rrc\n", rc);
 
-    for (;;)
-    {
-        uint32_t fEvents = 0;
+    bool fCapAcquired = false;
 
+    do
+    {
         if (HasActiveLocalUser())
         {
+            /* Release the GRAPHICS capability and delegate VBoxTray processing of resize requests */
+            if (fCapAcquired)
+            {
+                rc = VbglR3AcquireGuestCaps(0, VMMDEV_GUEST_SUPPORTS_GRAPHICS, false);
+                if (RT_SUCCESS(rc))
+                {
+                    fCapAcquired = false;
+                    LogRel((": GRAPHICS capability released by VBoxService\n"));
+                }
+            }
+
             RTThreadSleep(1000);
+            continue;
         }
-        else
+
+        /* Acquire the GRAPHICS capability and wait 1 sec for resize requests */
+        if (!fCapAcquired)
         {
             rc = VbglR3AcquireGuestCaps(VMMDEV_GUEST_SUPPORTS_GRAPHICS, 0, false);
-            VGSvcVerbose(3, "VbglR3AcquireGuestCaps acquire VMMDEV_GUEST_SUPPORTS_GRAPHICS rc=%Rrc\n", rc);
-
-            rc = VbglR3WaitEvent(VMMDEV_EVENT_DISPLAY_CHANGE_REQUEST, 2000 /*ms*/, &fEvents);
-            VGSvcVerbose(3, "VbglR3WaitEvent rc=%Rrc\n", rc);
-
             if (RT_SUCCESS(rc))
             {
-                VMMDevDisplayDef aDisplays[64];
-                uint32_t cDisplays = RT_ELEMENTS(aDisplays);
-
-                rc = VbglR3GetDisplayChangeRequestMulti(cDisplays, &cDisplays, &aDisplays[0], true);
-                VGSvcVerbose(3, "VbglR3GetDisplayChangeRequestMulti rc=%Rrc cDisplays=%d\n", rc, cDisplays);
-                if (cDisplays > 0)
-                {
-                    for(uint32_t i = 0; i < cDisplays; i++)
-                    {
-                        VGSvcVerbose(2, "%u) Display[%u] flags=%#x (%dx%d)\n", i, aDisplays[i].idDisplay,
-                            aDisplays[i].fDisplayFlags,
-                            aDisplays[i].cx, aDisplays[i].cy);
-                    }
-
-                    ReconnectDisplays(cDisplays, &aDisplays[0]);
-                }
+                fCapAcquired = true;
+                LogRel((": GRAPHICS capability acquired by VBoxService\n"));
             }
             else
             {
-                /* To prevent CPU throttle in case of multiple failures */
-                RTThreadSleep(200);
+                LogRelMax(8, (": VBoxService failed to acquire GRAPHICS capability\n"));
+                RTThreadSleep(1000);
+                continue;
             }
-
-            rc = VbglR3AcquireGuestCaps(0, VMMDEV_GUEST_SUPPORTS_GRAPHICS, false);
-            VGSvcVerbose(3, "VbglR3AcquireGuestCaps release VMMDEV_GUEST_SUPPORTS_GRAPHICS rc=%Rrc\n", rc);
         }
 
-        if (*pfShutdown)
-            break;
+        uint32_t fEvents = 0;
+
+        rc = VbglR3WaitEvent(VMMDEV_EVENT_DISPLAY_CHANGE_REQUEST, 1000 /*ms*/, &fEvents);
+        VGSvcVerbose(3, "VbglR3WaitEvent rc=%Rrc\n", rc);
+
+        if (RT_SUCCESS(rc))
+        {
+            VMMDevDisplayDef aDisplays[64];
+            uint32_t cDisplays = RT_ELEMENTS(aDisplays);
+
+            rc = VbglR3GetDisplayChangeRequestMulti(cDisplays, &cDisplays, &aDisplays[0], true);
+            VGSvcVerbose(3, "VbglR3GetDisplayChangeRequestMulti rc=%Rrc cDisplays=%d\n", rc, cDisplays);
+            if (cDisplays > 0)
+            {
+                for(uint32_t i = 0; i < cDisplays; i++)
+                {
+                    VGSvcVerbose(2, "%u) Display[%u] flags=%#x (%dx%d)\n", i, aDisplays[i].idDisplay,
+                        aDisplays[i].fDisplayFlags,
+                        aDisplays[i].cx, aDisplays[i].cy);
+                }
+
+                ReconnectDisplays(cDisplays, &aDisplays[0]);
+            }
+        }
+        else if (rc == VERR_TIMEOUT)
+        {
+            /* No requests still arrived from host, just wait one more time */
+        }
+        else
+        {
+            /* To prevent CPU throttle in case of multiple failures */
+            RTThreadSleep(1000);
+        }
+    } while(*pfShutdown == false);
+
+    if (fCapAcquired)
+    {
+        rc = VbglR3AcquireGuestCaps(0, VMMDEV_GUEST_SUPPORTS_GRAPHICS, false);
+        if (RT_SUCCESS(rc))
+        {
+            fCapAcquired = false;
+            LogRel((": GRAPHICS capability released by VBoxService\n"));
+        }
     }
 
     rc = VbglR3CtlFilterMask(0, VMMDEV_EVENT_DISPLAY_CHANGE_REQUEST);
