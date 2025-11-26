@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 111858 2025-11-24 17:12:00Z andreas.loeffler@oracle.com $
+# $Id: configure.py 111882 2025-11-26 10:40:33Z andreas.loeffler@oracle.com $
+# pylint: disable=global-statement
 # pylint: disable=line-too-long
 # pylint: disable=too-many-lines
 # pylint: disable=unnecessary-semicolon
@@ -86,6 +87,10 @@ class BuildTargets:
     BSD = "BSD";
     HAIKU = "Haiku";
 
+g_fDebug = False;          # Enables debug mode. Only for development.
+g_sEnvVarPrefix = 'VBOX_';
+g_fOSE = None;             # Will be determined on start.
+g_fHardening = True;       # Enable hardening by default.
 g_cVerbosity = 0;
 g_cErrors = 0;
 g_cWarnings = 0;
@@ -111,6 +116,7 @@ def printError(sMessage):
     Prints an error message to stderr in red.
     """
     print(f"{Ansi.RED}*** Error: {sMessage}{Ansi.RESET}", file=sys.stderr);
+    globals()['g_cErrors'] += 1;
 
 def printStatus(sStatus):
     """
@@ -142,7 +148,7 @@ def printTableHeader():
     """
     Prints the table header for library/tool status.
     """
-    print("{:<30} {:<18} {:<18} {}".format(
+    print("{:<24} {:<6} {:<8} {}".format(
         printHeader("Library/Tool"),
         printHeader("Status"),
         printHeader("Version"),
@@ -154,9 +160,10 @@ def printLibRow(oLib):
     Prints a formatted row for a given library.
     """
     sIncOrDash = oLib.sIncPath if oLib.fHave else "-";
-    print("{:<30} {:<18} {}".format(
+    print("{:<24} {:<6} {:<8} {}".format(
         printName(oLib.sName),
         printStatus(oLib.getStatusString()),
+        oLib.sVer if getattr(oLib, 'sVer', None) else "-",
         sIncOrDash
     ));
 
@@ -164,9 +171,10 @@ def printToolRow(oTool, sStatus):
     """
     Prints a formatted row for a given tool.
     """
-    print("{:<30} {:<18} {}".format(
+    print("{:<24} {:<6} {:<8} {}".format(
         printName(oTool.sName),
         printStatus(sStatus),
+        oTool.sVer if getattr(oTool, 'sVer', None) else "-",
         oTool.sCmdPath if getattr(oTool, 'sCmdPath', None) else "-"
     ));
 
@@ -204,7 +212,7 @@ class LibraryCheck:
         self.sCustomPath = None;
         self.sIncPath = None;
         self.sLibPath = None;
-        # Is a tri-state: None if not required (optional or not needed), False if not found, True if found.
+        # Is a tri-state: None if not required (optional or not needed), False if required but not found, True if found.
         self.fHave = None;
         # Contains the (parsable) version string if detected.
         # Only valid if self.fHave is True.
@@ -222,7 +230,7 @@ class LibraryCheck:
         Returns the linker arguments for the library as a string.
         """
         if not self.asLibFiles:
-            return "";
+            return [];
         # Remove 'lib' prefix if present for -l on UNIX-y OSes.
         asLibArgs = [];
         for sLibCur in self.asLibFiles:
@@ -241,48 +249,46 @@ class LibraryCheck:
         header = self.asIncFiles or (self.asAltIncFiles[0] if self.asAltIncFiles else None);
         if not header:
             return "";
-        sLibName = self.sName.lower();
-
-        if sLibName == "libstdc++":
-            return '#include <iostream>\nint main() { std::cout << "Found: " << __cplusplus << std::endl; return 0; }\n'
 
         if self.sCode:
             return '#include <stdio.h>\n' + self.sCode if 'stdio.h' not in self.sCode else self.sCode;
         if self.hasCPPHeader():
             return f"#include <{header}>\n#include <iostream>\nint main() {{ std::cout << \"1\" << std::endl; return 0; }}\n"
         else:
-            return f'#include <{header}>\n#include <stdio.h>\nint main(void) {{ printf("1"); return 0; }}\n'
+            return f'#include <{header}>\n#include <stdio.h>\nint main(void) {{ printf("<found>"); return 0; }}\n'
 
     def compileAndExecute(self):
         """
         Attempts to compile and execute test code using the discovered paths and headers.
         """
-        if not (self.sIncPath and self.sLibPath and self.asLibFiles):
-            return;
         sCompiler = "g++" if self.hasCPPHeader() else "gcc";
-        with tempfile.TemporaryDirectory() as tmpd:
-            sFilePath = os.path.join(tmpd, "testlib.cpp" if sCompiler == "g++" else "testlib.c");
-            sBinPath  = os.path.join(tmpd, "a.out" if platform.system() != "Windows" else "a.exe");
+        with tempfile.TemporaryDirectory() as sTempDir:#
+
+            if g_fDebug:
+                sTempDir = '/tmp/';
+
+            sFilePath = os.path.join(sTempDir, "testlib.cpp" if sCompiler == "g++" else "testlib.c");
+            sBinPath  = os.path.join(sTempDir, "a.out" if platform.system() != "Windows" else "a.exe");
 
             with open(sFilePath, "w", encoding = 'utf-8') as fh:
-                fh.write(self.getTestCode());
+                fh.write(self.sCode);
             fh.close();
 
-            sIncFlags    = f"-I{self.sIncPath}";
-            sLibFlags    = f"-L{self.sLibPath}";
-            sLinkerFlags = self.getLinkerArgs();
-            asCmd        = [sCompiler, sFilePath, sIncFlags, sLibFlags, "-o", sBinPath] + sLinkerFlags;
+            sIncFlags     = f"-I{self.sIncPath}";
+            sLibFlags     = f"-L{self.sLibPath}";
+            asLinkerFlags = self.getLinkerArgs();
+            asCmd         = [ sCompiler, sFilePath, sIncFlags, sLibFlags, "-o", sBinPath ] + asLinkerFlags;
 
             try:
                 # Try compiling the test source file.
-                oProc = subprocess.run(asCmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, check = True, timeout = 15)
+                oProc = subprocess.run(asCmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, check = False, timeout = 15);
                 if oProc.returncode != 0:
                     sCompilerStdErr = oProc.stderr.decode("utf-8", errors="ignore");
                     printError(sCompilerStdErr);
                 else:
                     # Try executing the compiled binary and capture stdout + stderr.
                     try:
-                        oProc = subprocess.run([sBinPath], stdout = subprocess.PIPE, stderr = subprocess.PIPE, check=True, timeout = 10);
+                        oProc = subprocess.run([sBinPath], stdout = subprocess.PIPE, stderr = subprocess.PIPE, check = False, timeout = 10);
                         if oProc.returncode == 0:
                             self.sVer = oProc.stdout.decode('utf-8', 'replace').strip();
                         else:
@@ -292,8 +298,8 @@ class LibraryCheck:
                         printError(f"Execution of test binary for {self.sName} failed: {str(ex)}");
                     finally:
                         try:
-                        #    os.remove(sBinPath);
-                            pass;
+                            if not g_fDebug:
+                                os.remove(sBinPath);
                         except OSError as ex:
                             printError(f"Failed to remove temporary binary file {sBinPath}: {str(ex)}");
             except subprocess.SubprocessError as e:
@@ -303,9 +309,8 @@ class LibraryCheck:
         """
         Applies argparse options for disabling and custom paths.
         """
-        sArgKey = self.sName.replace("-", "_");
-        self.fDisabled = getattr(args, f"disable_{sArgKey}", False);
-        self.sCustomPath = getattr(args, f"with_{sArgKey}_path", None);
+        self.fDisabled = getattr(args, f"config_libs_disable_{self.sName}", False);
+        self.sCustomPath = getattr(args, f"config_libs_path_{self.sName}", None);
 
     def getLinuxGnuTypeFromPlatform(self):
         """
@@ -398,6 +403,8 @@ class LibraryCheck:
                     if os.path.isfile(sCur):
                         self.sIncPath = sCurSearchPath;
                         return True;
+
+        printError(f"Header files {asHeaderToSearch} not found in paths: {asSearchPaths}");
         return False;
 
     def checkLib(self):
@@ -424,6 +431,8 @@ class LibraryCheck:
                     if os.path.isfile(sCurFile):
                         self.sLibPath = sCurSearchPath;
                         return True;
+
+        printError(f"Library files {self.asLibFiles} not found in paths: {asSearchPaths}");
         return False;
 
     def performCheck(self):
@@ -436,7 +445,8 @@ class LibraryCheck:
         if self.fDisabled:
             self.fHave = None;
             return;
-        if g_enmBuildTarget in self.aeTargets:
+        if g_enmBuildTarget in self.aeTargets \
+        or BuildTargets.ANY in self.aeTargets:
             self.fHave = self.checkInc() and self.checkLib();
 
     def getStatusString(self):
@@ -515,6 +525,86 @@ class ToolCheck:
     def __repr__(self):
         return f"{self.sName}: {self.getStatusString()}"
 
+class EnvManager:
+    """
+    A simple manager for environment variables.
+    """
+
+    def __init__(self):
+        """
+        Initializes an empty environment variable store.
+        """
+        self.env = {};
+
+    def set(self, sKey, oVal):
+        """
+        Set the value for a given environment variable key.
+        Empty values are allowed.
+        """
+        if isinstance(oVal, str):
+            self.env[sKey] = oVal;
+        elif isinstance(oVal, bool):
+            self.env[sKey] = '1' if oVal is True else '';
+        else:
+            assert True, "Implement me!"
+
+    def get(self, key, default=''):
+        """
+        Retrieves the value of an environment variable, or a default if not set (optional).
+        """
+        return self.env.get(key, default);
+
+    def modify(self, key, func):
+        """
+        Modifies the value of an existing environment variable using a function.
+        """
+        if key in self.env:
+            self.env[key] = str(func(self.env[key]));
+        else:
+            raise KeyError(f"{key} not set in environment");
+
+    def updateFromArgs(self, args):
+        """
+        Updates environment variable store using a Namespace object from argparse.
+        Each argument becomes an environment variable (in uppercase), set only if its value is not None.
+        """
+        for sKey, aValue in vars(args).items():
+            sVal = None;
+            if aValue is not None:
+                if    sKey.startswith('with_') \
+                   or sKey.startswith('without_'):
+                    sVal = '';
+                elif sKey.startswith('with_'):
+                    sVal = '1';
+                elif sKey.startswith('without_'):
+                    sVal = '0';
+                elif sKey.startswith('only_'):
+                    sVal = '1' if aValue else '';
+                if sVal:
+                    self.env[g_sEnvVarPrefix + sKey.upper()] = sVal;
+                else:
+                    self.env[sKey.upper()] = aValue;
+
+        if g_fDebug:
+            print('Environment manager variables:');
+            print(self.env);
+
+    def write(self, fh):
+        """
+        Writes all stored environment variables as KEY=VALUE pairs to the given file handle.
+        """
+        for key, value in self.env.items():
+            fh.write(f"{key}={value}\n");
+
+    def transform(self, mapTransform):
+        """
+        Evaluates mapping expressions and updates the affected environment variables.
+        """
+        for exprCur in mapTransform:
+            result = exprCur(self.env);
+            if isinstance(result, dict):
+                self.env.update(result);
+
 def check_java():
     """
     Checks for Java via 'java -version'.
@@ -584,16 +674,15 @@ Hint: Combine any supported --disable-<lib|tool> and --with-<lib>-path=PATH opti
 g_aoLibs = sorted([
     ## @todo
     #LibraryCheck("berkeley-softfloat-3", [ "softfloat.h" ], [ "libsoftfloat" ],
-    #             '#include <softfloat.h>\nint main() { float32_t x, y; f32_add(x, y); printf("1"); return 0; }\n'),
+    #             '#include <softfloat.h>\nint main() { float32_t x, y; f32_add(x, y); printf("<found>"); return 0; }\n'),
     LibraryCheck("dmtx", [ "dmtx.h" ], [ "libdmtx" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
                 '#include <dmtx.h>\nint main() { dmtxEncodeCreate(); printf("%s", dmtxVersion()); return 0; }\n'),
-    ## @todo
-    #LibraryCheck("dxvk", [ "dxvk/dxvk.h" ], [ "libdxvk" ],
-    #             '#include <dxvk/dxvk.h>\nint main() { printf("1\\n"); return 0; }\n'),
+    LibraryCheck("dxvk", [ "dxvk/dxvk.h" ], [ "libdxvk" ],  [ BuildTargets.LINUX ],
+                 '#include <dxvk/dxvk.h>\nint main() { printf("1"); return 0; }\n'),
     LibraryCheck("libalsa", [ "alsa/asoundlib.h" ], [ "libasound" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
                  '#include <alsa/asoundlib.h>\n#include <alsa/version.h>\nint main() { snd_pcm_info_sizeof(); printf("%s", SND_LIB_VERSION_STR); return 0; }\n'),
     LibraryCheck("libcap", [ "sys/capability.h" ], [ "libcap" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
-                 '#include <sys/capability.h>\nint main() { cap_t c = cap_init(); printf("1"); return 0; }\n'),
+                 '#include <sys/capability.h>\nint main() { cap_t c = cap_init(); printf("<found>"); return 0; }\n'),
     LibraryCheck("libcursor", [ "X11/cursorfont.h" ], [ "libXcursor" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
                  '#include <X11/Xcursor/Xcursor.h>\nint main() { printf("%d.%d", XCURSOR_LIB_MAJOR, XCURSOR_LIB_MINOR); return 0; }\n'),
     LibraryCheck("libcurl", [ "curl/curl.h" ], [ "libcurl" ], [ BuildTargets.ANY ],
@@ -607,7 +696,7 @@ g_aoLibs = sorted([
     LibraryCheck("liblzma", [ "lzma.h" ], [ "liblzma" ], [ BuildTargets.ANY ],
                  '#include <lzma.h>\nint main() { printf("%s", lzma_version_string()); return 0; }\n'),
     LibraryCheck("libogg", [ "ogg/ogg.h" ], [ "libogg" ], [ BuildTargets.ANY ],
-                 '#include <ogg/ogg.h>\nint main() { oggpack_buffer o; oggpack_get_buffer(&o); printf("found"); return 0; }\n'),
+                 '#include <ogg/ogg.h>\nint main() { oggpack_buffer o; oggpack_get_buffer(&o); printf("<found>"); return 0; }\n'),
     LibraryCheck("libpam", [ "security/pam_appl.h" ], [ "libpam" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
                  '#include <security/pam_appl.h>\nint main() { \n#ifdef __LINUX_PAM__\nprintf("%d.%d", __LINUX_PAM__, __LINUX_PAM_MINOR__); if (__LINUX_PAM__ >= 1) return 0;\n#endif\nreturn 1; }\n'),
     LibraryCheck("libpng", [ "png.h" ], [ "libpng" ], [ BuildTargets.ANY ],
@@ -620,34 +709,28 @@ g_aoLibs = sorted([
                  '#include <slirp/libslirp.h>\n#include <slirp/libslirp-version.h>\nint main() { printf("%d.%d.%d", SLIRP_MAJOR_VERSION, SLIRP_MINOR_VERSION, SLIRP_MICRO_VERSION); return 0; }\n'),
     LibraryCheck("libssh", [ "libssh/libssh.h" ], [ "libssh" ], [ BuildTargets.ANY ],
                  '#include <libssh/libssh.h>\n#include <libssh/libssh_version.h>\nint main() { printf("%d.%d.%d", LIBSSH_VERSION_MAJOR, LIBSSH_VERSION_MINOR, LIBSSH_VERSION_MICRO); return 0; }\n'),
-    ## @todo
-    #  LibraryCheck("libstdc++", "c++/v1/iostream", "stdc++", [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ], asAltIncFiles = [ "c++/4.8.2/iostream", "c++/iostream" ]),
+    LibraryCheck("libstdc++", [ "c++/11/iostream" ], [ ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
+                 "#include <iostream>\nint main() { \n #ifdef __GLIBCXX__\nstd::cout << __GLIBCXX__;\n#elif defined(__GLIBCPP__)\nstd::cout << __GLIBCPP__;\n#else\nreturn 1\n#endif\nreturn 0; }\n",
+                 asAltIncFiles = [ "c++/4.8.2/iostream", "c++/iostream" ]),
     LibraryCheck("libtpms", [ "libtpms/tpm_library.h" ], [ "libtpms" ], [ BuildTargets.ANY ],
                  '#include <libtpms/tpm_library.h>\nint main() { printf("%d.%d.%d", TPM_LIBRARY_VER_MAJOR, TPM_LIBRARY_VER_MINOR, TPM_LIBRARY_VER_MICRO); return 0; }\n'),
     LibraryCheck("libvncserver", [ "rfb/rfb.h", "rfb/rfbclient.h" ], [ "libvncserver" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
                  '#include <rfb/rfb.h>\nint main() { printf("%s", LIBVNCSERVER_PACKAGE_VERSION); return 0; }\n'),
     LibraryCheck("libvorbis", [ "vorbis/vorbisenc.h" ], [ "libvorbis", "libvorbisenc" ], [ BuildTargets.ANY ],
-                 '#include <vorbis/vorbisenc.h>\nint main() { vorbis_info v; vorbis_info_init(&v); int vorbis_rc = vorbis_encode_init_vbr(&v, 2 /* channels */, 44100 /* hz */, (float).4 /* quality */); return 0; }\n'),
+                 '#include <vorbis/vorbisenc.h>\nint main() { vorbis_info v; vorbis_info_init(&v); int vorbis_rc = vorbis_encode_init_vbr(&v, 2 /* channels */, 44100 /* hz */, (float).4 /* quality */); printf("<found>"); return 0; }\n'),
     LibraryCheck("libvpx", [ "vpx/vpx_decoder.h" ], [ "libvpx" ], [ BuildTargets.ANY ],
                  '#include <vpx/vpx_codec.h>\nint main() { printf("%s", vpx_codec_version_str()); return 0; }\n'),
     LibraryCheck("libxml2", [ "libxml/parser.h" ] , [ "libxml2" ], [ BuildTargets.ANY ],
                  '#include <libxml/xmlversion.h>\nint main() { printf("%s", LIBXML_DOTTED_VERSION); return 0; }\n'),
     LibraryCheck("zlib1g", [ "zlib.h" ], [ "libz" ], [ BuildTargets.ANY ],
                  '#include <zlib.h>\nint main() { printf("%s", ZLIB_VERSION); return 0; }\n'),
-    LibraryCheck("lwip", [ "lwip/init.h" ], [ "lwip" ], [ BuildTargets.ANY ],
+    LibraryCheck("lwip", [ "lwip/init.h" ], [ "liblwip" ], [ BuildTargets.ANY ],
                  '#include <lwip/init.h>\nint main() { printf("%d.%d.%d", LWIP_VERSION_MAJOR, LWIP_VERSION_MINOR, LWIP_VERSION_REVISION); return 0; }\n'),
     LibraryCheck("opengl", [ "GL/gl.h" ], [ "libGL" ], [ BuildTargets.ANY ],
-                 '#include <GL/gl.h>\n#include <stdio.h>\nint main() { const GLubyte *s = glGetString(GL_VERSION); printf("%s", s ? (const char *)s : "<not found>"); return 0; }\n'),
-    ## @todo
-    # LibraryCheck(
-    #    "qt6",
-    #    "QtCore/qglobal.h",
-    #    "Qt6Core",
-    #    asAltIncFiless = [
-    #        "qt6/QtCore/qglobal.h", "qt/QtCore/qglobal.h",
-    #        "QtCore/qcoreapplication.h", "qt6/QtCore/qcoreapplication.h"
-    #    ]
-    #),
+                 '#include <GL/gl.h>\n#include <stdio.h>\nint main() { const GLubyte *s = glGetString(GL_VERSION); printf("%s", s ? (const char *)s : "<found>"); return 0; }\n'),
+    LibraryCheck("qt6", [ "QtCore/qconfig.h" ], [ "libQt6Core" ], [ BuildTargets.ANY ],
+                 '#include <stdio.h>\n#include <qt6/QtCore/qconfig.h>\nint main() { printf("%s", QT_VERSION_STR); }',
+                 asAltIncFiles = [ "qt/QtCore/qglobal.h", "QtCore/qcoreapplication.h", "qt6/QtCore/qcoreapplication.h" ] ),
     LibraryCheck("sdl2", [ "SDL2/SDL.h" ], [ "libSDL2" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
                  '#include <SDL2/SDL.h>\nint main() { printf("%d.%d.%d", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL); return 0; }\n',
                  asAltIncFiles = [ "SDL.h" ]),
@@ -655,15 +738,15 @@ g_aoLibs = sorted([
                  '#include <SDL2/SDL_ttf.h>\nint main() { printf("%d.%d.%d", SDL_TTF_MAJOR_VERSION, SDL_TTF_MINOR_VERSION, SDL_TTF_PATCHLEVEL); return 0; }\n',
                  asAltIncFiles = [ "SDL_ttf.h" ]),
     LibraryCheck("x11", [ "X11/Xlib.h" ], [ "libX11" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
-                 '#include <X11/Xlib.h>\nint main() { XOpenDisplay(NULL); printf("1"); return 0; }\n'),
+                 '#include <X11/Xlib.h>\nint main() { XOpenDisplay(NULL); printf("<found>"); return 0; }\n'),
     LibraryCheck("xext", [ "X11/extensions/Xext.h" ], [ "libXext" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
-                 '#include <X11/Xlib.h>\n#include <X11/extensions/Xext.h>\nint main() { XSetExtensionErrorHandler(NULL); printf("1"); return 0; }\n'),
+                 '#include <X11/Xlib.h>\n#include <X11/extensions/Xext.h>\nint main() { XSetExtensionErrorHandler(NULL); printf("<found>"); return 0; }\n'),
     LibraryCheck("xmu", [ "X11/Xmu/Xmu.h" ], [ "libXmu" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
-                 '#include <X11/Xmu/Xmu.h>\nint main() { XmuMakeAtom("test"); printf("1"); return 0; }\n', aeTargetsExcluded=[ BuildTargets.DARWIN ]),
+                 '#include <X11/Xmu/Xmu.h>\nint main() { XmuMakeAtom("test"); printf("<found>"); return 0; }\n', aeTargetsExcluded=[ BuildTargets.DARWIN ]),
     LibraryCheck("xrandr", [ "X11/extensions/Xrandr.h" ], [ "libXrandr", "libX11" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
-                 '#include <X11/Xlib.h>\n#include <X11/extensions/Xrandr.h>\nint main() { Display *dpy = XOpenDisplay(NULL); Window root = RootWindow(dpy, 0); XRRScreenConfiguration *c = XRRGetScreenInfo(dpy, root); printf("1"); return 0; }\n'),
+                 '#include <X11/Xlib.h>\n#include <X11/extensions/Xrandr.h>\nint main() { Display *dpy = XOpenDisplay(NULL); Window root = RootWindow(dpy, 0); XRRScreenConfiguration *c = XRRGetScreenInfo(dpy, root); printf("<found>"); return 0; }\n'),
     LibraryCheck("libxinerama", [ "X11/extensions/Xinerama.h" ], [ "libXinerama", "libX11" ], [ BuildTargets.LINUX, BuildTargets.SOLARIS, BuildTargets.BSD ],
-                 '#include <X11/Xlib.h>\n#include <X11/extensions/Xinerama.h>\nint main() { Display *dpy = XOpenDisplay(NULL); XineramaIsActive(dpy); printf("1"); return 0; }\n')
+                 '#include <X11/Xlib.h>\n#include <X11/extensions/Xinerama.h>\nint main() { Display *dpy = XOpenDisplay(NULL); XineramaIsActive(dpy); printf("<found>"); return 0; }\n')
 ], key=lambda l: l.sName);
 
 g_aoTools = sorted([
@@ -676,61 +759,134 @@ g_aoTools = sorted([
     ToolCheck("yasm", "yasm"),
 ], key=lambda t: t.sName.lower())
 
-def write_autoconfig_kmk(aoLibs, aoTools):
+def write_autoconfig_kmk(sFilePath, oEnv, aoLibs, aoTools):
     """
     Writes the AutoConfig.kmk file with SDK paths and enable/disable flags.
     Each library/tool gets VBOX_WITH_<NAME>, SDK_<NAME>_LIBS, SDK_<NAME>_INCS.
     """
 
-    sScript = os.path.basename(__file__);
+    _ = aoTools; # Unused for now.
 
-    with open("AutoConfig.kmk", "w", encoding = "utf-8") as fh:
-        fh.write("""
-# -*- Makefile -*-
-#
-# Generated by """ + sScript + """.
-#
-# DO NOT EDIT THIS FILE MANUALLY
-# It will be completely overwritten if """ + sScript + """ is executed again.
-#
-# Generated on """ + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """
-#
-                \n""");
+    try:
+        with open(sFilePath, "w", encoding = "utf-8") as fh:
+            fh.write("""
+    # -*- Makefile -*-
+    #
+    # Generated by """ + sFilePath + """.
+    #
+    # DO NOT EDIT THIS FILE MANUALLY
+    # It will be completely overwritten if """ + sFilePath + """ is executed again.
+    #
+    # Generated on """ + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """
+    #
+                    \n""");
 
-        for oLibCur in aoLibs:
-            sVarBase = oLibCur.sName.upper().replace("+", "PLUS").replace("-", "_");
-            fEnabled = 1 if oLibCur.fHave else 0;
-            fh.write(f"VBOX_WITH_{sVarBase}={fEnabled}\n");
-            if oLibCur.fHave and (oLibCur.sLibPath or oLibCur.sIncPath):
-                if oLibCur.sLibPath:
-                    fh.write(f"SDK_{sVarBase}_LIBS={oLibCur.sLibPath}\n");
-                if oLibCur.sIncPath:
-                    fh.write(f"SDK_{sVarBase}_INCS={oLibCur.sIncPath}\n");
+            oEnv.write(fh);
+            fh.write('\n');
+
+            for oLibCur in aoLibs:
+                sVarBase = oLibCur.sName.upper().replace("+", "PLUS").replace("-", "_");
+                fEnabled = 1 if oLibCur.fHave else 0;
+                fh.write(f"VBOX_WITH_{sVarBase}={fEnabled}\n");
+                if oLibCur.fHave and (oLibCur.sLibPath or oLibCur.sIncPath):
+                    if oLibCur.sLibPath:
+                        fh.write(f"SDK_{sVarBase}_LIBS={oLibCur.sLibPath}\n");
+                    if oLibCur.sIncPath:
+                        fh.write(f"SDK_{sVarBase}_INCS={oLibCur.sIncPath}\n");
+
+        return True;
+    except OSError as ex:
+        printError(f"Failed to write AutoConfig.kmk to {sFilePath}: {str(ex)}");
+    return False;
+
+def write_env(sFilePath, oEnv, aoLibs, aoTools):
+    """
+    Writes the env.sh file with SDK paths and enable/disable flags.
+    Each library/tool gets VBOX_WITH_<NAME>, SDK_<NAME>_LIBS, SDK_<NAME>_INCS.
+    """
+
+    _ = oEnv, aoTools; # Unused for now.
+
+    try:
+        with open(sFilePath, "w", encoding = "utf-8") as fh:
+            fh.write("""
+    # -*- Makefile -*-
+    #
+    # Generated by """ + sFilePath + """.
+    #
+    # DO NOT EDIT THIS FILE MANUALLY
+    # It will be completely overwritten if """ + sFilePath + """ is executed again.
+    #
+    # Generated on """ + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """
+    #
+                    \n""");
+
+            for oLibCur in aoLibs:
+                sVarBase = oLibCur.sName.upper().replace("+", "PLUS").replace("-", "_");
+                fEnabled = 1 if oLibCur.fHave else 0;
+                fh.write(f"VBOX_WITH_{sVarBase}={fEnabled}\n");
+                if oLibCur.fHave and (oLibCur.sLibPath or oLibCur.sIncPath):
+                    if oLibCur.sLibPath:
+                        fh.write(f"SDK_{sVarBase}_LIBS={oLibCur.sLibPath}\n");
+                    if oLibCur.sIncPath:
+                        fh.write(f"SDK_{sVarBase}_INCS={oLibCur.sIncPath}\n");
+
+        return True;
+    except OSError as ex:
+        printError(f"Failed to write env.sh to {sFilePath}: {str(ex)}");
+    return False;
 
 def main():
     """
     Main entry point.
     """
+    global g_cVerbosity;
+    global g_fDebug;
+    global g_fOSE;
+
+    #
+    # argparse config namespace rules:
+    # - Everything internally used is prefixed with 'config_'.
+    # - Library options are prefixed with 'config_libs_'.
+    # - Tool options are prefixed with 'config_tools_'.
+    # - VirtualBox-specific environment variables (VBOX_WITH_, VBOX_ONLY_ and so on) are prefixed with 'vbox_env_'.
+    #
     oParser = argparse.ArgumentParser(add_help=False);
-    oParser.add_argument('--help', action='store_true');
-    oParser.add_argument('-v', '--verbose', action='store_true', help="Enables verbose output");
+    oParser.add_argument('--help', help="Displays this help", action='store_true', default=None);
+    oParser.add_argument('-v', '--verbose', help="Enables verbose output", action='count', default=None, dest='config_verbose');
     for oLibCur in g_aoLibs:
-        oParser.add_argument(f'--disable-{oLibCur.sName}', action='store_true');
-        oParser.add_argument(f'--with-{oLibCur.sName}-path');
-        oParser.add_argument(f'--only-{oLibCur.sName}', action='store_true');
+        oParser.add_argument(f'--disable-{oLibCur.sName}', action='store_true', default=None, dest=f'config_libs_disable_{oLibCur.sName}');
+        oParser.add_argument(f'--with-{oLibCur.sName}-path', dest=f'config_libs_path_{oLibCur.sName}');
+        oParser.add_argument(f'--only-{oLibCur.sName}', action='store_true', default=None, dest=f'config_libs_only_{oLibCur.sName}');
     for oToolCur in g_aoTools:
-        oParser.add_argument(f'--disable-{oToolCur.sName.replace("+","plus").replace("-","_")}', action='store_true');
-        oParser.add_argument(f'--only-{oToolCur.sName.replace("+","plus").replace("-","_")}', action='store_true');
-    args = oParser.parse_args();
+        oParser.add_argument(f'--disable-{oToolCur.sName}', action='store_true', default=None, dest=f'config_tools_disable_{oToolCur.sName}');
+        oParser.add_argument(f'--only-{oToolCur.sName}', action='store_true', default=None, dest=f'config_tools_only_{oToolCur.sName}');
+    oParser.add_argument('--disable-docs', help='Disables building the documentation', action='store_true', default=None);
+    oParser.add_argument('--disable-python', help='Disables building the Python bindings', action='store_true', default=None);
+    oParser.add_argument('--with-hardening', help='Enables or disables hardening', action='store_true', default=None);
+    oParser.add_argument('--without-hardening', help='Enables or disables hardening', action='store_true', default=None);
+    oParser.add_argument('--file-autoconfig', default='AutoConfig.kmk', action='store_true', help='Path to output AutoConfig.kmk file');
+    oParser.add_argument('--file-env', default='env.sh', action='store_true', help='Path to output env.sh file');
+    oParser.add_argument('--only-additions', help='Only build Guest Additions related libraries and tools', action='store_true', default=None, dest='vbox_only_additions');
+    oParser.add_argument('--only-docs', help='Only build the documentation', action='store_true', default=None, dest='vbox_env_only_docs');
+    oParser.add_argument('--ose', help='Builds the OSE version', action='store_true', default=None);
+    oParser.add_argument('--debug', help='Runs in debug mode. Only use for development', action='store_true', default=False, dest='config_debug');
 
-    g_cVerbosity = 1; # args.verbose
+    try:
+        oArgs = oParser.parse_args();
+    except argparse.ArgumentError as e:
+        printError(f"Argument error: {str(e)}");
+        return 2;
 
-    aoOnlyLibs = [lib for lib in g_aoLibs if getattr(args, f'only_{lib.sName}', False)];
-    aoOnlyTools = [tool for tool in g_aoTools if getattr(args, f'only_{tool.sName.replace("+","plus").replace("-","_")}', False)];
+    g_cVerbosity = oArgs.config_verbose;
+    g_fDebug = oArgs.config_debug;
+
+    aoOnlyLibs = [lib for lib in g_aoLibs if getattr(oArgs, f'config_libs_only_{lib.sName}', False)];
+    aoOnlyTools = [tool for tool in g_aoTools if getattr(oArgs, f'config_tools_only_{tool.sName}', False)];
     aoLibsToCheck = aoOnlyLibs if aoOnlyLibs else g_aoLibs;
     aoToolsToCheck = aoOnlyTools if aoOnlyTools else g_aoTools;
 
-    if args.help:
+    if oArgs.help:
         show_syntax_help();
         return 2;
 
@@ -738,15 +894,46 @@ def main():
     sys.stdout = Log(sys.stdout, logf);
     sys.stderr = Log(sys.stderr, logf);
 
-    print(f'VirtualBox configuration script');
+    print( 'VirtualBox configuration script');
     print(f'Running on {platform.system()} {platform.release()} ({platform.machine()})');
     print(f'Detected target: {g_sHostOS}');
 
     print();
+
+    oEnv = EnvManager();
+    oEnv.updateFromArgs(oArgs);
+
+    #
+    # Handle OSE building.
+    #
+    g_fOSE = oArgs.ose;
+    if   not g_fOSE \
+    and os.path.exists('src/VBox/ExtPacks/Puel/ExtPack.xml'):
+        print('Found ExtPack, assuming to build PUEL version');
+        g_fOSE = False;
+    print('Building %s version' % ('OSE' if (g_fOSE is None or g_fOSE is True) else 'PUEL'));
+    oEnv.set('VBOX_OSE', g_fOSE);
+
+    envTransforms = [
+        # Disabling building the docs when only building Additions or explicitly disabled building the docs.
+        lambda env: { 'VBOX_WITH_DOCS': '', 'VBOX_WITH_DOCS_PACKING': ''} if oEnv.get('VBOX_ONLY_ADDITIONS') or oEnv.get('VBOX_WITH_DOCS') == '0' else {},
+        # Disable building the ExtPack VNC when only building Additions or OSE.
+        lambda env: { 'VBOX_WITH_EXTPACK_VNC': '' } if oEnv.get('VBOX_ONLY_ADDITIONS') or oEnv.get('VBOX_OSE') == '1' else {},
+        lambda env: { 'VBOX_WITH_WEBSERVICES': '' } if oEnv.get('VBOX_ONLY_ADDITIONS') else {},
+        # Disable stuff which aren't available in OSE.
+        lambda env: { 'VBOX_WITH_VALIDATIONKIT': '' , 'VBOX_WITH_WIN32_ADDITIONS': '' } if oEnv.get('VBOX_OSE') else {},
+        lambda env: { 'VBOX_WITH_EXTPACK_PUEL_BUILD': '' } if oEnv.get('VBOX_ONLY_ADDITIONS') else {},
+        lambda env: { 'VBOX_WITH_QTGUI': '' } if oEnv.get('CONFIG_LIBS_DISABLE_QT') else {}
+    ];
+    oEnv.transform(envTransforms);
+
+    #
+    # Perform library checks.
+    #
     printTableHeader();
 
     for oLibCur in aoLibsToCheck:
-        oLibCur.setArgs(args);
+        oLibCur.setArgs(oArgs);
         oLibCur.performCheck();
         if oLibCur.fHave:
             oLibCur.compileAndExecute();
@@ -754,8 +941,11 @@ def main():
 
     print();
 
+    #
+    # Perform tool checks.
+    #
     for oToolCur in aoToolsToCheck:
-        oToolCur.setArgs(args);
+        oToolCur.setArgs(oArgs);
         if oToolCur.sName == "Java":
             if oToolCur.fDisabled:
                 sStatus = "DISABLED";
@@ -800,7 +990,45 @@ def main():
         print(f"{printName(sBinary):<30} {sStatus}");
 
     if g_cErrors == 0:
-        write_autoconfig_kmk(g_aoLibs, g_aoTools);
+        if write_autoconfig_kmk(oArgs.file_autoconfig, oEnv, g_aoLibs, g_aoTools):
+            if write_env(oArgs.file_env, oEnv, g_aoLibs, g_aoTools):
+                print();
+                print(f'Successfully generated \"{oArgs.file_autoconfig}\" and \"{oArgs.file_env}\".');
+                print(f'Source {oArgs.file_env} once before you start to build VirtualBox:');
+                print(f'  source "{oArgs.file_env}"');
+                print( 'Then run the build with:');
+                print( '  kmk');
+
+        if g_enmBuildTarget == BuildTargets.LINUX:
+            print('To compile the kernel modules, do:');
+            print();
+            print('  cd $out_base_dir/out/$OS.$TARGET_MACHINE/$BUILD_TYPE/bin/src');
+            print('  make');
+            print();
+
+        if oArgs.vbox_only_additions:
+            print();
+            print('Tree configured to build only the Guest Additions');
+            print();
+
+        if g_fHardening:
+            print();
+            print('  +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++');
+            print('  Hardening is enabled which means that the VBox binaries will not run from');
+            print('  the binary directory. The binaries have to be installed suid root and some');
+            print('  more prerequisites have to be fulfilled which is normally done by installing');
+            print('  the final package. For development, the hardening feature can be disabled');
+            print('  by specifying the --disable-hardening parameter. Please never disable that');
+            print('  feature for the final distribution!');
+            print('  +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++');
+            print();
+        else:
+            print();
+            print('  +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++');
+            print('  Hardening is disabled. Please do NOT build packages for distribution with');
+            print('  disabled hardening!');
+            print('  +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++');
+            print();
 
     print('\nWork in progress! Do not use for production builds yet!\n');
 
