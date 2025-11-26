@@ -1,4 +1,4 @@
-/* $Id: IEMR0.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMR0.cpp 111873 2025-11-26 08:35:38Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Ring-0.
  */
@@ -48,6 +48,51 @@ VMMR0_INT_DECL(int) IEMR0InitVM(PGVM pGVM)
 {
     AssertCompile(sizeof(pGVM->iem.s) <= sizeof(pGVM->iem.padding));
     AssertCompile(sizeof(pGVM->aCpus[0].iem.s) <= sizeof(pGVM->aCpus[0].iem.padding));
+    AssertCompile(sizeof(pGVM->aCpus[0].iemr0.s) <= sizeof(pGVM->aCpus[0].iemr0.padding));
+
+    /*
+     * Initialize the ring-0 structures.
+     * The target cpu config is copied from ring-3.
+     */
+    PVMCPUCC const      pVCpu0                   = &pGVM->aCpus[0];
+#if IEM_CFG_TARGET_CPU == IEMTARGETCPU_DYNAMIC
+    uint8_t const       uTargetCpu               = pVCpu0->iem.s.Core.uTargetCpu;
+    AssertLogRelMsgReturn(uTargetCpu <= IEMTARGETCPU_CURRENT, ("uTargetCpu=%#x\n", uTargetCpu), VERR_INVALID_PARAMETER);
+#endif
+    uint8_t const       aidxTargetCpuEflFlavour0 = pVCpu0->iem.s.Core.aidxTargetCpuEflFlavour[0];
+    uint8_t const       aidxTargetCpuEflFlavour1 = pVCpu0->iem.s.Core.aidxTargetCpuEflFlavour[1];
+    AssertLogRelMsgReturn(   aidxTargetCpuEflFlavour0 < IEMTARGETCPU_EFL_BEHAVIOR_RESERVED
+                          && aidxTargetCpuEflFlavour1 < IEMTARGETCPU_EFL_BEHAVIOR_RESERVED,
+                          ("aidxTargetCpuEflFlavour = {%#x, %#x}\n", aidxTargetCpuEflFlavour0, aidxTargetCpuEflFlavour1),
+                          VERR_INVALID_PARAMETER);
+    CPUMCPUVENDOR const enmCpuVendor             = pVCpu0->iem.s.Core.enmCpuVendor;
+    AssertLogRelMsgReturn(enmCpuVendor > CPUMCPUVENDOR_INVALID && enmCpuVendor <= CPUMCPUVENDOR_UNKNOWN,
+                          ("enmCpuVendor=%d\n", enmCpuVendor),
+                          VERR_INVALID_PARAMETER);
+
+    for (VMCPUID idCpu = 0; idCpu < pGVM->cCpus; idCpu++)
+    {
+        PVMCPUCC const pVCpu = &pGVM->aCpus[idCpu];
+        AssertCompile(sizeof(pVCpu->iem.s) <= sizeof(pVCpu->iem.padding)); /* (tstVMStruct can't do it's job w/o instruction stats) */
+
+        /*
+         * Host and guest CPU information.
+         */
+        ICORE(pVCpu).enmCpuVendor                     = enmCpuVendor;
+        ICORE(pVCpu).aidxTargetCpuEflFlavour[0]       = aidxTargetCpuEflFlavour0;
+        ICORE(pVCpu).aidxTargetCpuEflFlavour[1]       = aidxTargetCpuEflFlavour1;
+#if IEM_CFG_TARGET_CPU == IEMTARGETCPU_DYNAMIC
+        ICORE(pVCpu).uTargetCpu                       = uTargetCpu;
+#endif
+
+        /*
+         * Mark all buffers free.
+         */
+        uint32_t iMemMap = RT_ELEMENTS(ICORE(pVCpu).aMemMappings);
+        while (iMemMap-- > 0)
+            ICORE(pVCpu).aMemMappings[iMemMap].fAccess = IEM_ACCESS_INVALID;
+    }
+
 
 #ifdef VBOX_WITH_NESTED_HWVIRT_VMX
     /*

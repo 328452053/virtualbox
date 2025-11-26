@@ -1,4 +1,4 @@
-/* $Id: IEMInline-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMInline-x86.h 111873 2025-11-26 08:35:38Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inlined Functions, x86 target.
  */
@@ -723,7 +723,7 @@ DECL_FORCE_INLINE(void) iemGRegStoreU64(PVMCPUCC pVCpu, uint8_t iReg, uint64_t u
  *
  * @param   pVCpu               The cross context virtual CPU structure of the calling thread.
  */
-DECL_FORCE_INLINE(RTGCPTR) iemRegGetEffRsp(PCVMCPU pVCpu) RT_NOEXCEPT
+DECL_FORCE_INLINE(RTGCPTR) iemRegGetEffRsp(PCVMCPUCC pVCpu) RT_NOEXCEPT
 {
     if (IEM_IS_64BIT_CODE(pVCpu))
         return pVCpu->cpum.GstCtx.rsp;
@@ -2563,7 +2563,7 @@ DECLINLINE(void) iemRegSubFromRsp(PVMCPUCC pVCpu, uint8_t cbToSub) RT_NOEXCEPT
  * @param   pTmpRsp             The temporary SP/ESP/RSP to update.
  * @param   cbToAdd             The number of bytes to add (16-bit).
  */
-DECLINLINE(void) iemRegAddToRspEx(PCVMCPU pVCpu, PRTUINT64U pTmpRsp, uint16_t cbToAdd) RT_NOEXCEPT
+DECLINLINE(void) iemRegAddToRspEx(PCVMCPUCC pVCpu, PRTUINT64U pTmpRsp, uint16_t cbToAdd) RT_NOEXCEPT
 {
     if (IEM_IS_64BIT_CODE(pVCpu))
         pTmpRsp->u           += cbToAdd;
@@ -2583,7 +2583,7 @@ DECLINLINE(void) iemRegAddToRspEx(PCVMCPU pVCpu, PRTUINT64U pTmpRsp, uint16_t cb
  * @remarks The @a cbToSub argument *MUST* be 16-bit, iemCImpl_enter is
  *          expecting that.
  */
-DECLINLINE(void) iemRegSubFromRspEx(PCVMCPU pVCpu, PRTUINT64U pTmpRsp, uint16_t cbToSub) RT_NOEXCEPT
+DECLINLINE(void) iemRegSubFromRspEx(PCVMCPUCC pVCpu, PRTUINT64U pTmpRsp, uint16_t cbToSub) RT_NOEXCEPT
 {
     if (IEM_IS_64BIT_CODE(pVCpu))
         pTmpRsp->u          -= cbToSub;
@@ -2603,7 +2603,7 @@ DECLINLINE(void) iemRegSubFromRspEx(PCVMCPU pVCpu, PRTUINT64U pTmpRsp, uint16_t 
  * @param   cbItem              The size of the stack item to pop.
  * @param   puNewRsp            Where to return the new RSP value.
  */
-DECLINLINE(RTGCPTR) iemRegGetRspForPush(PCVMCPU pVCpu, uint8_t cbItem, uint64_t *puNewRsp) RT_NOEXCEPT
+DECLINLINE(RTGCPTR) iemRegGetRspForPush(PCVMCPUCC pVCpu, uint8_t cbItem, uint64_t *puNewRsp) RT_NOEXCEPT
 {
     RTUINT64U   uTmpRsp;
     RTGCPTR     GCPtrTop;
@@ -2629,7 +2629,7 @@ DECLINLINE(RTGCPTR) iemRegGetRspForPush(PCVMCPU pVCpu, uint8_t cbItem, uint64_t 
  * @param   cbItem              The size of the stack item to pop.
  * @param   puNewRsp            Where to return the new RSP value.
  */
-DECLINLINE(RTGCPTR) iemRegGetRspForPop(PCVMCPU pVCpu, uint8_t cbItem, uint64_t *puNewRsp) RT_NOEXCEPT
+DECLINLINE(RTGCPTR) iemRegGetRspForPop(PCVMCPUCC pVCpu, uint8_t cbItem, uint64_t *puNewRsp) RT_NOEXCEPT
 {
     RTUINT64U   uTmpRsp;
     RTGCPTR     GCPtrTop;
@@ -2664,7 +2664,7 @@ DECLINLINE(RTGCPTR) iemRegGetRspForPop(PCVMCPU pVCpu, uint8_t cbItem, uint64_t *
  * @param   pTmpRsp             The temporary stack pointer.  This is updated.
  * @param   cbItem              The size of the stack item to pop.
  */
-DECLINLINE(RTGCPTR) iemRegGetRspForPushEx(PCVMCPU pVCpu, PRTUINT64U pTmpRsp, uint8_t cbItem) RT_NOEXCEPT
+DECLINLINE(RTGCPTR) iemRegGetRspForPushEx(PCVMCPUCC pVCpu, PRTUINT64U pTmpRsp, uint8_t cbItem) RT_NOEXCEPT
 {
     RTGCPTR GCPtrTop;
 
@@ -2687,7 +2687,7 @@ DECLINLINE(RTGCPTR) iemRegGetRspForPushEx(PCVMCPU pVCpu, PRTUINT64U pTmpRsp, uin
  * @param   pTmpRsp             The temporary stack pointer.  This is updated.
  * @param   cbItem              The size of the stack item to pop.
  */
-DECLINLINE(RTGCPTR) iemRegGetRspForPopEx(PCVMCPU pVCpu, PRTUINT64U pTmpRsp, uint8_t cbItem) RT_NOEXCEPT
+DECLINLINE(RTGCPTR) iemRegGetRspForPopEx(PCVMCPUCC pVCpu, PRTUINT64U pTmpRsp, uint8_t cbItem) RT_NOEXCEPT
 {
     RTGCPTR GCPtrTop;
     if (IEM_IS_64BIT_CODE(pVCpu))

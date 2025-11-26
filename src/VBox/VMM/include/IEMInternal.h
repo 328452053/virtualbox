@@ -1,4 +1,4 @@
-/* $Id: IEMInternal.h 111871 2025-11-25 17:24:15Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMInternal.h 111873 2025-11-26 08:35:38Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Internal header file.
  */
@@ -2544,6 +2544,39 @@ typedef struct IEMCPURECOMP
 } IEMCPURECOMP;
 
 
+/** @name Member Access Wrapper Macros
+ * This is for ring-0 and ring-3 state separation.
+ * @{ */
+#ifdef IN_RING0
+# define IEM_CORE_MEMBER                                      iemr0.s.CoreR0
+# define ICORE(a_pVCpu)                            (a_pVCpu)->iemr0.s.CoreR0
+# define ICORE_OFFSETOF(a_Member)       RT_UOFFSETOF(VMCPUCC, iemr0.s.CoreR0. a_Member)
+#else
+# define IEM_CORE_MEMBER                                      iem.s.Core
+# define ICORE(a_pVCpu)                            (a_pVCpu)->iem.s.Core
+# define ICORE_OFFSETOF(a_Member)       RT_UOFFSETOF(VMCPUCC, iem.s.Core. a_Member)
+#endif
+#define ICORE_STAT_OFFSETOF(a_Member)   RT_UOFFSETOF(VMCPUCC, iem.s. a_Member)
+
+#define IEM_RECM_MEMBER                                       iem.s.Recomp
+#define IRECM(a_pVCpu)                             (a_pVCpu)->iem.s.Recomp
+#define IRECM_OFFSETOF(a_Member)        RT_UOFFSETOF(VMCPUCC, iem.s.Recomp. a_Member)
+#define IRECM_STAT_OFFSETOF(a_Member)   RT_UOFFSETOF(VMCPUCC, iem.s.Recomp. a_Member)
+/** @} */
+
+
+/**
+ * The ring-0 per-CPU IEM state
+ */
+typedef struct IEMR0PERVCPU
+{
+    /** The ring-0 recompiler core. */
+    IEMCPUCORE              CoreR0;
+
+} IEMR0PERVCPU;
+AssertCompile(sizeof(IEMR0PERVCPU) < 1856);
+
+
 /**
  * The per-CPU IEM state.
  */
@@ -2551,10 +2584,6 @@ typedef struct IEMCPU
 {
     /** The ring-3 recompiler core. */
     IEMCPUCORE              Core;
-#define IEM_CORE_MEMBER                                       iem.s.Core
-#define ICORE(a_pVCpu)                             (a_pVCpu)->iem.s.Core
-#define ICORE_OFFSETOF(a_Member)        RT_UOFFSETOF(VMCPUCC, iem.s.Core. a_Member)
-#define ICORE_STAT_OFFSETOF(a_Member)   RT_UOFFSETOF(VMCPUCC, iem.s. a_Member)
 
     /** @name Statistics
      * @{  */
@@ -2589,10 +2618,6 @@ typedef struct IEMCPU
 
     /** The ring-3 recompiler data. */
     IEMCPURECOMP            Recomp;
-#define IEM_RECM_MEMBER                                       iem.s.Recomp
-#define IRECM(a_pVCpu)                             (a_pVCpu)->iem.s.Recomp
-#define IRECM_OFFSETOF(a_Member)        RT_UOFFSETOF(VMCPUCC, iem.s.Recomp. a_Member)
-#define IRECM_STAT_OFFSETOF(a_Member)   RT_UOFFSETOF(VMCPUCC, iem.s.Recomp. a_Member)
 
     /** Threaded TB statistics: Times TB execution was broken off before reaching the end. */
     STAMCOUNTER             StatTbThreadedExecBreaks;

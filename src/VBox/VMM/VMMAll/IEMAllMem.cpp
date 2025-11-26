@@ -1,4 +1,4 @@
-/* $Id: IEMAllMem.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllMem.cpp 111873 2025-11-26 08:35:38Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Common Memory Routines.
  */
@@ -69,6 +69,68 @@ size_t g_cbIemWrote;
  * @{
  */
 
+#ifndef IN_RING3
+/**
+ * Postpone a bounce buffer writeback to ring-3 after failure.
+ *
+ * We make the data accessible to ring-3 by importing the state into one of its
+ * memory mapping bounce buffers.
+ *
+ * @note There can only be one buffer in play here, so we will trash the whole
+ *       ring-3 buffer state when called, boldly ASSUMING that we won't be
+ *       called a 2nd time w/o returning to ring-3.  The ASSUMPTION is that this
+ *       is only used for INS and REP INS emulation.
+ */
+static VBOXSTRICTRC iemMemBounceBufferPostponeToRing3(PVMCPUCC pVCpu, unsigned iMemMap, VBOXSTRICTRC rcStrict,
+                                                      uint32_t fPendingWriteAccess)
+{
+    Assert(!VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_IEM)); /* Can only be called once! */
+
+    /*
+     * Copy the buffering info into ring-3 entry #0.
+     */
+
+    /* The mapping info. */
+    pVCpu->iem.s.Core.aMemMappings[0].pv             = NULL;
+    pVCpu->iem.s.Core.aMemMappings[0].fAccess        = ICORE(pVCpu).aMemMappings[iMemMap].fAccess | fPendingWriteAccess;
+
+    /* The bounce buffer info. */
+    pVCpu->iem.s.Core.aMemBbMappings[0].GCPhysFirst  = ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysFirst;
+    pVCpu->iem.s.Core.aMemBbMappings[0].GCPhysSecond = ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysSecond;
+    pVCpu->iem.s.Core.aMemBbMappings[0].cbFirst      = ICORE(pVCpu).aMemBbMappings[iMemMap].cbFirst;
+    pVCpu->iem.s.Core.aMemBbMappings[0].cbSecond     = ICORE(pVCpu).aMemBbMappings[iMemMap].cbSecond;
+    pVCpu->iem.s.Core.aMemBbMappings[0].fUnassigned  = ICORE(pVCpu).aMemBbMappings[iMemMap].fUnassigned;
+
+    /* The data. */
+    size_t cbToCopy = ICORE(pVCpu).aMemBbMappings[iMemMap].cbFirst + ICORE(pVCpu).aMemBbMappings[iMemMap].cbSecond;
+    cbToCopy = RT_MIN(cbToCopy, sizeof(pVCpu->iem.s.Core.aBounceBuffers[0].ab));
+    memcpy(pVCpu->iem.s.Core.aBounceBuffers[0].ab, ICORE(pVCpu).aBounceBuffers[iMemMap].ab, cbToCopy);
+
+    /* Reset the other ring-3 mappings. */
+    pVCpu->iem.s.Core.aMemMappings[1].fAccess = IEM_ACCESS_INVALID;
+# if IEM_MAX_MEM_MAPPINGS > 2
+    pVCpu->iem.s.Core.aMemMappings[2].fAccess = IEM_ACCESS_INVALID;
+# endif
+
+    /*
+     * Tell ring-3 there is one pending buffer and set the FF that will force a return.
+     */
+    pVCpu->iem.s.Core.cActiveMappings = 1;
+    VMCPU_FF_SET(pVCpu, VMCPU_FF_IEM);
+
+    /*
+     * Free the ring-0 buffer entry, pretending we've successfully committed it.
+     */
+    ICORE(pVCpu).aMemMappings[iMemMap].fAccess = IEM_ACCESS_INVALID;
+    Assert(ICORE(pVCpu).cActiveMappings != 0);
+    ICORE(pVCpu).cActiveMappings--;
+
+    pVCpu->iem.s.cPendingCommit += 1;
+
+    return iemSetPassUpStatus(pVCpu, rcStrict);
+}
+#endif
+
 /**
  * Commits a bounce buffer that needs writing back and unmaps it.
  *
@@ -133,9 +195,7 @@ static VBOXSTRICTRC iemMemBounceBufferCommitAndUnmap(PVMCPUCC pVCpu, unsigned iM
                               ("iemMemBounceBufferCommitAndUnmap: PGMPhysWrite GCPhysFirst=%RGp/%#x GCPhysSecond=%RGp/%#x %Rrc (postponed)\n",
                                ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysFirst, cbFirst,
                                ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysSecond, cbSecond, VBOXSTRICTRC_VAL(rcStrict) ));
-                        ICORE(pVCpu).aMemMappings[iMemMap].fAccess |= IEM_ACCESS_PENDING_R3_WRITE_2ND;
-                        VMCPU_FF_SET(pVCpu, VMCPU_FF_IEM);
-                        return iemSetPassUpStatus(pVCpu, rcStrict);
+                        return iemMemBounceBufferPostponeToRing3(pVCpu, iMemMap, rcStrict, IEM_ACCESS_PENDING_R3_WRITE_2ND);
                     }
 #endif
                     else
@@ -188,9 +248,7 @@ static VBOXSTRICTRC iemMemBounceBufferCommitAndUnmap(PVMCPUCC pVCpu, unsigned iM
                               ("iemMemBounceBufferCommitAndUnmap: PGMPhysWrite GCPhysFirst=%RGp/%#x GCPhysSecond=%RGp/%#x %Rrc (postponed)\n",
                                ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysFirst, cbFirst,
                                ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysSecond, cbSecond, VBOXSTRICTRC_VAL(rcStrict) ));
-                        ICORE(pVCpu).aMemMappings[iMemMap].fAccess |= IEM_ACCESS_PENDING_R3_WRITE_2ND;
-                        VMCPU_FF_SET(pVCpu, VMCPU_FF_IEM);
-                        return iemSetPassUpStatus(pVCpu, rcStrict);
+                        return iemMemBounceBufferPostponeToRing3(pVCpu, iMemMap, rcStrict, IEM_ACCESS_PENDING_R3_WRITE_2ND);
                     }
 #endif
                     else
@@ -210,12 +268,9 @@ static VBOXSTRICTRC iemMemBounceBufferCommitAndUnmap(PVMCPUCC pVCpu, unsigned iM
                       ("iemMemBounceBufferCommitAndUnmap: PGMPhysWrite GCPhysFirst=%RGp/%#x GCPhysSecond=%RGp/%#x %Rrc (postponed)\n",
                        ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysFirst, cbFirst,
                        ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysSecond, cbSecond, VBOXSTRICTRC_VAL(rcStrict) ));
-                if (!cbSecond)
-                    ICORE(pVCpu).aMemMappings[iMemMap].fAccess |= IEM_ACCESS_PENDING_R3_WRITE_1ST;
-                else
-                    ICORE(pVCpu).aMemMappings[iMemMap].fAccess |= IEM_ACCESS_PENDING_R3_WRITE_1ST | IEM_ACCESS_PENDING_R3_WRITE_2ND;
-                VMCPU_FF_SET(pVCpu, VMCPU_FF_IEM);
-                return iemSetPassUpStatus(pVCpu, rcStrict);
+                return iemMemBounceBufferPostponeToRing3(pVCpu, iMemMap, rcStrict,
+                                                            IEM_ACCESS_PENDING_R3_WRITE_1ST
+                                                         | (!cbSecond ? IEM_ACCESS_PENDING_R3_WRITE_2ND : 0));
             }
 #endif
             else
@@ -421,7 +476,7 @@ VBOXSTRICTRC iemMemBounceBufferMapCrossPage(PVMCPUCC pVCpu, int iMemMap, void **
     if (cbMem < sizeof(ICORE(pVCpu).aBounceBuffers[iMemMap].ab))
         memset(pbBuf + cbMem, 0xaa, sizeof(ICORE(pVCpu).aBounceBuffers[iMemMap].ab) - cbMem);
 #endif
-    AssertCompileMemberAlignment(VMCPU, IEM_CORE_MEMBER.aBounceBuffers, 64);
+    AssertCompileMemberAlignment(VMCPUCC, IEM_CORE_MEMBER.aBounceBuffers, 64);
 
     /*
      * Commit the bounce buffer entry.
@@ -681,6 +736,9 @@ void iemMemRollbackAndUnmapWoSafe(PVMCPUCC pVCpu, uint8_t bUnmapInfo) RT_NOEXCEP
  * @param   pVCpu               The cross context virtual CPU structure of the calling thread.
  * @param   pvMem               The mapping.
  * @param   fAccess             The kind of access.
+ *
+ * @note    Can only be used on 1 - one - memory bounce buffer.  The code up in
+ *          iemMemBounceBufferPostponeToRing3() is not ready for more.
  */
 VBOXSTRICTRC iemMemCommitAndUnmapPostponeTroubleToR3(PVMCPUCC pVCpu, uint8_t bUnmapInfo) RT_NOEXCEPT
 {
@@ -825,63 +883,59 @@ DECLINLINE(VBOXSTRICTRC) iemR3MergeStatus(VBOXSTRICTRC rcStrict, VBOXSTRICTRC rc
  */
 VMMR3_INT_DECL(VBOXSTRICTRC) IEMR3ProcessForceFlag(PVM pVM, PVMCPUCC pVCpu, VBOXSTRICTRC rcStrict)
 {
+    /* There shall be 1 in entry #0. */
+    AssertMsg(   ICORE(pVCpu).aMemMappings[0].fAccess & (IEM_ACCESS_PENDING_R3_WRITE_1ST | IEM_ACCESS_PENDING_R3_WRITE_2ND)
+              && ICORE(pVCpu).cActiveMappings == 1,
+              ("%u: %#x (%#x %#x)\n", ICORE(pVCpu).cActiveMappings,
+               ICORE(pVCpu).aMemMappings[0].fAccess, ICORE(pVCpu).aMemMappings[1].fAccess, ICORE(pVCpu).aMemMappings[2].fAccess));
+
     /*
      * Reset the pending commit.
      */
-    AssertMsg(  (ICORE(pVCpu).aMemMappings[0].fAccess | ICORE(pVCpu).aMemMappings[1].fAccess | ICORE(pVCpu).aMemMappings[2].fAccess)
-              & (IEM_ACCESS_PENDING_R3_WRITE_1ST | IEM_ACCESS_PENDING_R3_WRITE_2ND),
-              ("%#x %#x %#x\n",
-               ICORE(pVCpu).aMemMappings[0].fAccess, ICORE(pVCpu).aMemMappings[1].fAccess, ICORE(pVCpu).aMemMappings[2].fAccess));
     VMCPU_FF_CLEAR(pVCpu, VMCPU_FF_IEM);
 
     /*
-     * Commit the pending bounce buffers (usually just one).
+     * Commit the pending bounce buffers (there can only be one, #0).
      */
-    unsigned cBufs = 0;
-    unsigned iMemMap = RT_ELEMENTS(ICORE(pVCpu).aMemMappings);
-    while (iMemMap-- > 0)
-        if (ICORE(pVCpu).aMemMappings[iMemMap].fAccess & (IEM_ACCESS_PENDING_R3_WRITE_1ST | IEM_ACCESS_PENDING_R3_WRITE_2ND))
+    unsigned const iMemMap = 0;
+    if (ICORE(pVCpu).aMemMappings[iMemMap].fAccess & (IEM_ACCESS_PENDING_R3_WRITE_1ST | IEM_ACCESS_PENDING_R3_WRITE_2ND))
+    {
+        Assert(ICORE(pVCpu).aMemMappings[iMemMap].fAccess & IEM_ACCESS_TYPE_WRITE);
+        Assert(ICORE(pVCpu).aMemMappings[iMemMap].fAccess & IEM_ACCESS_BOUNCE_BUFFERED);
+        Assert(!ICORE(pVCpu).aMemBbMappings[iMemMap].fUnassigned);
+
+        uint16_t const  cbFirst  = ICORE(pVCpu).aMemBbMappings[iMemMap].cbFirst;
+        uint16_t const  cbSecond = ICORE(pVCpu).aMemBbMappings[iMemMap].cbSecond;
+        uint8_t const  *pbBuf    = &ICORE(pVCpu).aBounceBuffers[iMemMap].ab[0];
+
+        if (ICORE(pVCpu).aMemMappings[iMemMap].fAccess & IEM_ACCESS_PENDING_R3_WRITE_1ST)
         {
-            Assert(ICORE(pVCpu).aMemMappings[iMemMap].fAccess & IEM_ACCESS_TYPE_WRITE);
-            Assert(ICORE(pVCpu).aMemMappings[iMemMap].fAccess & IEM_ACCESS_BOUNCE_BUFFERED);
-            Assert(!ICORE(pVCpu).aMemBbMappings[iMemMap].fUnassigned);
-
-            uint16_t const  cbFirst  = ICORE(pVCpu).aMemBbMappings[iMemMap].cbFirst;
-            uint16_t const  cbSecond = ICORE(pVCpu).aMemBbMappings[iMemMap].cbSecond;
-            uint8_t const  *pbBuf    = &ICORE(pVCpu).aBounceBuffers[iMemMap].ab[0];
-
-            if (ICORE(pVCpu).aMemMappings[iMemMap].fAccess & IEM_ACCESS_PENDING_R3_WRITE_1ST)
-            {
-                VBOXSTRICTRC rcStrictCommit1 = PGMPhysWrite(pVM,
-                                                            ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysFirst,
-                                                            pbBuf,
-                                                            cbFirst,
-                                                            PGMACCESSORIGIN_IEM);
-                rcStrict = iemR3MergeStatus(rcStrict, rcStrictCommit1, iMemMap, pVCpu);
-                Log(("IEMR3ProcessForceFlag: iMemMap=%u GCPhysFirst=%RGp LB %#x %Rrc => %Rrc\n",
-                     iMemMap, ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysFirst, cbFirst,
-                     VBOXSTRICTRC_VAL(rcStrictCommit1), VBOXSTRICTRC_VAL(rcStrict)));
-            }
-
-            if (ICORE(pVCpu).aMemMappings[iMemMap].fAccess & IEM_ACCESS_PENDING_R3_WRITE_2ND)
-            {
-                VBOXSTRICTRC rcStrictCommit2 = PGMPhysWrite(pVM,
-                                                            ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysSecond,
-                                                            pbBuf + cbFirst,
-                                                            cbSecond,
-                                                            PGMACCESSORIGIN_IEM);
-                rcStrict = iemR3MergeStatus(rcStrict, rcStrictCommit2, iMemMap, pVCpu);
-                Log(("IEMR3ProcessForceFlag: iMemMap=%u GCPhysSecond=%RGp LB %#x %Rrc => %Rrc\n",
-                     iMemMap, ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysSecond, cbSecond,
-                     VBOXSTRICTRC_VAL(rcStrictCommit2), VBOXSTRICTRC_VAL(rcStrict)));
-            }
-            cBufs++;
-            ICORE(pVCpu).aMemMappings[iMemMap].fAccess = IEM_ACCESS_INVALID;
+            VBOXSTRICTRC rcStrictCommit1 = PGMPhysWrite(pVM,
+                                                        ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysFirst,
+                                                        pbBuf,
+                                                        cbFirst,
+                                                        PGMACCESSORIGIN_IEM);
+            rcStrict = iemR3MergeStatus(rcStrict, rcStrictCommit1, iMemMap, pVCpu);
+            Log(("IEMR3ProcessForceFlag: iMemMap=%u GCPhysFirst=%RGp LB %#x %Rrc => %Rrc\n",
+                 iMemMap, ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysFirst, cbFirst,
+                 VBOXSTRICTRC_VAL(rcStrictCommit1), VBOXSTRICTRC_VAL(rcStrict)));
         }
 
-    AssertMsg(cBufs > 0 && cBufs == ICORE(pVCpu).cActiveMappings,
-              ("cBufs=%u cActiveMappings=%u - %#x %#x %#x\n", cBufs, ICORE(pVCpu).cActiveMappings,
-               ICORE(pVCpu).aMemMappings[0].fAccess, ICORE(pVCpu).aMemMappings[1].fAccess, ICORE(pVCpu).aMemMappings[2].fAccess));
+        if (ICORE(pVCpu).aMemMappings[iMemMap].fAccess & IEM_ACCESS_PENDING_R3_WRITE_2ND)
+        {
+            VBOXSTRICTRC rcStrictCommit2 = PGMPhysWrite(pVM,
+                                                        ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysSecond,
+                                                        pbBuf + cbFirst,
+                                                        cbSecond,
+                                                        PGMACCESSORIGIN_IEM);
+            rcStrict = iemR3MergeStatus(rcStrict, rcStrictCommit2, iMemMap, pVCpu);
+            Log(("IEMR3ProcessForceFlag: iMemMap=%u GCPhysSecond=%RGp LB %#x %Rrc => %Rrc\n",
+                 iMemMap, ICORE(pVCpu).aMemBbMappings[iMemMap].GCPhysSecond, cbSecond,
+                 VBOXSTRICTRC_VAL(rcStrictCommit2), VBOXSTRICTRC_VAL(rcStrict)));
+        }
+        ICORE(pVCpu).aMemMappings[iMemMap].fAccess = IEM_ACCESS_INVALID;
+    }
+
     ICORE(pVCpu).cActiveMappings = 0;
     return rcStrict;
 }

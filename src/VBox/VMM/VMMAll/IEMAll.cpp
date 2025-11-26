@@ -1,4 +1,4 @@
-/* $Id: IEMAll.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAll.cpp 111873 2025-11-26 08:35:38Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - All Contexts.
  */
@@ -1242,7 +1242,7 @@ IEMExecForExits(PVMCPUCC pVCpu, uint32_t fWillExit, uint32_t cMinInstructions, u
                     Assert(ICORE(pVCpu).cActiveMappings == 0);
                 }
                 else if (ICORE(pVCpu).cActiveMappings > 0)
-                        iemMemRollback(pVCpu);
+                    iemMemRollback(pVCpu);
                 rcStrict = iemExecStatusCodeFiddling(pVCpu, rcStrict);
                 break;
             }

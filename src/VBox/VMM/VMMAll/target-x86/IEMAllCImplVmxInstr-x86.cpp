@@ -1,4 +1,4 @@
-/* $Id: IEMAllCImplVmxInstr-x86.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllCImplVmxInstr-x86.cpp 111873 2025-11-26 08:35:38Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - VT-x instruction implementation (x86 target).
  */
@@ -8067,7 +8067,7 @@ VMM_INT_DECL(VBOXSTRICTRC) IEMExecDecodedVmlaunchVmresume(PVMCPUCC pVCpu, uint8_
  *                          VMX_EXIT_WRMSR).
  * @param   idMsr           The MSR.
  */
-bool iemVmxIsRdmsrWrmsrInterceptSet(PCVMCPU pVCpu, uint32_t uExitReason, uint32_t idMsr) RT_NOEXCEPT
+bool iemVmxIsRdmsrWrmsrInterceptSet(PCVMCPUCC pVCpu, uint32_t uExitReason, uint32_t idMsr) RT_NOEXCEPT
 {
     Assert(IEM_VMX_IS_NON_ROOT_MODE(pVCpu));
     Assert(   uExitReason == VMX_EXIT_RDMSR

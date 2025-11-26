@@ -1,4 +1,4 @@
-/* $Id: gvm.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: gvm.h 111873 2025-11-26 08:35:38Z knut.osmundsen@oracle.com $ */
 /** @file
  * GVM - The Global VM Data.
  */
@@ -143,15 +143,23 @@ typedef struct GVMCPU
         uint8_t             padding[576];
     } pgmr0;
 
+    union
+    {
+# if defined(VMM_INCLUDED_SRC_include_IEMInternal_h) && defined(IN_RING0)
+        struct IEMR0PERVCPU s;
+# endif
+        uint8_t             padding[1856];
+    } iemr0;
+
 #endif /* !VBOX_WITH_MINIMAL_R0 */
 
     /** Padding the structure size to page boundrary. */
 #ifdef VBOX_WITH_MINIMAL_R0
     uint8_t                 abPadding3[16384 - 64*2 - 256 - 896];
 #elif defined(VBOX_WITH_NEM_R0)
-    uint8_t                 abPadding3[16384 - 64*2 - 256 - 896 - 1024 - 64 - 576];
+    uint8_t                 abPadding3[16384 - 64*2 - 256 - 896 - 1024 - 64 - 576 - 1856];
 #else
-    uint8_t                 abPadding3[16384 - 64*2 - 256 - 896 - 1024      - 576];
+    uint8_t                 abPadding3[16384 - 64*2 - 256 - 896 - 1024      - 576 - 1856];
 #endif
 } GVMCPU;
 #ifndef IN_TSTVMSTRUCT
