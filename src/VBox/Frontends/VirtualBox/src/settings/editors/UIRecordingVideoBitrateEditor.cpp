@@ -1,4 +1,4 @@
-/* $Id: UIRecordingVideoBitrateEditor.cpp 111914 2025-11-27 11:37:23Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingVideoBitrateEditor.cpp 111918 2025-11-27 12:37:02Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingVideoBitrateEditor class implementation.
  */
@@ -26,26 +26,15 @@
  */
 
 /* Qt includes: */
-#include <QCheckBox>
-#include <QComboBox>
 #include <QHBoxLayout>
 #include <QGridLayout>
 #include <QLabel>
 #include <QSpinBox>
-#include <QVBoxLayout>
 
 /* GUI includes: */
 #include "QIAdvancedSlider.h"
 #include "UICommon.h"
-#include "UIConverter.h"
-#include "UIFilmContainer.h"
-#include "UIGlobalSession.h"
 #include "UIRecordingVideoBitrateEditor.h"
-#include "UIRecordingFilePathEditor.h"
-#include "UIRecordingVideoFrameRateEditor.h"
-
-/* COM includes: */
-#include "CSystemProperties.h"
 
 /* Defines: */
 #define VIDEO_CAPTURE_BIT_RATE_MIN 32
@@ -219,10 +208,7 @@ void UIRecordingVideoBitrateEditor::prepareWidgets()
 
             pLayout->addWidget(m_pSpinboxBitRate);
         }
-
-
     }
-
 }
 
 void UIRecordingVideoBitrateEditor::prepareConnections()

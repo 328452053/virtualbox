@@ -1,4 +1,4 @@
-/* $Id: UIRecordingVideoBitrateEditor.h 111914 2025-11-27 11:37:23Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingVideoBitrateEditor.h 111918 2025-11-27 12:37:02Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingVideoBitrateEditor class declaration.
  */
@@ -39,16 +39,10 @@
 #include "KRecordingCodecDeadline.h"
 
 /* Forward declarations: */
-class QCheckBox;
-class QComboBox;
 class QGridLayout;
 class QLabel;
 class QSpinBox;
-class QWidget;
 class QIAdvancedSlider;
-class UIFilmContainer;
-class UIRecordingFilePathEditor;
-class UIRecordingVideoFrameRateEditor;
 
 
 /** UIEditor sub-class used as a recording settings editor. */
