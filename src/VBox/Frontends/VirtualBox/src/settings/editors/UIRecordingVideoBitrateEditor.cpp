@@ -1,4 +1,4 @@
-/* $Id: UIRecordingVideoBitrateEditor.cpp 111921 2025-11-27 12:51:44Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingVideoBitrateEditor.cpp 111922 2025-11-27 13:03:56Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingVideoBitrateEditor class implementation.
  */
@@ -26,7 +26,6 @@
  */
 
 /* Qt includes: */
-#include <QHBoxLayout>
 #include <QGridLayout>
 #include <QLabel>
 #include <QSpinBox>
@@ -43,27 +42,28 @@
 
 UIRecordingVideoBitrateEditor::UIRecordingVideoBitrateEditor(QWidget *pParent /* = 0 */, bool fShowInBasicMode /* = false */)
     : UIEditor(pParent, fShowInBasicMode)
-    , m_pLabelBitRate(0)
+    , m_pLabel(0)
     , m_pWidgetBitRateSettings(0)
     , m_pSliderQuality(0)
-    , m_pSpinboxBitRate(0)
-    , m_pLabelBitRateMin(0)
-    , m_pLabelBitRateMed(0)
-    , m_pLabelBitRateMax(0)
+    , m_pSpinbox(0)
+    , m_pLabelMin(0)
+    , m_pLabelMed(0)
+    , m_pLabelMax(0)
+    , m_pLayout(0)
 {
     prepare();
 }
 
 void UIRecordingVideoBitrateEditor::setBitrate(int iRate)
 {
-    if (!m_pSpinboxBitRate || m_pSpinboxBitRate->value() == iRate)
+    if (!m_pSpinbox || m_pSpinbox->value() == iRate)
         return;
-    m_pSpinboxBitRate->setValue(iRate);
+    m_pSpinbox->setValue(iRate);
 }
 
 int UIRecordingVideoBitrateEditor::bitrate() const
 {
-    return m_pSpinboxBitRate ? m_pSpinboxBitRate->value() : 0;
+    return m_pSpinbox ? m_pSpinbox->value() : 0;
 }
 
 void UIRecordingVideoBitrateEditor::setQuality(int iQuality)
@@ -78,17 +78,28 @@ int UIRecordingVideoBitrateEditor::quality() const
     return m_pSliderQuality ? m_pSliderQuality->value() : 0;
 }
 
+int UIRecordingVideoBitrateEditor::minimumLabelHorizontalHint() const
+{
+    return m_pLabel ? m_pLabel->minimumSizeHint().width() : 0;
+}
+
+void UIRecordingVideoBitrateEditor::setMinimumLayoutIndent(int iIndent)
+{
+    if (m_pLayout)
+        m_pLayout->setColumnMinimumWidth(0, iIndent + m_pLayout->spacing());
+}
+
 void UIRecordingVideoBitrateEditor::sltRetranslateUI()
 {
-    m_pLabelBitRate->setText(tr("&Bitrate"));
+    m_pLabel->setText(tr("&Bitrate"));
     m_pSliderQuality->setToolTip(tr("Bitrate. Increasing this value will make the video "
                                     "look better at the cost of an increased file size."));
-    m_pSpinboxBitRate->setSuffix(QString(" %1").arg(tr("kbps")));
-    m_pSpinboxBitRate->setToolTip(tr("Bitrate in kilobits per second. Increasing this value "
+    m_pSpinbox->setSuffix(QString(" %1").arg(tr("kbps")));
+    m_pSpinbox->setToolTip(tr("Bitrate in kilobits per second. Increasing this value "
                                      "will make the video look better at the cost of an increased file size."));
-    m_pLabelBitRateMin->setText(tr("low", "quality"));
-    m_pLabelBitRateMed->setText(tr("medium", "quality"));
-    m_pLabelBitRateMax->setText(tr("high", "quality"));
+    m_pLabelMin->setText(tr("low", "quality"));
+    m_pLabelMed->setText(tr("medium", "quality"));
+    m_pLabelMax->setText(tr("high", "quality"));
 }
 
 void UIRecordingVideoBitrateEditor::sltHandleBitRateSliderChange()
@@ -98,7 +109,7 @@ void UIRecordingVideoBitrateEditor::sltHandleBitRateSliderChange()
 
 void UIRecordingVideoBitrateEditor::sltHandleBitRateSpinboxChange()
 {
-    emit sigBitrateChanged(m_pSpinboxBitRate->value());
+    emit sigBitrateChanged(m_pSpinbox->value());
 }
 
 void UIRecordingVideoBitrateEditor::prepare()
@@ -114,17 +125,17 @@ void UIRecordingVideoBitrateEditor::prepare()
 void UIRecordingVideoBitrateEditor::prepareWidgets()
 {
     /* Prepare main layout: */
-    QHBoxLayout *pLayout = new QHBoxLayout(this);
-    if (pLayout)
+    m_pLayout = new QGridLayout(this);
+    if (m_pLayout)
     {
-        pLayout->setContentsMargins(0, 0, 0, 0);
+        m_pLayout->setContentsMargins(0, 0, 0, 0);
 
         /* Prepare recording bit rate label: */
-        m_pLabelBitRate = new QLabel(this);
-        if (m_pLabelBitRate)
+        m_pLabel = new QLabel(this);
+        if (m_pLabel)
         {
-            m_pLabelBitRate->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-            pLayout->addWidget(m_pLabelBitRate);
+            m_pLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+            m_pLayout->addWidget(m_pLabel, 0, 0);
         }
         /* Prepare recording bit rate widget: */
         m_pWidgetBitRateSettings = new QWidget(this);
@@ -160,37 +171,37 @@ void UIRecordingVideoBitrateEditor::prepareWidgets()
                     pLayoutRecordingBitRateScale->setContentsMargins(0, 0, 0, 0);
 
                     /* Prepare recording bit rate min label: */
-                    m_pLabelBitRateMin = new QLabel(m_pWidgetBitRateSettings);
-                    if (m_pLabelBitRateMin)
-                        pLayoutRecordingBitRateScale->addWidget(m_pLabelBitRateMin);
+                    m_pLabelMin = new QLabel(m_pWidgetBitRateSettings);
+                    if (m_pLabelMin)
+                        pLayoutRecordingBitRateScale->addWidget(m_pLabelMin);
                     pLayoutRecordingBitRateScale->addStretch();
                     /* Prepare recording bit rate med label: */
-                    m_pLabelBitRateMed = new QLabel(m_pWidgetBitRateSettings);
-                    if (m_pLabelBitRateMed)
-                        pLayoutRecordingBitRateScale->addWidget(m_pLabelBitRateMed);
+                    m_pLabelMed = new QLabel(m_pWidgetBitRateSettings);
+                    if (m_pLabelMed)
+                        pLayoutRecordingBitRateScale->addWidget(m_pLabelMed);
                     pLayoutRecordingBitRateScale->addStretch();
                     /* Prepare recording bit rate max label: */
-                    m_pLabelBitRateMax = new QLabel(m_pWidgetBitRateSettings);
-                    if (m_pLabelBitRateMax)
-                        pLayoutRecordingBitRateScale->addWidget(m_pLabelBitRateMax);
+                    m_pLabelMax = new QLabel(m_pWidgetBitRateSettings);
+                    if (m_pLabelMax)
+                        pLayoutRecordingBitRateScale->addWidget(m_pLabelMax);
 
                     pLayoutRecordingBitRate->addLayout(pLayoutRecordingBitRateScale);
                 }
             }
 
-            pLayout->addWidget(m_pWidgetBitRateSettings);
+            m_pLayout->addWidget(m_pWidgetBitRateSettings, 0, 1);
         }
         /* Prepare recording bit rate spinbox: */
-        m_pSpinboxBitRate = new QSpinBox(this);
-        if (m_pSpinboxBitRate)
+        m_pSpinbox = new QSpinBox(this);
+        if (m_pSpinbox)
         {
-            if (m_pLabelBitRate)
-                m_pLabelBitRate->setBuddy(m_pSpinboxBitRate);
-            uiCommon().setMinimumWidthAccordingSymbolCount(m_pSpinboxBitRate, 5);
-            m_pSpinboxBitRate->setMinimum(VIDEO_CAPTURE_BIT_RATE_MIN);
-            m_pSpinboxBitRate->setMaximum(VIDEO_CAPTURE_BIT_RATE_MAX);
+            if (m_pLabel)
+                m_pLabel->setBuddy(m_pSpinbox);
+            uiCommon().setMinimumWidthAccordingSymbolCount(m_pSpinbox, 5);
+            m_pSpinbox->setMinimum(VIDEO_CAPTURE_BIT_RATE_MIN);
+            m_pSpinbox->setMaximum(VIDEO_CAPTURE_BIT_RATE_MAX);
 
-            pLayout->addWidget(m_pSpinboxBitRate);
+            m_pLayout->addWidget(m_pSpinbox, 0, 2);
         }
     }
 }
@@ -199,6 +210,6 @@ void UIRecordingVideoBitrateEditor::prepareConnections()
 {
     connect(m_pSliderQuality, &QIAdvancedSlider::valueChanged,
             this, &UIRecordingVideoBitrateEditor::sltHandleBitRateSliderChange);
-    connect(m_pSpinboxBitRate, &QSpinBox::valueChanged,
+    connect(m_pSpinbox, &QSpinBox::valueChanged,
             this, &UIRecordingVideoBitrateEditor::sltHandleBitRateSpinboxChange);
 }

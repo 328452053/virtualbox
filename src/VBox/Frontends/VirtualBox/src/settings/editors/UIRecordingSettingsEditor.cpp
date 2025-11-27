@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.cpp 111914 2025-11-27 11:37:23Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.cpp 111922 2025-11-27 13:03:56Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class implementation.
  */
@@ -829,14 +829,17 @@ void UIRecordingSettingsEditor::updateMinimumLayoutHint()
     int iMinimumLayoutHint = 0;
     if (m_pLabelMode && !m_pLabelMode->isHidden())
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pLabelMode->minimumSizeHint().width());
-    // This editor have own label, but we want it to be properly layouted according to rest of stuff.
+    // This editor has own label, but we want it to be properly layouted according to rest of stuff.
     if (m_pEditorFilePath && !m_pEditorFilePath->isHidden())
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pEditorFilePath->minimumLabelHorizontalHint());
     if (m_pLabelFrameSize && !m_pLabelFrameSize->isHidden())
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pLabelFrameSize->minimumSizeHint().width());
-    // This editor have own label, but we want it to be properly layouted according to rest of stuff.
+    // This editor has own label, but we want it to be properly layouted according to rest of stuff.
     if (m_pEditorFrameRate && !m_pEditorFrameRate->isHidden())
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pEditorFrameRate->minimumLabelHorizontalHint());
+    // This editor has own label, but we want it to be properly layouted according to rest of stuff.
+    if (m_pEditorBitrate && !m_pEditorBitrate->isHidden())
+        iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pEditorBitrate->minimumLabelHorizontalHint());
     if (m_pLabelVideoQuality && !m_pLabelVideoQuality->isHidden())
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pLabelVideoQuality->minimumSizeHint().width());
     if (m_pLabelAudioProfile && !m_pLabelAudioProfile->isHidden())
@@ -847,6 +850,8 @@ void UIRecordingSettingsEditor::updateMinimumLayoutHint()
         m_pEditorFilePath->setMinimumLayoutIndent(iMinimumLayoutHint);
     if (m_pEditorFrameRate)
         m_pEditorFrameRate->setMinimumLayoutIndent(iMinimumLayoutHint);
+    if (m_pEditorBitrate)
+        m_pEditorBitrate->setMinimumLayoutIndent(iMinimumLayoutHint);
     if (m_pLayoutSettings)
         m_pLayoutSettings->setColumnMinimumWidth(0, iMinimumLayoutHint);
 }
