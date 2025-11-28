@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 111931 2025-11-27 17:04:48Z andreas.loeffler@oracle.com $
+# $Id: configure.py 111933 2025-11-28 12:11:13Z andreas.loeffler@oracle.com $
 # pylint: disable=global-statement
 # pylint: disable=line-too-long
 # pylint: disable=too-many-lines
@@ -85,8 +85,6 @@ g_enmHostArch = {
     "aarch64": BuildArch.ARM64,
     "arm64": BuildArch.ARM64
 }.get(g_sHostArch, BuildArch.UNKNOWN);
-# By default we build for the host system.
-g_enmBuildArch = g_enmHostArch;
 
 class BuildTargets:
     """
@@ -103,10 +101,9 @@ class BuildTargets:
     UNKNOWN = "unknown";
 
 g_fDebug = False;             # Enables debug mode. Only for development.
+g_fNoFatal = False;           # Continue on fatal errors.
 g_sEnvVarPrefix = 'VBOX_';
-g_fOSE = None;                # Will be determined on start.
 g_sFileLog = 'configure.log'; # Log file path.
-g_fHardening = True;          # Enable hardening by default.
 g_cVerbosity = 0;
 g_cErrors = 0;
 g_cWarnings = 0;
@@ -125,8 +122,6 @@ g_enmHostTarget = {
     "haiku":    BuildTargets.HAIKU,
     "":         BuildTargets.UNKNOWN
 }.get(g_sHostTarget, BuildTargets.UNKNOWN);
-# By default we build for the host system.
-g_enmBuildTarget = g_enmHostTarget;
 
 class BuildType:
     """
@@ -135,8 +130,7 @@ class BuildType:
     """
     DEBUG = "debug";
     RELEASE = "release";
-# By defaut we do a release build.
-g_enmBuildType = BuildType.RELEASE;
+    PROFILE = "profile";
 
 def printError(sMessage):
     """
@@ -226,7 +220,7 @@ class LibraryCheck:
         # Remove 'lib' prefix if present for -l on UNIX-y OSes.
         asLibArgs = [];
         for sLibCur in self.asLibFiles:
-            if g_enmBuildTarget != BuildTargets.WINDOWS:
+            if  g_oEnv['KBUILD_TARGET'] != BuildTargets.WINDOWS:
                 if sLibCur.startswith("lib"):
                     sLibCur = sLibCur[3:];
                 else:
@@ -332,7 +326,7 @@ class LibraryCheck:
             asPaths.extend([ os.path.join(self.sCustomPath, "include")] );
         # Use source tree lib paths first.
         asPaths.extend([ os.path.join(g_sScriptPath, "src/libs") ]);
-        if g_enmBuildTarget == BuildTargets.WINDOWS:
+        if  g_oEnv['KBUILD_TARGET'] == BuildTargets.WINDOWS:
             asRootDrivers = [ d+":" for d in "CDEFGHIJKLMNOPQRSTUVWXYZ" if os.path.exists(d+":") ];
             for r in asRootDrivers:
                 asPaths.extend([ os.path.join(r, p) for p in [
@@ -345,7 +339,7 @@ class LibraryCheck:
                              "/usr/include/" + sGnuType, "/usr/local/include/" + sGnuType,
                              "/usr/include/" + self.sName, "/usr/local/include/" + self.sName,
                              "/opt/include", "/opt/local/include" ]);
-            if g_enmBuildTarget == BuildTargets.DARWIN:
+            if  g_oEnv['KBUILD_TARGET'] == BuildTargets.DARWIN:
                 asPaths.extend([ "/opt/homebrew/include" ]);
         return [p for p in asPaths if os.path.exists(p)];
 
@@ -358,15 +352,15 @@ class LibraryCheck:
             asPaths = [os.path.join(self.sCustomPath, "lib")];
         # Use source tree lib paths first.
         asPaths.extend([ os.path.join(g_sScriptPath, "src/libs") ]);
-        if g_enmBuildTarget == BuildTargets.WINDOWS:
+        if  g_oEnv['KBUILD_TARGET'] == BuildTargets.WINDOWS:
             root_drives = [d+":" for d in "CDEFGHIJKLMNOPQRSTUVWXYZ" if os.path.exists(d+":")];
             for r in root_drives:
                 asPaths += [os.path.join(r, p) for p in [
                     "\\msys64\\mingw64\\lib", "\\msys64\\mingw32\\lib", "\\lib"]];
                 asPaths += [r"c:\\Program Files", r"c:\\Program Files (x86)"];
         else:
-            if g_enmBuildTarget == BuildTargets.LINUX \
-            or g_enmBuildTarget == BuildTargets.SOLARIS:
+            if  g_oEnv['KBUILD_TARGET'] == BuildTargets.LINUX \
+            or  g_oEnv['KBUILD_TARGET'] == BuildTargets.SOLARIS:
                 sGnuType = self.getLinuxGnuTypeFromPlatform();
                 # Sorted by most likely-ness.
                 asPaths = [ "/usr/lib", "/usr/local/lib",
@@ -411,9 +405,9 @@ class LibraryCheck:
             return True;
         sBasename = self.asLibFiles;
         asLibExts = [];
-        if g_enmBuildTarget == BuildTargets.WINDOWS:
+        if  g_oEnv['KBUILD_TARGET'] == BuildTargets.WINDOWS:
             asLibExts = [".lib", ".dll", ".a", ".dll.a"];
-        elif g_enmBuildTarget == BuildTargets.DARWIN:
+        elif  g_oEnv['KBUILD_TARGET'] == BuildTargets.DARWIN:
             asLibExts = [".a", ".dylib", ".so"];
         else:
             asLibExts = [".a", ".so"];
@@ -433,13 +427,13 @@ class LibraryCheck:
         """
         Run library detection.
         """
-        if g_enmBuildTarget in self.aeTargetsExcluded:
+        if  g_oEnv['KBUILD_TARGET'] in self.aeTargetsExcluded:
             self.fHave = None;
             return;
         if self.fDisabled:
             self.fHave = None;
             return;
-        if g_enmBuildTarget in self.aeTargets \
+        if  g_oEnv['KBUILD_TARGET'] in self.aeTargets \
         or BuildTargets.ANY in self.aeTargets:
             self.fHave = self.checkInc() and self.checkLib();
 
@@ -502,7 +496,7 @@ class ToolCheck:
         if self.fDisabled:
             self.fHave = None;
             return True;
-        if g_enmBuildTarget in self.aeTargets \
+        if g_oEnv['KBUILD_TARGET'] in self.aeTargets \
         or BuildTargets.ANY in self.aeTargets:
             if self.fnCallback: # Custom callback function provided?
                 self.fHave = self.fnCallback(self);
@@ -538,15 +532,15 @@ class ToolCheck:
         # These are the sub directories OpenWatcom ships its binaries in.
         mapBuildTarget2Bin = {
             BuildTargets.DARWIN:  "binosx",  ## @todo Still correct for Apple Silicon?
-            BuildTargets.LINUX:   "binl64" if g_enmBuildArch is BuildArch.AMD64 else "arml64", # ASSUMES 64-bit.
+            BuildTargets.LINUX:   "binl64" if g_oEnv['KBUILD_TARGET_ARCH'] is BuildArch.AMD64 else "arml64", # ASSUMES 64-bit.
             BuildTargets.SOLARIS: "binsol",  ## @todo Test on Solaris.
             BuildTargets.WINDOWS: "binnt",
             BuildTargets.BSD:     "binnbsd"  ## @todo Test this on FreeBSD.
         };
 
-        sBinSubdir = mapBuildTarget2Bin.get(g_enmBuildTarget, None);
+        sBinSubdir = mapBuildTarget2Bin.get(g_oEnv['KBUILD_TARGET'], None);
         if not sBinSubdir:
-            printError(f"OpenWatcom not supported on host target {g_enmBuildTarget}.");
+            printError(f"OpenWatcom not supported on host target { g_oEnv['KBUILD_TARGET'] }.");
             return False;
 
         for sCmdCur in self.asCmd:
@@ -609,7 +603,7 @@ class EnvManager:
         else:
             assert True, "Implement me!"
 
-    def get(self, key, default=''):
+    def get(self, key, default=None):
         """
         Retrieves the value of an environment variable, or a default if not set (optional).
         """
@@ -624,28 +618,22 @@ class EnvManager:
         else:
             raise KeyError(f"{key} not set in environment");
 
-    def updateFromArgs(self, args):
+    def updateFromArgs(self, oArgs):
         """
         Updates environment variable store using a Namespace object from argparse.
         Each argument becomes an environment variable (in uppercase), set only if its value is not None.
         """
-        for sKey, aValue in vars(args).items():
-            if aValue is not None:
-                # Search for vbox_env_ prefix to map to VBOX_* environment variables.
-                if sKey.startswith('vbox_env_'):
-                    sKey = sKey[len('vbox_env_'):];
-                    asKeywordMap = {
-                        'sete_': '',
-                        'set1_': '1',
-                        'set0_': '0'
-                    };
-                    for sPrefix, sVal in asKeywordMap.items():
-                        if sKey.startswith(sPrefix):
-                            sKey = sKey[len(sPrefix):];
-                            aValue = sVal;
-                            break;
-                    sKey = g_sEnvVarPrefix + sKey;
-                self.env[sKey.upper()] = aValue;
+        for sKey, aValue in vars(oArgs).items():
+            if aValue:
+                if sKey.startswith('config_'):
+                    self.env[sKey.upper()] = aValue;
+                else:
+                    idxSep =  sKey.find("=");
+                    if not idxSep:
+                        break;
+                    sKeyNew   = sKey[:idxSep];
+                    aValueNew = sKey[idxSep + 1:];
+                    self.env[sKeyNew.upper()] = aValueNew;
 
     def write(self, fh, asPrefixExclude):
         """
@@ -664,6 +652,16 @@ class EnvManager:
             result = exprCur(self.env);
             if isinstance(result, dict):
                 self.env.update(result);
+
+    def __getitem__(self, sName):
+        """
+
+        """
+        return self.get(sName, None);
+
+# Global instance of the environment manager.
+# This hold the configuration we later serialize into files.
+g_oEnv = EnvManager();
 
 class SimpleTable:
     """
@@ -886,10 +884,10 @@ def write_env(sFilePath, oEnv, aoLibs, aoTools):
 
 KBUILD_HOST={g_enmHostTarget}
 KBUILD_HOST_ARCH={g_sHostArch}
-KBUILD_TARGET={g_enmBuildTarget}
-KBUILD_TARGET_ARCH={g_enmBuildArch}
-KBUILD_TARGET_CPU={g_enmBuildArch}
-KBUILD_TYPE={g_enmBuildType}
+KBUILD_TARGET={ oEnv['KBUILD_TARGET'] }
+KBUILD_TARGET_ARCH={ oEnv['KBUILD_TARGET_ARCH'] }
+KBUILD_TARGET_CPU={ oEnv['KBUILD_TARGET_ARCH'] }
+KBUILD_TYPE={ oEnv['KBUILD_TYPE'] }
 export KBUILD_HOST KBUILD_HOST_ARCH KBUILD_TARGET KBUILD_TARGET_ARCH KBUILD_TARGET_CPU KBUILD_TYPE
 """);
         return True;
@@ -903,7 +901,7 @@ def main():
     """
     global g_cVerbosity;
     global g_fDebug;
-    global g_fOSE;
+    global g_fNoFatal;
     global g_sFileLog;
 
     #
@@ -911,12 +909,8 @@ def main():
     # - Everything internally used is prefixed with 'config_'.
     # - Library options are prefixed with 'config_libs_'.
     # - Tool options are prefixed with 'config_tools_'.
-    # - VirtualBox-specific environment variables (VBOX_WITH_, VBOX_ONLY_ and so on) are prefixed with 'vbox_env_'.
-    #
-    # 'vbox_env' prefix rules:
-    # - 'vbox_env_sete_': Sets the env variable to empty (e.g. VBOX_WITH_DOCS="").
-    # - 'vbox_env_set1_': Sets the env variable to 1 (e.g. VBOX_WITH_DOCS=1).
-    # - 'vbox_env_set0_': Sets the env variable to 0 (e.g. VBOX_WITH_DOCS=0).
+    # - VirtualBox-specific environment variables (VBOX_WITH_, VBOX_ONLY_ and so on) are written as-is (e.g. 'vbox_with_docs=1'),
+    #   including the value to be set.
     #
     oParser = argparse.ArgumentParser(add_help=False);
     oParser.add_argument('--help', help="Displays this help");
@@ -930,36 +924,27 @@ def main():
         oParser.add_argument(f'--disable-{oToolCur.sName}', action='store_true', default=None, dest=f'config_tools_disable_{oToolCur.sName}');
         oParser.add_argument(f'--with-{oToolCur.sName}-path', dest=f'config_tools_path_{oToolCur.sName}');
         oParser.add_argument(f'--only-{oToolCur.sName}', action='store_true', default=None, dest=f'config_tools_only_{oToolCur.sName}');
-    oParser.add_argument('--disable-docs', help='Disables building the documentation', action='store_true', default=None, dest='vbox_env_sete_with_docs');
-    oParser.add_argument('--disable-python', help='Disables building the Python bindings', action='store_true', default=None);
-    oParser.add_argument('--with-hardening', help='Enables or disables hardening', action='store_true', default=None);
-    oParser.add_argument('--without-hardening', help='Enables or disables hardening', action='store_true', default=None);
+    oParser.add_argument('--disable-docs', help='Disables building the documentation', action='store_true', default=None, dest='vbox_with_docs=');
+    oParser.add_argument('--disable-python', help='Disables building the Python bindings', action='store_true', default=None, dest='vbox_with_python=');
+    oParser.add_argument('--with-hardening', help='Enables or disables hardening', action='store_true', default=None, dest='vbox_with_hardening=1');
+    oParser.add_argument('--without-hardening', help='Enables or disables hardening', action='store_true', default=None, dest='vbox_with_hardening=');
     oParser.add_argument('--file-autoconfig', help='Path to output AutoConfig.kmk file', action='store_true', default='AutoConfig.kmk', dest='config_file_autoconfig');
     oParser.add_argument('--file-env', help='Path to output env.sh file', action='store_true', default='env.sh', dest='config_file_env');
     oParser.add_argument('--file-log', help='Path to output log file', action='store_true', default='configure.log', dest='config_file_log');
-    oParser.add_argument('--only-additions', help='Only build Guest Additions related libraries and tools', action='store_true', default=None, dest='vbox_only_additions');
-    oParser.add_argument('--only-docs', help='Only build the documentation', action='store_true', default=None, dest='vbox_env_set1_only_docs');
-    oParser.add_argument('--ose', help='Builds the OSE version', action='store_true', default=None, dest='vbox_env_set1_ose');
+    oParser.add_argument('--only-additions', help='Only build Guest Additions related libraries and tools', action='store_true', default=None, dest='vbox_only_additions=');
+    oParser.add_argument('--only-docs', help='Only build the documentation', action='store_true', default=None, dest='vbox_only_docs=1');
+    oParser.add_argument('--ose', help='Builds the OSE version', action='store_true', default=None, dest='vbox_ose=1');
     oParser.add_argument('--debug', help='Runs in debug mode. Only use for development', action='store_true', default=False, dest='config_debug');
+    oParser.add_argument('--nofatal', help='Continues execution on fatal errors', action='store_true', dest='config_nofatal');
+    oParser.add_argument('--build-profile', help='Build with a profiling support', action='store_true', default=None, dest='kbuild_type=profile');
+    oParser.add_argument('--build-debug', help='Build with debugging symbols and assertions', action='store_true', default=None, dest='kbuild_type=debug');
+    oParser.add_argument('--build-headless', help='Build headless (without any GUI frontend)', action='store_true', dest='config_build_headless');
 
     try:
         oArgs = oParser.parse_args();
     except argparse.ArgumentError as e:
         printError(f"Argument error: {str(e)}");
         return 2;
-
-    g_cVerbosity = oArgs.config_verbose;
-    g_fDebug = oArgs.config_debug;
-    g_sFileLog = oArgs.config_file_log;
-
-    # Filter libs and tools based on --only-XXX flags.
-    aoOnlyLibs = [lib for lib in g_aoLibs if getattr(oArgs, f'config_libs_only_{lib.sName}', False)];
-    aoOnlyTools = [tool for tool in g_aoTools if getattr(oArgs, f'config_tools_only_{tool.sName}', False)];
-    aoLibsToCheck = aoOnlyLibs if aoOnlyLibs else g_aoLibs;
-    aoToolsToCheck = aoOnlyTools if aoOnlyTools else g_aoTools;
-    # Filter libs and tools based on build target.
-    aoLibsToCheck  = [lib for lib in aoLibsToCheck if g_enmBuildTarget in lib.aeTargets or BuildTargets.ANY in lib.aeTargets];
-    aoToolsToCheck = [tool for tool in aoToolsToCheck if g_enmBuildTarget in tool.aeTargets or BuildTargets.ANY in tool.aeTargets];
 
     if oArgs.help:
         show_syntax_help();
@@ -972,28 +957,49 @@ def main():
     sys.stdout = Log(sys.stdout, logf);
     sys.stderr = Log(sys.stderr, logf);
 
+    g_cVerbosity = oArgs.config_verbose;
+    g_fDebug = oArgs.config_debug;
+    g_fNoFatal = oArgs.config_nofatal;
+    g_sFileLog = oArgs.config_file_log;
+
+    # Set defaults.
+    g_oEnv.set('KBUILD_TYPE', BuildType.RELEASE);
+    g_oEnv.set('KBUILD_TARGET', g_enmHostTarget);
+    g_oEnv.set('KBUILD_TARGET_ARCH', g_enmHostArch);
+    g_oEnv.set('VBOX_OSE', '1');
+    g_oEnv.set('VBOX_WITH_HARDENING', '1');
+
+    # Apply updates from command line arguments.
+    g_oEnv.updateFromArgs(oArgs);
+
+    # Filter libs and tools based on --only-XXX flags.
+    aoOnlyLibs = [lib for lib in g_aoLibs if getattr(oArgs, f'config_libs_only_{lib.sName}', False)];
+    aoOnlyTools = [tool for tool in g_aoTools if getattr(oArgs, f'config_tools_only_{tool.sName}', False)];
+    aoLibsToCheck = aoOnlyLibs if aoOnlyLibs else g_aoLibs;
+    aoToolsToCheck = aoOnlyTools if aoOnlyTools else g_aoTools;
+    # Filter libs and tools based on build target.
+    aoLibsToCheck  = [lib for lib in aoLibsToCheck if g_oEnv['KBUILD_TARGET'] in lib.aeTargets or BuildTargets.ANY in lib.aeTargets];
+    aoToolsToCheck = [tool for tool in aoToolsToCheck if g_oEnv['KBUILD_TARGET'] in tool.aeTargets or BuildTargets.ANY in tool.aeTargets];
+
     print( 'VirtualBox configuration script');
     print();
     print(f'Running on {platform.system()} {platform.release()} ({platform.machine()})');
     print();
-    print(f'Host OS / arch     : {g_sHostTarget}.{g_sHostArch}');
-    print(f'Building for target: {g_enmBuildTarget}.{g_enmBuildArch}');
+    print(f'Host OS / arch     : { g_sHostTarget}.{g_sHostArch}');
+    print(f'Building for target: { g_oEnv["KBUILD_TARGET"] }.{ g_oEnv["KBUILD_TARGET_ARCH"] }');
+    print(f'Build type         : { g_oEnv["KBUILD_TYPE"] }');
     print();
-
-    oEnv = EnvManager();
-    oEnv.updateFromArgs(oArgs);
 
     #
     # Handle OSE building.
     #
-    g_fOSE = oArgs.vbox_env_set1_ose;
-    if   not g_fOSE \
+    fOSE = g_oEnv.get('VBOX_OSE');
+    if  not fOSE  \
     and os.path.exists('src/VBox/ExtPacks/Puel/ExtPack.xml'):
         print('Found ExtPack, assuming to build PUEL version');
-        g_fOSE = False;
-    print('Building %s version' % ('OSE' if (g_fOSE is None or g_fOSE is True) else 'PUEL'));
+        g_oEnv.set('VBOX_OSE', '1');
+    print('Building %s version' % ('OSE' if (fOSE is None or fOSE is True) else 'PUEL'));
     print();
-    oEnv.set('VBOX_OSE', g_fOSE);
 
     #
     # Handle environment variable transformations.
@@ -1003,20 +1009,27 @@ def main():
     #
     envTransforms = [
         # Disabling building the docs when only building Additions or explicitly disabled building the docs.
-        lambda env: { 'VBOX_WITH_DOCS_PACKING': ''} if oEnv.get('VBOX_ONLY_ADDITIONS') or oEnv.get('VBOX_WITH_DOCS') == '' else {},
+        lambda env: { 'VBOX_WITH_DOCS_PACKING': ''} if g_oEnv['VBOX_ONLY_ADDITIONS'] or g_oEnv['VBOX_WITH_DOCS'] == '' else {},
         # Disable building the ExtPack VNC when only building Additions or OSE.
-        lambda env: { 'VBOX_WITH_EXTPACK_VNC': '' } if oEnv.get('VBOX_ONLY_ADDITIONS') or oEnv.get('VBOX_OSE') == '1' else {},
-        lambda env: { 'VBOX_WITH_WEBSERVICES': '' } if oEnv.get('VBOX_ONLY_ADDITIONS') else {},
+        lambda env: { 'VBOX_WITH_EXTPACK_VNC': '' } if g_oEnv['VBOX_ONLY_ADDITIONS'] or g_oEnv['VBOX_OSE'] == '1' else {},
+        lambda env: { 'VBOX_WITH_WEBSERVICES': '' } if g_oEnv['VBOX_ONLY_ADDITIONS'] else {},
         # Disable stuff which aren't available in OSE.
-        lambda env: { 'VBOX_WITH_VALIDATIONKIT': '' , 'VBOX_WITH_WIN32_ADDITIONS': '' } if oEnv.get('VBOX_OSE') else {},
-        lambda env: { 'VBOX_WITH_EXTPACK_PUEL_BUILD': '' } if oEnv.get('VBOX_ONLY_ADDITIONS') else {},
-        lambda env: { 'VBOX_WITH_QTGUI': '' } if oEnv.get('CONFIG_LIBS_DISABLE_QT') else {}
+        lambda env: { 'VBOX_WITH_VALIDATIONKIT': '' , 'VBOX_WITH_WIN32_ADDITIONS': '' } if g_oEnv['VBOX_OSE'] else {},
+        lambda env: { 'VBOX_WITH_EXTPACK_PUEL_BUILD': '' } if g_oEnv['VBOX_ONLY_ADDITIONS'] else {},
+        lambda env: { 'VBOX_WITH_QTGUI': '' } if g_oEnv['CONFIG_LIBS_DISABLE_QT'] else {},
+        # Disable components if we want to build headless.
+        lambda env: { 'VBOX_WITH_HEADLESS': '1', \
+                      'VBOX_WITH_QTGUI': '', \
+                      'VBOX_WITH_SECURELABEL': '', \
+                      'VBOX_WITH_VMSVGA3D': '', \
+                      'VBOX_WITH_3D_ACCELERATION' : '', \
+                      'VBOX_GUI_USE_QGL' : '' } if g_oEnv['CONFIG_BUILD_HEADLESS'] else {}
     ];
-    oEnv.transform(envTransforms);
+    g_oEnv.transform(envTransforms);
 
     if g_cVerbosity >= 2:
         printVerbose(2, 'Environment manager variables:');
-        print(oEnv.env);
+        print(g_oEnv.env);
 
     #
     # Perform OS tool checks.
@@ -1028,7 +1041,7 @@ def main():
         BuildTargets.WINDOWS: [ 'cl', 'gcc', 'nmake', 'cmake', 'msbuild' ],
         BuildTargets.SOLARIS: [ 'cc', 'gmake', 'pkg-config' ]
     };
-    aOsToolsToCheck = aOsTools.get(g_enmBuildTarget, []);
+    aOsToolsToCheck = aOsTools.get( g_oEnv[ 'KBUILD_TARGET' ], [] );
     oOsToolsTable = SimpleTable([ 'Tool', 'Status', 'Version', 'Path' ]);
     for sBinary in aOsToolsToCheck:
         sCmdPath, sVer = checkWhich(sBinary, sBinary);
@@ -1041,7 +1054,8 @@ def main():
     #
     # Perform tool checks.
     #
-    if g_cErrors == 0:
+    if g_cErrors == 0 \
+    or g_fNoFatal:
         print();
         for oToolCur in aoToolsToCheck:
             oToolCur.setArgs(oArgs);
@@ -1050,7 +1064,8 @@ def main():
     #
     # Perform library checks.
     #
-    if g_cErrors == 0:
+    if g_cErrors == 0 \
+    or g_fNoFatal:
         print();
         for oLibCur in aoLibsToCheck:
             oLibCur.setArgs(oArgs);
@@ -1060,7 +1075,8 @@ def main():
     #
     # Print summary.
     #
-    if g_cErrors == 0:
+    if g_cErrors == 0 \
+    or g_fNoFatal:
 
         oToolsTable = SimpleTable([ 'Tool', 'Status', 'Version', 'Path' ]);
         for oToolCur in aoToolsToCheck:
@@ -1082,9 +1098,10 @@ def main():
         oLibsTable.print();
         print();
 
-    if g_cErrors == 0:
-        if write_autoconfig_kmk(oArgs.config_file_autoconfig, oEnv, g_aoLibs, g_aoTools):
-            if write_env(oArgs.config_file_env, oEnv, g_aoLibs, g_aoTools):
+    if g_cErrors == 0 \
+    or g_fNoFatal:
+        if write_autoconfig_kmk(oArgs.config_file_autoconfig, g_oEnv, g_aoLibs, g_aoTools):
+            if write_env(oArgs.config_file_env, g_oEnv, g_aoLibs, g_aoTools):
                 print();
                 print(f'Successfully generated \"{oArgs.config_file_autoconfig}\" and \"{oArgs.config_file_env}\".');
                 print();
@@ -1095,19 +1112,20 @@ def main():
                 print( '  kmk');
                 print();
 
-        if g_enmBuildTarget == BuildTargets.LINUX:
+        if g_oEnv['KBUILD_TARGET'] == BuildTargets.LINUX:
             print('To compile the kernel modules, do:');
             print();
             print('  cd $out_base_dir/out/$OS.$TARGET_MACHINE/$BUILD_TYPE/bin/src');
             print('  make');
             print();
 
-        if oArgs.vbox_only_additions:
+        if g_oEnv['VBOX_ONLY_ADDITIONS']:
             print();
             print('Tree configured to build only the Guest Additions');
             print();
 
-        if g_fHardening:
+        if g_oEnv['VBOX_WITH_HARDENING'] \
+        or g_oEnv['VBOX_WITHOUT_HARDENING'] == '':
             print();
             print('  +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++');
             print('  Hardening is enabled which means that the VBox binaries will not run from');
@@ -1130,6 +1148,9 @@ def main():
         print(f'\nConfiguration completed with {g_cWarnings} warning(s). See {g_sFileLog} for details.');
     if g_cErrors:
         print(f'\nConfiguration failed with {g_cErrors} error(s). See {g_sFileLog} for details.');
+    if  g_fNoFatal \
+    and g_cErrors:
+        print('\nWARNING: Errors occurred but non-fatal mode active -- check build carefully!');
 
     print('\nWork in progress! Do not use for production builds yet!\n');
 
