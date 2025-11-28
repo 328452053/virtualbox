@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.cpp 111932 2025-11-28 11:19:26Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.cpp 111934 2025-11-28 12:55:46Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class implementation.
  */
@@ -70,12 +70,6 @@ UIRecordingSettingsEditor::UIRecordingSettingsEditor(QWidget *pParent /* = 0 */)
     , m_pEditorFrameSize(0)
     , m_pEditorFrameRate(0)
     , m_pEditorBitrate(0)
-    , m_pLabelVideoQuality(0)
-    , m_pWidgetVideoQualitySettings(0)
-    , m_pSliderVideoQuality(0)
-    , m_pLabelVideoQualityMin(0)
-    , m_pLabelVideoQualityMed(0)
-    , m_pLabelVideoQualityMax(0)
     , m_pLabelAudioProfile(0)
     , m_pWidgetAudioProfileSettings(0)
     , m_pSliderAudioProfile(0)
@@ -209,23 +203,6 @@ int UIRecordingSettingsEditor::bitrate() const
     return m_pEditorBitrate ? m_pEditorBitrate->bitrate() : m_iBitrate;
 }
 
-void UIRecordingSettingsEditor::setVideoQuality(KRecordingCodecDeadline enmQuality)
-{
-    /* Update cached value and
-     * slider if value has changed: */
-    if (m_enmVideoQuality != enmQuality)
-    {
-        m_enmVideoQuality = enmQuality;
-        if (m_pSliderVideoQuality)
-            m_pSliderVideoQuality->setValue((int)enmQuality);
-    }
-}
-
-KRecordingCodecDeadline UIRecordingSettingsEditor::videoQuality() const
-{
-    return m_pSliderVideoQuality ? (KRecordingCodecDeadline)m_pSliderVideoQuality->value() : m_enmVideoQuality;
-}
-
 void UIRecordingSettingsEditor::setAudioProfile(const QString &strProfile)
 {
     /* Update cached value and
@@ -289,13 +266,6 @@ void UIRecordingSettingsEditor::sltRetranslateUI()
         m_pComboMode->setItemText(iIndex, gpConverter->toString(enmType));
     }
     m_pComboMode->setToolTip(tr("Recording mode"));
-
-    m_pLabelVideoQuality->setText(tr("&Video Quality"));
-    m_pSliderVideoQuality->setToolTip(tr("Video quality. Increasing this value will make the video "
-                                         "look better at the cost of a decreased VM performance."));
-    m_pLabelVideoQualityMin->setText(tr("default", "quality"));
-    m_pLabelVideoQualityMed->setText(tr("good", "quality"));
-    m_pLabelVideoQualityMax->setText(tr("best", "quality"));
 
     m_pLabelAudioProfile->setText(tr("&Audio Profile"));
     m_pSliderAudioProfile->setToolTip(tr("Audio profile. Increasing this value will make the audio "
@@ -442,71 +412,6 @@ void UIRecordingSettingsEditor::prepareWidgets()
                 {
                     addEditor(m_pEditorBitrate);
                     m_pLayoutSettings->addWidget(m_pEditorBitrate, ++iLayoutSettingsRow, 0, 1, 4);
-                }
-
-                /* Prepare recording video quality label: */
-                m_pLabelVideoQuality = new QLabel(pWidgetSettings);
-                if (m_pLabelVideoQuality)
-                {
-                    m_pLabelVideoQuality->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-                    m_pLayoutSettings->addWidget(m_pLabelVideoQuality, 7, 0);
-                }
-                /* Prepare recording video quality widget: */
-                m_pWidgetVideoQualitySettings = new QWidget(pWidgetSettings);
-                if (m_pWidgetVideoQualitySettings)
-                {
-                    /* Prepare recording video quality layout: */
-                    QVBoxLayout *pLayoutRecordingVideoQuality = new QVBoxLayout(m_pWidgetVideoQualitySettings);
-                    if (pLayoutRecordingVideoQuality)
-                    {
-                        pLayoutRecordingVideoQuality->setContentsMargins(0, 0, 0, 0);
-
-                        /* Prepare recording video quality slider: */
-                        m_pSliderVideoQuality = new QIAdvancedSlider(m_pWidgetVideoQualitySettings);
-                        if (m_pSliderVideoQuality)
-                        {
-                            if (m_pLabelVideoQuality)
-                                m_pLabelVideoQuality->setBuddy(m_pSliderVideoQuality);
-                            m_pSliderVideoQuality->setOrientation(Qt::Horizontal);
-                            m_pSliderVideoQuality->setMinimum(KRecordingCodecDeadline_Default);
-                            m_pSliderVideoQuality->setMaximum(KRecordingCodecDeadline_Max - 1);
-                            m_pSliderVideoQuality->setPageStep(1);
-                            m_pSliderVideoQuality->setSingleStep(1);
-                            m_pSliderVideoQuality->setTickInterval(1);
-                            m_pSliderVideoQuality->setSnappingEnabled(true);
-                            m_pSliderVideoQuality->setOptimalHint(KRecordingCodecDeadline_Default,
-                                                                  KRecordingCodecDeadline_Realtime);
-                            m_pSliderVideoQuality->setWarningHint(KRecordingCodecDeadline_Realtime,
-                                                                  KRecordingCodecDeadline_Max - 1);
-
-                            pLayoutRecordingVideoQuality->addWidget(m_pSliderVideoQuality);
-                        }
-                        /* Prepare recording video quality scale layout: */
-                        QHBoxLayout *pLayoutRecordingVideoQualityScale = new QHBoxLayout;
-                        if (pLayoutRecordingVideoQualityScale)
-                        {
-                            pLayoutRecordingVideoQualityScale->setContentsMargins(0, 0, 0, 0);
-
-                            /* Prepare recording video quality min label: */
-                            m_pLabelVideoQualityMin = new QLabel(m_pWidgetVideoQualitySettings);
-                            if (m_pLabelVideoQualityMin)
-                                pLayoutRecordingVideoQualityScale->addWidget(m_pLabelVideoQualityMin);
-                            pLayoutRecordingVideoQualityScale->addStretch();
-                            /* Prepare recording video quality med label: */
-                            m_pLabelVideoQualityMed = new QLabel(m_pWidgetVideoQualitySettings);
-                            if (m_pLabelVideoQualityMed)
-                                pLayoutRecordingVideoQualityScale->addWidget(m_pLabelVideoQualityMed);
-                            pLayoutRecordingVideoQualityScale->addStretch();
-                            /* Prepare recording video quality max label: */
-                            m_pLabelVideoQualityMax = new QLabel(m_pWidgetVideoQualitySettings);
-                            if (m_pLabelVideoQualityMax)
-                                pLayoutRecordingVideoQualityScale->addWidget(m_pLabelVideoQualityMax);
-
-                            pLayoutRecordingVideoQuality->addLayout(pLayoutRecordingVideoQualityScale);
-                        }
-                    }
-
-                    m_pLayoutSettings->addWidget(m_pWidgetVideoQualitySettings, 7, 1, 2, 1);
                 }
 
                 /* Prepare recording audio profile label: */
@@ -687,9 +592,6 @@ void UIRecordingSettingsEditor::updateWidgetAvailability()
     m_pEditorFrameRate->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
     m_pEditorBitrate->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
 
-    m_pLabelVideoQuality->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
-    m_pWidgetVideoQualitySettings->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordVideo);
-
     m_pLabelAudioProfile->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordAudio);
     m_pWidgetAudioProfileSettings->setEnabled(fFeatureEnabled && m_fOptionsAvailable && fRecordAudio);
 
@@ -720,8 +622,6 @@ void UIRecordingSettingsEditor::updateMinimumLayoutHint()
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pEditorFrameRate->minimumLabelHorizontalHint());
     if (m_pEditorBitrate && !m_pEditorBitrate->isHidden())
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pEditorBitrate->minimumLabelHorizontalHint());
-    if (m_pLabelVideoQuality && !m_pLabelVideoQuality->isHidden())
-        iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pLabelVideoQuality->minimumSizeHint().width());
     if (m_pLabelAudioProfile && !m_pLabelAudioProfile->isHidden())
         iMinimumLayoutHint = qMax(iMinimumLayoutHint, m_pLabelAudioProfile->minimumSizeHint().width());
     if (m_pLabelScreens && !m_pLabelScreens->isHidden())

@@ -1,4 +1,4 @@
-/* $Id: UIMachineSettingsDisplay.cpp 111914 2025-11-27 11:37:23Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIMachineSettingsDisplay.cpp 111934 2025-11-28 12:55:46Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineSettingsDisplay class implementation.
  */
@@ -411,7 +411,6 @@ void UIMachineSettingsDisplay::getFromCache()
         m_pEditorRecordingSettings->setFrameRate(oldDisplayData.m_iRecordingVideoFrameRate);
         m_pEditorRecordingSettings->setBitrate(oldDisplayData.m_iRecordingVideoBitRate);
         m_pEditorRecordingSettings->setScreens(oldDisplayData.m_vecRecordingScreens);
-        m_pEditorRecordingSettings->setVideoQuality(oldDisplayData.m_enmVideoQuality);
         m_pEditorRecordingSettings->setAudioProfile(oldDisplayData.m_strAudioProfile);
 
         /* Load old 'Recording' features: */
@@ -482,7 +481,6 @@ void UIMachineSettingsDisplay::putToCache()
         newDisplayData.m_iRecordingVideoFrameRate = m_pEditorRecordingSettings->frameRate();
         newDisplayData.m_iRecordingVideoBitRate = m_pEditorRecordingSettings->bitrate();
         newDisplayData.m_vecRecordingScreens = m_pEditorRecordingSettings->screens();
-        newDisplayData.m_enmVideoQuality = m_pEditorRecordingSettings->videoQuality();
         newDisplayData.m_strAudioProfile = m_pEditorRecordingSettings->audioProfile();
 
         /* Gather new 'Recording' features: */

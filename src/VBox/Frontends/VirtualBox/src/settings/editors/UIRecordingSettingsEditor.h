@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.h 111932 2025-11-28 11:19:26Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.h 111934 2025-11-28 12:55:46Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class declaration.
  */
@@ -103,11 +103,6 @@ public:
     /** Returns bitrate. */
     int bitrate() const;
 
-    /** Defines video @a enmQuality. */
-    void setVideoQuality(KRecordingCodecDeadline enmQuality);
-    /** Returns video quality. */
-    KRecordingCodecDeadline videoQuality() const;
-
     /** Defines audio @a strProfile. */
     void setAudioProfile(const QString &strProfile);
     /** Returns audio profile. */
@@ -184,8 +179,6 @@ private:
         int                      m_iFrameHeight;
         /** Holds the bitrate. */
         int                      m_iBitrate;
-        /** Holds the video quality. */
-        KRecordingCodecDeadline  m_enmVideoQuality;
         /** Holds the audio profile. */
         QString                  m_strAudioProfile;
 
@@ -211,18 +204,6 @@ private:
         UIRecordingVideoFrameRateEditor *m_pEditorFrameRate;
         /** Holds the bit rate editor instance. */
         UIRecordingVideoBitrateEditor *m_pEditorBitrate;
-        /** Holds the video quality label instance. */
-        QLabel             *m_pLabelVideoQuality;
-        /** Holds the video quality settings widget instance. */
-        QWidget            *m_pWidgetVideoQualitySettings;
-        /** Holds the video quality slider instance. */
-        QIAdvancedSlider   *m_pSliderVideoQuality;
-        /** Holds the video quality min label instance. */
-        QLabel             *m_pLabelVideoQualityMin;
-        /** Holds the video quality med label instance. */
-        QLabel             *m_pLabelVideoQualityMed;
-        /** Holds the video quality max label instance. */
-        QLabel             *m_pLabelVideoQualityMax;
         /** Holds the audio profile label instance. */
         QLabel             *m_pLabelAudioProfile;
         /** Holds the audio profile settings widget instance. */
