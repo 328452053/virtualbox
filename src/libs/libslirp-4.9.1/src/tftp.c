@@ -165,7 +165,7 @@ static int tftp_read_data(struct tftp_session *spt, uint32_t block_nr,
     return bytes_read;
 
 #else /* VBOX */
-    if (spt->hFile != NIL_RTFILE) {
+    if (spt->hFile == NIL_RTFILE) {
         int rc = RTFileOpen(&spt->hFile, spt->filename, RTFILE_O_READ | RTFILE_O_OPEN | RTFILE_O_DENY_WRITE);
         if (RT_FAILURE(rc)) {
             spt->hFile = NIL_RTFILE; /* paranoia */
