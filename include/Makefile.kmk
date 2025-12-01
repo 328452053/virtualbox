@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 111959 2025-12-01 12:46:40Z alexander.eichner@oracle.com $
+# $Id: Makefile.kmk 111963 2025-12-01 15:13:01Z brent.paulson@oracle.com $
 ## @file
 # Some hacks to allow syntax and prerequisite include checking of headers.
 # This makefile doesn't and shouldn't build successfully.
@@ -39,6 +39,7 @@ VBOX_HDRS_CPP_FEATURES := \
 	VBox/vmm/pdmaudiohostenuminline.h \
 	VBox/HostServices/GuestControlSvc.h \
 	VBox/HostServices/DragAndDropSvc.h \
+	VBox/HostServices/VBoxSharedClipboardSvc.h \
 	VBox/HostServices/Service.h \
 	VBox/GuestHost/GuestControl.h \
 	VBox/GuestHost/DragAndDrop.h \
