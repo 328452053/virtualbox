@@ -1,4 +1,4 @@
-/* $Id: VMMDevHGCM.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VMMDevHGCM.cpp 111946 2025-12-01 08:50:00Z alexander.eichner@oracle.com $ */
 /** @file
  * VMMDev - HGCM - Host-Guest Communication Manager Device.
  */
@@ -914,13 +914,8 @@ static int vmmdevR3HgcmInitHostParameters(PPDMDEVINS pDevIns, PVMMDEVCC pThisCC,
 static int vmmdevR3HgcmCallAlloc(PVMMDEVCC pThisCC, const VMMDevHGCMCall *pHGCMCall, uint32_t cbHGCMCall, RTGCPHYS GCPhys,
                                  VMMDevRequestType enmRequestType, PVBOXHGCMCMD *ppCmd, uint32_t *pcbHGCMParmStruct)
 {
-#ifdef VBOX_WITH_64_BITS_GUESTS
     const uint32_t cbHGCMParmStruct = enmRequestType == VMMDevReq_HGCMCall64 ? sizeof(HGCMFunctionParameter64)
                                                                              : sizeof(HGCMFunctionParameter32);
-#else
-    const uint32_t cbHGCMParmStruct = sizeof(HGCMFunctionParameter);
-#endif
-
     const uint32_t cParms = pHGCMCall->cParms;
 
     /* Whether there is enough space for parameters and sane upper limit. */
@@ -1020,10 +1015,7 @@ static int vmmdevR3HgcmCallFetchGuestParms(PPDMDEVINS pDevIns, PVMMDEVCC pThisCC
      * VBOXHGCMCMD must contain all information about the request,
      * the request will be not read from the guest memory again.
      */
-#ifdef VBOX_WITH_64_BITS_GUESTS
     const bool f64Bits = (enmRequestType == VMMDevReq_HGCMCall64);
-#endif
-
     const uint32_t cParms = pCmd->u.call.cParms;
 
     /* Offsets in the request buffer to HGCM parameters and additional data. */
@@ -1037,23 +1029,15 @@ static int vmmdevR3HgcmCallFetchGuestParms(PPDMDEVINS pDevIns, PVMMDEVCC pThisCC
     {
         VBOXHGCMGUESTPARM * const pGuestParm = &pCmd->u.call.paGuestParms[i];
 
-#ifdef VBOX_WITH_64_BITS_GUESTS
         AssertCompileMembersSameSizeAndOffset(HGCMFunctionParameter64, type, HGCMFunctionParameter32, type);
         pGuestParm->enmType = ((HGCMFunctionParameter64 *)pu8HGCMParm)->type;
-#else
-        pGuestParm->enmType = ((HGCMFunctionParameter   *)pu8HGCMParm)->type;
-#endif
 
         switch (pGuestParm->enmType)
         {
             case VMMDevHGCMParmType_32bit:
             {
-#ifdef VBOX_WITH_64_BITS_GUESTS
                 AssertCompileMembersSameSizeAndOffset(HGCMFunctionParameter64, u.value32,   HGCMFunctionParameter32, u.value32);
                 uint32_t *pu32 = &((HGCMFunctionParameter64 *)pu8HGCMParm)->u.value32;
-#else
-                uint32_t *pu32 = &((HGCMFunctionParameter   *)pu8HGCMParm)->u.value32;
-#endif
                 LogFunc(("uint32 guest parameter %RI32\n", *pu32));
 
                 pGuestParm->u.val.u64Value = *pu32;
@@ -1065,12 +1049,8 @@ static int vmmdevR3HgcmCallFetchGuestParms(PPDMDEVINS pDevIns, PVMMDEVCC pThisCC
 
             case VMMDevHGCMParmType_64bit:
             {
-#ifdef VBOX_WITH_64_BITS_GUESTS
                 AssertCompileMembersSameSizeAndOffset(HGCMFunctionParameter64, u.value64,   HGCMFunctionParameter32, u.value64);
                 uint64_t *pu64 = (uint64_t *)(uintptr_t)&((HGCMFunctionParameter64 *)pu8HGCMParm)->u.value64; /* MSC detect misalignment, thus casts. */
-#else
-                uint64_t *pu64 = &((HGCMFunctionParameter   *)pu8HGCMParm)->u.value64;
-#endif
                 LogFunc(("uint64 guest parameter %RI64\n", *pu64));
 
                 pGuestParm->u.val.u64Value = *pu64;
@@ -1084,15 +1064,10 @@ static int vmmdevR3HgcmCallFetchGuestParms(PPDMDEVINS pDevIns, PVMMDEVCC pThisCC
             case VMMDevHGCMParmType_LinAddr_Out: /* Out (write) */
             case VMMDevHGCMParmType_LinAddr:     /* In & Out */
             {
-#ifdef VBOX_WITH_64_BITS_GUESTS
                 uint32_t cbData = f64Bits ? ((HGCMFunctionParameter64 *)pu8HGCMParm)->u.Pointer.size
                                           : ((HGCMFunctionParameter32 *)pu8HGCMParm)->u.Pointer.size;
                 RTGCPTR GCPtr = f64Bits ? ((HGCMFunctionParameter64 *)pu8HGCMParm)->u.Pointer.u.linearAddr
                                         : ((HGCMFunctionParameter32 *)pu8HGCMParm)->u.Pointer.u.linearAddr;
-#else
-                uint32_t cbData = ((HGCMFunctionParameter *)pu8HGCMParm)->u.Pointer.size;
-                RTGCPTR GCPtr = ((HGCMFunctionParameter *)pu8HGCMParm)->u.Pointer.u.linearAddr;
-#endif
                 LogFunc(("LinAddr guest parameter %RGv, cb %u\n", GCPtr, cbData));
 
                 ASSERT_GUEST_RETURN(cbData <= VMMDEV_MAX_HGCM_DATA_SIZE, VERR_INVALID_PARAMETER);
@@ -1144,15 +1119,10 @@ static int vmmdevR3HgcmCallFetchGuestParms(PPDMDEVINS pDevIns, PVMMDEVCC pThisCC
             case VMMDevHGCMParmType_ContiguousPageList:
             case VMMDevHGCMParmType_NoBouncePageList:
             {
-#ifdef VBOX_WITH_64_BITS_GUESTS
                 AssertCompileMembersSameSizeAndOffset(HGCMFunctionParameter64, u.PageList.size,   HGCMFunctionParameter32, u.PageList.size);
                 AssertCompileMembersSameSizeAndOffset(HGCMFunctionParameter64, u.PageList.offset, HGCMFunctionParameter32, u.PageList.offset);
                 uint32_t cbData          = ((HGCMFunctionParameter64 *)pu8HGCMParm)->u.PageList.size;
                 uint32_t offPageListInfo = ((HGCMFunctionParameter64 *)pu8HGCMParm)->u.PageList.offset;
-#else
-                uint32_t cbData          = ((HGCMFunctionParameter   *)pu8HGCMParm)->u.PageList.size;
-                uint32_t offPageListInfo = ((HGCMFunctionParameter   *)pu8HGCMParm)->u.PageList.offset;
-#endif
                 LogFunc(("PageList guest parameter cb %u, offset %u\n", cbData, offPageListInfo));
 
                 ASSERT_GUEST_RETURN(cbData <= VMMDEV_MAX_HGCM_DATA_SIZE, VERR_INVALID_PARAMETER);
@@ -1272,16 +1242,10 @@ static int vmmdevR3HgcmCallFetchGuestParms(PPDMDEVINS pDevIns, PVMMDEVCC pThisCC
 
             case VMMDevHGCMParmType_Embedded:
             {
-#ifdef VBOX_WITH_64_BITS_GUESTS
                 AssertCompileMembersSameSizeAndOffset(HGCMFunctionParameter64, u.Embedded.cbData, HGCMFunctionParameter32, u.Embedded.cbData);
                 uint32_t const cbData    = ((HGCMFunctionParameter64 *)pu8HGCMParm)->u.Embedded.cbData;
                 uint32_t const offData   = ((HGCMFunctionParameter64 *)pu8HGCMParm)->u.Embedded.offData;
                 uint32_t const fFlags    = ((HGCMFunctionParameter64 *)pu8HGCMParm)->u.Embedded.fFlags;
-#else
-                uint32_t const cbData    = ((HGCMFunctionParameter   *)pu8HGCMParm)->u.Embedded.cbData;
-                uint32_t const offData   = ((HGCMFunctionParameter   *)pu8HGCMParm)->u.Embedded.offData;
-                uint32_t const fFlags    = ((HGCMFunctionParameter   *)pu8HGCMParm)->u.Embedded.fFlags;
-#endif
                 LogFunc(("Embedded guest parameter cb %u, offset %u, flags %#x\n", cbData, offData, fFlags));
 
                 ASSERT_GUEST_RETURN(cbData <= VMMDEV_MAX_HGCM_DATA_SIZE, VERR_INVALID_PARAMETER);
@@ -1338,12 +1302,8 @@ int vmmdevR3HgcmCall(PPDMDEVINS pDevIns, PVMMDEV pThis, PVMMDEVCC pThisCC, const
      * Validation.
      */
     ASSERT_GUEST_RETURN(cbHGCMCall >= sizeof(VMMDevHGCMCall), VERR_INVALID_PARAMETER);
-#ifdef VBOX_WITH_64_BITS_GUESTS
     ASSERT_GUEST_RETURN(   enmRequestType == VMMDevReq_HGCMCall32
                         || enmRequestType == VMMDevReq_HGCMCall64, VERR_INVALID_PARAMETER);
-#else
-    ASSERT_GUEST_RETURN(enmRequestType == VMMDevReq_HGCMCall32, VERR_INVALID_PARAMETER);
-#endif
     RT_UNTRUSTED_VALIDATED_FENCE();
 
     /*
@@ -1512,21 +1472,13 @@ static int vmmdevR3HgcmCompleteCallRequest(PPDMDEVINS pDevIns, PVBOXHGCMCMD pCmd
     /*
      * Go over parameter descriptions saved in pCmd.
      */
-#ifdef VBOX_WITH_64_BITS_GUESTS
     HGCMFunctionParameter64 *pReqParm         = (HGCMFunctionParameter64 *)(pbReq + sizeof(VMMDevHGCMCall));
     size_t const             cbHGCMParmStruct = pCmd->enmRequestType == VMMDevReq_HGCMCall64
                                               ? sizeof(HGCMFunctionParameter64) : sizeof(HGCMFunctionParameter32);
-#else
-    HGCMFunctionParameter   *pReqParm         = (HGCMFunctionParameter   *)(pbReq + sizeof(VMMDevHGCMCall));
-    size_t const             cbHGCMParmStruct = sizeof(HGCMFunctionParameter);
-#endif
+
     for (uint32_t i = 0;
          i < pCmd->u.call.cParms;
-#ifdef VBOX_WITH_64_BITS_GUESTS
          ++i, pReqParm = (HGCMFunctionParameter64 *)((uint8_t *)pReqParm + cbHGCMParmStruct)
-#else
-         ++i, pReqParm = (HGCMFunctionParameter   *)((uint8_t *)pReqParm + cbHGCMParmStruct)
-#endif
         )
     {
         VBOXHGCMGUESTPARM * const pGuestParm = &pCmd->u.call.paGuestParms[i];
@@ -1570,9 +1522,7 @@ static int vmmdevR3HgcmCompleteCallRequest(PPDMDEVINS pDevIns, PVBOXHGCMCMD pCmd
                 const VBOXHGCMPARMPTR * const pPtr = &pGuestParm->u.ptr;
 
                 /* Update size. */
-#ifdef VBOX_WITH_64_BITS_GUESTS
                 AssertCompileMembersSameSizeAndOffset(HGCMFunctionParameter64, u.Embedded.cbData, HGCMFunctionParameter32, u.Embedded.cbData);
-#endif
                 pReqParm->u.Embedded.cbData = pHostParm->u.pointer.size;
 
                 /* Copy out data. */
@@ -1592,9 +1542,7 @@ static int vmmdevR3HgcmCompleteCallRequest(PPDMDEVINS pDevIns, PVBOXHGCMCMD pCmd
                 const VBOXHGCMPARMPTR * const pPtr = &pGuestParm->u.ptr;
 
                 /* Update size. */
-#ifdef VBOX_WITH_64_BITS_GUESTS
                 AssertCompileMembersSameSizeAndOffset(HGCMFunctionParameter64, u.PageList.size, HGCMFunctionParameter32, u.PageList.size);
-#endif
                 pReqParm->u.PageList.size = pHostParm->u.pointer.size;
 
                 /* Copy out data. */
@@ -1615,9 +1563,7 @@ static int vmmdevR3HgcmCompleteCallRequest(PPDMDEVINS pDevIns, PVBOXHGCMCMD pCmd
             case VMMDevHGCMParmType_NoBouncePageList:
             {
                 /* Update size. */
-#ifdef VBOX_WITH_64_BITS_GUESTS
                 AssertCompileMembersSameSizeAndOffset(HGCMFunctionParameter64, u.PageList.size, HGCMFunctionParameter32, u.PageList.size);
-#endif
                 pReqParm->u.PageList.size = pHostParm->u.Pages.cb;
 
                 /* unlock early. */
@@ -1712,9 +1658,7 @@ static int hgcmCompletedWorker(PPDMIHGCMPORT pInterface, int32_t result, PVBOXHG
                      */
                     switch (enmRequestType)
                     {
-#ifdef VBOX_WITH_64_BITS_GUESTS
                         case VMMDevReq_HGCMCall64:
-#endif
                         case VMMDevReq_HGCMCall32:
                         {
                             VMMDevHGCMCall *pHGCMCall = (VMMDevHGCMCall *)pHeader;
@@ -1793,9 +1737,7 @@ static int hgcmCompletedWorker(PPDMIHGCMPORT pInterface, int32_t result, PVBOXHG
                  */
                 switch (enmRequestType)
                 {
-#ifdef VBOX_WITH_64_BITS_GUESTS
                     case VMMDevReq_HGCMCall64:
-#endif
                     case VMMDevReq_HGCMCall32:
                     {
                         VMMDevHGCMCall *pHGCMCall = (VMMDevHGCMCall *)pHeader;
@@ -2536,9 +2478,7 @@ static int vmmdevR3HgcmRestoreCommand(PPDMDEVINS pDevIns, PVMMDEV pThis, PVMMDEV
             break;
         }
 
-#ifdef VBOX_WITH_64_BITS_GUESTS
         case VMMDevReq_HGCMCall64:
-#endif
         case VMMDevReq_HGCMCall32:
         {
             VMMDevHGCMCall *pReq = (VMMDevHGCMCall *)pReqHdr;

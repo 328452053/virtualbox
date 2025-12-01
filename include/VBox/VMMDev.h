@@ -1737,13 +1737,11 @@ AssertCompileSize(HGCMPageListInfo, 4+2+2+8);
 /** Get the pointer to the first parmater of a 32-bit HGCM call request.  */
 # define VMMDEV_HGCM_CALL_PARMS32(a) ((HGCMFunctionParameter32 *)((uint8_t *)(a) + sizeof (VMMDevHGCMCall)))
 
-# ifdef VBOX_WITH_64_BITS_GUESTS
 /* Explicit defines for the host code. */
-#  ifdef VBOX_HGCM_HOST_CODE
-#   define VMMDEV_HGCM_CALL_PARMS32(a) ((HGCMFunctionParameter32 *)((uint8_t *)(a) + sizeof (VMMDevHGCMCall)))
-#   define VMMDEV_HGCM_CALL_PARMS64(a) ((HGCMFunctionParameter64 *)((uint8_t *)(a) + sizeof (VMMDevHGCMCall)))
-#  endif /* VBOX_HGCM_HOST_CODE */
-# endif /* VBOX_WITH_64_BITS_GUESTS */
+# ifdef VBOX_HGCM_HOST_CODE
+#  define VMMDEV_HGCM_CALL_PARMS32(a) ((HGCMFunctionParameter32 *)((uint8_t *)(a) + sizeof (VMMDevHGCMCall)))
+#  define VMMDEV_HGCM_CALL_PARMS64(a) ((HGCMFunctionParameter64 *)((uint8_t *)(a) + sizeof (VMMDevHGCMCall)))
+# endif /* VBOX_HGCM_HOST_CODE */
 
 # define VBOX_HGCM_MAX_PARMS 32
 
@@ -1901,10 +1899,8 @@ DECLINLINE(size_t) vmmdevGetRequestSize(VMMDevRequestType requestType)
             return sizeof(VMMDevHGCMDisconnect);
         case VMMDevReq_HGCMCall32:
             return sizeof(VMMDevHGCMCall);
-# ifdef VBOX_WITH_64_BITS_GUESTS
         case VMMDevReq_HGCMCall64:
             return sizeof(VMMDevHGCMCall);
-# endif
         case VMMDevReq_HGCMCancel:
             return sizeof(VMMDevHGCMCancel);
 #endif /* VBOX_WITH_HGCM */

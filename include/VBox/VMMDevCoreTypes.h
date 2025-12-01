@@ -285,12 +285,11 @@ typedef enum
 AssertCompileSize(HGCMFunctionParameterType, 4);
 
 
-# ifdef VBOX_WITH_64_BITS_GUESTS
 /**
  * HGCM function parameter, 32-bit client.
  */
-#  pragma pack(4) /* We force structure dword packing here for hysterical raisins.  Saves us 4 bytes, at the cost of
-                     misaligning the value64 member of every other parameter structure. */
+# pragma pack(4) /* We force structure dword packing here for hysterical raisins.  Saves us 4 bytes, at the cost of
+                    misaligning the value64 member of every other parameter structure. */
 typedef struct HGCMFunctionParameter32
 {
     HGCMFunctionParameterType type;
@@ -456,91 +455,6 @@ AssertCompileSize(HGCMFunctionParameter64, 4+12);
 #    error "Unsupported sizeof (void *)"
 #   endif
 #  endif /* !VBOX_HGCM_HOST_CODE */
-
-# else /* !VBOX_WITH_64_BITS_GUESTS */
-
-/**
- * HGCM function parameter, 32-bit client.
- *
- * @todo If this is the same as HGCMFunctionParameter32, why the duplication?
- */
-#  pragma pack(4) /* We force structure dword packing here for hysterical raisins.  Saves us 4 bytes, at the cost of
-                     misaligning the value64 member of every other parameter structure. */
-typedef struct
-{
-    HGCMFunctionParameterType type;
-    union
-    {
-        uint32_t   value32;
-        uint64_t   value64;
-        struct
-        {
-            uint32_t size;
-
-            union
-            {
-                RTGCPHYS32 physAddr;
-                RTGCPTR32  linearAddr;
-            } u;
-        } Pointer;
-        struct
-        {
-            uint32_t  cb;
-            RTGCPTR32 uAddr;
-        } LinAddr;                      /**< Shorter version of the above Pointer structure. */
-        struct
-        {
-            uint32_t size;              /**< Size of the buffer described by the page list. */
-            uint32_t offset;            /**< Relative to the request header, valid if size != 0. */
-        } PageList;
-        struct
-        {
-            uint32_t fFlags : 8;        /**< VBOX_HGCM_F_PARM_*. */
-            uint32_t offData : 24;      /**< Relative to the request header (must be a valid offset even if cbData is zero). */
-            uint32_t cbData;            /**< The buffer size. */
-        } Embedded;
-    } u;
-#  ifdef __cplusplus
-    void SetUInt32(uint32_t u32)
-    {
-        type = VMMDevHGCMParmType_32bit;
-        u.value64 = 0; /* init unused bits to 0 */
-        u.value32 = u32;
-    }
-
-    int GetUInt32(uint32_t *pu32)
-    {
-        AssertMsgReturnStmt(type == VMMDevHGCMParmType_32bit, ("type=%d\n", type),
-                            *pu32 = UINT32_MAX /* shut up gcc */, VERR_WRONG_PARAMETER_TYPE)
-        *pu32 = u.value32;
-        return VINF_SUCCESS;
-    }
-
-    void SetUInt64(uint64_t u64)
-    {
-        type      = VMMDevHGCMParmType_64bit;
-        u.value64 = u64;
-    }
-
-    int GetUInt64(uint64_t *pu64)
-    {
-        AssertMsgReturnStmt(type == VMMDevHGCMParmType_64bit, ("type=%d\n", type),
-                            *pu64 = UINT64_MAX /* shut up gcc */, VERR_WRONG_PARAMETER_TYPE);
-        *pu64 = u.value64;
-        return VINF_SUCCESS;
-    }
-
-    void SetPtr(void *pv, uint32_t cb)
-    {
-        type                    = VMMDevHGCMParmType_LinAddr;
-        u.Pointer.size          = cb;
-        u.Pointer.u.linearAddr  = (uintptr_t)pv;
-    }
-#  endif /* __cplusplus */
-} HGCMFunctionParameter;
-#  pragma pack()
-AssertCompileSize(HGCMFunctionParameter, 4+8);
-# endif /* !VBOX_WITH_64_BITS_GUESTS */
 
 /** @} */
 
