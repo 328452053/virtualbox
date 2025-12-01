@@ -1,4 +1,4 @@
-/* $Id: EMAll.cpp 111908 2025-11-27 09:18:56Z knut.osmundsen@oracle.com $ */
+/* $Id: EMAll.cpp 111961 2025-12-01 13:39:33Z knut.osmundsen@oracle.com $ */
 /** @file
  * EM - Execution Monitor(/Manager) - All contexts
  */
@@ -30,6 +30,7 @@
 *   Header Files                                                                                                                 *
 *********************************************************************************************************************************/
 #define LOG_GROUP LOG_GROUP_EM
+#define VMCPU_INCL_CPUM_GST_CTX /* (For use with CPUM_IMPORT_EXTRN_RET in EMHistoryExec.) */
 #include <VBox/vmm/em.h>
 #include <VBox/vmm/mm.h>
 #include <VBox/vmm/selm.h>
@@ -418,6 +419,7 @@ VMM_INT_DECL(VBOXSTRICTRC) EMHistoryExec(PVMCPUCC pVCpu, PCEMEXITREC pExitRec, u
         {
             STAM_REL_PROFILE_START(&pVCpu->em.s.StatHistoryExec, a);
             LogFlow(("EMHistoryExec/EXEC_WITH_MAX: %RX64, max %u\n", pExitRec->uFlatPC, pExitRec->cMaxInstructionsWithoutExit));
+            CPUM_IMPORT_EXTRN_RET(pVCpu, IEM_CPUMCTX_EXTRN_MUST_MASK);
             IEMTlbInvalidateAll(pVCpu);
             VBOXSTRICTRC rcStrict = IEMExecForExits(pVCpu, fWillExit,
                                                     pExitRec->cMaxInstructionsWithoutExit /* cMinInstructions*/,
@@ -450,6 +452,7 @@ VMM_INT_DECL(VBOXSTRICTRC) EMHistoryExec(PVMCPUCC pVCpu, PCEMEXITREC pExitRec, u
         {
             STAM_REL_PROFILE_START(&pVCpu->em.s.StatHistoryProbe, b);
             LogFlow(("EMHistoryExec/EXEC_PROBE: %RX64\n", pExitRec->uFlatPC));
+            CPUM_IMPORT_EXTRN_RET(pVCpu, IEM_CPUMCTX_EXTRN_MUST_MASK);
             PEMEXITREC   pExitRecUnconst = (PEMEXITREC)pExitRec;
             IEMTlbInvalidateAll(pVCpu);
             VBOXSTRICTRC rcStrict = IEMExecForExits(pVCpu, fWillExit,
