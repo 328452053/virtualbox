@@ -72,14 +72,13 @@ int main(int argc, char **argv)
     STRUCT(SHFLVOLINFO, 40);
     STRUCT(SHFLFSOBJATTR, 44);
     STRUCT(SHFLFSOBJINFO, 92);
-#ifdef VBOX_WITH_64_BITS_GUESTS
 /* The size of the guest structures depends on the current architecture bit count (ARCH_BITS)
  * because the HGCMFunctionParameter structure differs in 32 and 64 bit guests.
  * The host VMMDev device takes care about this.
  *
  * Therefore this testcase verifies whether structure sizes are correct for the current ARCH_BITS.
  */
-# if ARCH_BITS == 64
+#if ARCH_BITS == 64
     STRUCT(VBoxSFQueryMappings, 88);
     STRUCT(VBoxSFQueryMapName, 72);
     STRUCT(VBoxSFMapFolder_Old, 88);
@@ -95,7 +94,7 @@ int main(int argc, char **argv)
     STRUCT(VBoxSFInformation, 120);
     STRUCT(VBoxSFRemove, 88);
     STRUCT(VBoxSFRename, 104);
-# elif ARCH_BITS == 32
+#elif ARCH_BITS == 32
     STRUCT(VBoxSFQueryMappings, 24+52);
     STRUCT(VBoxSFQueryMapName, 24+40); /* this was changed from 52 in 21976 after VBox-1.4. */
     STRUCT(VBoxSFMapFolder_Old, 24+52);
@@ -111,26 +110,9 @@ int main(int argc, char **argv)
     STRUCT(VBoxSFInformation, 24+76);
     STRUCT(VBoxSFRemove, 24+52);
     STRUCT(VBoxSFRename, 24+64);
-# else
-#  error "Unsupported ARCH_BITS"
-# endif /* ARCH_BITS */
 #else
-    STRUCT(VBoxSFQueryMappings, 24+52);
-    STRUCT(VBoxSFQueryMapName, 24+40); /* this was changed from 52 in 21976 after VBox-1.4. */
-    STRUCT(VBoxSFMapFolder_Old, 24+52);
-    STRUCT(VBoxSFMapFolder, 24+64);
-    STRUCT(VBoxSFUnmapFolder, 24+28);
-    STRUCT(VBoxSFCreate, 24+52);
-    STRUCT(VBoxSFClose, 24+40);
-    STRUCT(VBoxSFRead, 24+76);
-    STRUCT(VBoxSFWrite, 24+76);
-    STRUCT(VBoxSFLock, 24+76);
-    STRUCT(VBoxSFFlush, 24+40);
-    STRUCT(VBoxSFList, 24+112);
-    STRUCT(VBoxSFInformation, 24+76);
-    STRUCT(VBoxSFRemove, 24+52);
-    STRUCT(VBoxSFRename, 24+64);
-#endif /* VBOX_WITH_64_BITS_GUESTS */
+# error "Unsupported ARCH_BITS"
+#endif /* ARCH_BITS */
 
     /*
      * The summary.
