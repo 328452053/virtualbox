@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: Makefile.kmk 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $
 ## @file
 # Sub-Makefile for the Shared Clipboard Host Service testcases.
 #
@@ -79,7 +79,7 @@ if defined(VBOX_WITH_TESTCASES) && !defined(VBOX_ONLY_ADDITIONS) && !defined(VBO
   	../VBoxSharedClipboardSvc-transfers.cpp \
   	$(PATH_ROOT)/src/VBox/GuestHost/SharedClipboard/clipboard-transfers.cpp \
   	$(PATH_ROOT)/src/VBox/GuestHost/SharedClipboard/clipboard-transfers-provider-local.cpp
-  if VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS_HTTP
+  if defined(VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS_HTTP)
    if1of ($(KBUILD_TARGET), linux solaris)
     tstClipboardMockHGCM_SOURCES += \
     	$(PATH_ROOT)/src/VBox/GuestHost/SharedClipboard/clipboard-transfers-http.cpp

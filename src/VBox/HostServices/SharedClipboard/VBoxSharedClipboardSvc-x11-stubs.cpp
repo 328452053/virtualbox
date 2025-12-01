@@ -1,4 +1,4 @@
-/* $Id: VBoxSharedClipboardSvc-x11-stubs.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $*/
+/* $Id: VBoxSharedClipboardSvc-x11-stubs.cpp 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $*/
 /** @file
  * Shared Clipboard Service - Linux host, a stub version with no functionality for use on headless hosts.
  */
@@ -31,6 +31,7 @@
 *********************************************************************************************************************************/
 #define LOG_GROUP LOG_GROUP_SHARED_CLIPBOARD
 #include <VBox/HostServices/VBoxClipboardSvc.h>
+#include <VBox/HostServices/VBoxSharedClipboardSvc.h>
 
 #include <iprt/alloc.h>
 #include <iprt/asm.h>        /* For atomic operations */
@@ -43,8 +44,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
-
-#include "VBoxSharedClipboardSvc-internal.h"
 
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: VBoxSharedClipboardSvc-utils.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxSharedClipboardSvc-utils.cpp 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $ */
 /** @file
  * Shared Clipboard Service - Host service utility functions.
  */
@@ -37,6 +37,4 @@
 
 #include <iprt/errcore.h>
 #include <iprt/path.h>
-
-#include "VBoxSharedClipboardSvc-internal.h"
 

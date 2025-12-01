@@ -1,4 +1,4 @@
-/* $Id: VBoxSharedClipboardSvc-x11.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxSharedClipboardSvc-x11.cpp 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $ */
 /** @file
  * Shared Clipboard Service - Linux host.
  */
@@ -41,6 +41,7 @@
 #include <VBox/GuestHost/SharedClipboard.h>
 #include <VBox/GuestHost/SharedClipboard-x11.h>
 #include <VBox/HostServices/VBoxClipboardSvc.h>
+#include <VBox/HostServices/VBoxSharedClipboardSvc.h>
 #include <iprt/errcore.h>
 
 #ifdef VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS
@@ -50,7 +51,6 @@
 # endif
 #endif
 
-#include "VBoxSharedClipboardSvc-internal.h"
 #ifdef VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS
 # include "VBoxSharedClipboardSvc-transfers.h"
 #endif

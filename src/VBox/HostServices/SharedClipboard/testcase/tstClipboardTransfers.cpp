@@ -1,4 +1,4 @@
-/* $Id: tstClipboardTransfers.cpp 111865 2025-11-25 13:30:00Z andreas.loeffler@oracle.com $ */
+/* $Id: tstClipboardTransfers.cpp 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $ */
 /** @file
  * Shared Clipboard transfers test case.
  */
@@ -25,9 +25,8 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-#include "../VBoxSharedClipboardSvc-internal.h"
-
 #include <VBox/HostServices/VBoxClipboardSvc.h>
+#include <VBox/HostServices/VBoxSharedClipboardSvc.h>
 
 #include <iprt/assert.h>
 #include <iprt/dir.h>

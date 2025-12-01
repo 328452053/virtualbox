@@ -1,4 +1,4 @@
-/* $Id: VBoxSharedClipboardSvc-win.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxSharedClipboardSvc-win.cpp 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $ */
 /** @file
  * Shared Clipboard Service - Win32 host.
  */
@@ -33,6 +33,7 @@
 #include <iprt/win/windows.h>
 
 #include <VBox/HostServices/VBoxClipboardSvc.h>
+#include <VBox/HostServices/VBoxSharedClipboardSvc.h>
 #include <VBox/GuestHost/clipboard-helper.h>
 #include <VBox/GuestHost/SharedClipboard-win.h>
 #ifdef VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS
@@ -53,7 +54,6 @@
 #include <process.h>
 #include <iprt/win/shlobj.h> /* Needed for shell objects. */
 
-#include "VBoxSharedClipboardSvc-internal.h"
 #ifdef VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS
 # include "VBoxSharedClipboardSvc-transfers.h"
 #endif

@@ -1,4 +1,4 @@
-/* $Id: tstClipboardMockHGCM.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: tstClipboardMockHGCM.cpp 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $ */
 /** @file
  * Shared Clipboard host service test case.
  */
@@ -29,9 +29,8 @@
 /*********************************************************************************************************************************
 *   Header Files                                                                                                                 *
 *********************************************************************************************************************************/
-#include "../VBoxSharedClipboardSvc-internal.h"
-
 #include <VBox/HostServices/VBoxClipboardSvc.h>
+#include <VBox/HostServices/VBoxSharedClipboardSvc.h>
 #include <VBox/VBoxGuestLib.h>
 #ifdef RT_OS_LINUX
 # include <VBox/GuestHost/SharedClipboard-x11.h>

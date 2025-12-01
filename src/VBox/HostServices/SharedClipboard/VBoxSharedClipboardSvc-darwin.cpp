@@ -1,4 +1,4 @@
-/* $Id: VBoxSharedClipboardSvc-darwin.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxSharedClipboardSvc-darwin.cpp 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $ */
 /** @file
  * Shared Clipboard Service - Mac OS X host.
  */
@@ -31,6 +31,7 @@
 *********************************************************************************************************************************/
 #define LOG_GROUP LOG_GROUP_SHARED_CLIPBOARD
 #include <VBox/HostServices/VBoxClipboardSvc.h>
+#include <VBox/HostServices/VBoxSharedClipboardSvc.h>
 
 #include <iprt/assert.h>
 #include <iprt/asm.h>
@@ -39,7 +40,6 @@
 #include <iprt/string.h>
 #include <iprt/thread.h>
 
-#include "VBoxSharedClipboardSvc-internal.h"
 #include "darwin-pasteboard.h"
 
 

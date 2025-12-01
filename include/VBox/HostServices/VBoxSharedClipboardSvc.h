@@ -1,6 +1,7 @@
-/* $Id: VBoxSharedClipboardSvc-internal.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxSharedClipboardSvc.h 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $ */
 /** @file
- * Shared Clipboard Service - Internal header.
+ * Shared Clipboard Service - header file for shared clipboard data transfer
+ * interfaces and platform-dependent backend functionality.
  */
 
 /*
@@ -22,11 +23,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <https://www.gnu.org/licenses>.
  *
- * SPDX-License-Identifier: GPL-3.0-only
+ * The contents of this file may alternatively be used under the terms
+ * of the Common Development and Distribution License Version 1.0
+ * (CDDL), a copy of it is provided in the "COPYING.CDDL" file included
+ * in the VirtualBox distribution, in which case the provisions of the
+ * CDDL are applicable instead of those of the GPL.
+ *
+ * You may elect to license modified versions of this file under the
+ * terms and conditions of either the GPL or the CDDL or both.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
  */
 
-#ifndef VBOX_INCLUDED_SRC_SharedClipboard_VBoxSharedClipboardSvc_internal_h
-#define VBOX_INCLUDED_SRC_SharedClipboard_VBoxSharedClipboardSvc_internal_h
+#ifndef VBOX_INCLUDED_HostServices_VBoxSharedClipboardSvc_h
+#define VBOX_INCLUDED_HostServices_VBoxSharedClipboardSvc_h
 #ifndef RT_WITHOUT_PRAGMA_ONCE
 # pragma once
 #endif
@@ -484,5 +494,5 @@ DECLCALLBACK(int) ShClSvcTransferIfaceGHObjRead(PSHCLTXPROVIDERCTX pCtx, SHCLOBJ
 uint32_t TestClipSvcGetMode(void);
 #endif
 
-#endif /* !VBOX_INCLUDED_SRC_SharedClipboard_VBoxSharedClipboardSvc_internal_h */
+#endif /* !VBOX_INCLUDED_HostServices_VBoxSharedClipboardSvc_h */
 
