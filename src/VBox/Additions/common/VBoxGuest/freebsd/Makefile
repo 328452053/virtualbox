@@ -1,4 +1,4 @@
-# $Id: Makefile 111930 2025-11-27 15:49:32Z alexander.eichner@oracle.com $
+# $Id: Makefile 111949 2025-12-01 09:54:09Z alexander.eichner@oracle.com $
 ## @file
 # VirtualBox Guest Additions Module Makefile.
 #
@@ -35,7 +35,7 @@
 #
 KMOD = vboxguest
 
-CFLAGS += -DRT_OS_FREEBSD -DIN_RING0 -DIN_RT_R0 -DIN_SUP_R0 -DVBOX -DRT_WITH_VBOX -Iinclude -I. -Ir0drv -w -DVBGL_VBOXGUEST -DVBOX_WITH_HGCM -DVBOX_WITH_64_BITS_GUESTS
+CFLAGS += -DRT_OS_FREEBSD -DIN_RING0 -DIN_RT_R0 -DIN_SUP_R0 -DVBOX -DRT_WITH_VBOX -Iinclude -I. -Ir0drv -w -DVBGL_VBOXGUEST -DVBOX_WITH_HGCM
 
 .if (${MACHINE_ARCH} == "i386")
  CFLAGS += -DRT_ARCH_X86
