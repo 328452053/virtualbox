@@ -2322,7 +2322,6 @@ PREDEFINED            += \
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
 EXPAND_AS_DEFINED      = ARCH_BITS \
-                         GC_ARCH_BITS \
                          HC_ARCH_BITS \
                          R3_ARCH_BITS \
                          R0_ARCH_BITS \
