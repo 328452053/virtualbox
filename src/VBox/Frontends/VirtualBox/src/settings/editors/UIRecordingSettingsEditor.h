@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.h 111934 2025-11-28 12:55:46Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.h 111969 2025-12-02 07:59:05Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class declaration.
  */
@@ -47,6 +47,7 @@ class QSpinBox;
 class QWidget;
 class QIAdvancedSlider;
 class UIFilmContainer;
+class UIRecordingAudioProfileEditor;
 class UIRecordingFilePathEditor;
 class UIRecordingVideoBitrateEditor;
 class UIRecordingVideoFrameRateEditor;
@@ -204,18 +205,10 @@ private:
         UIRecordingVideoFrameRateEditor *m_pEditorFrameRate;
         /** Holds the bit rate editor instance. */
         UIRecordingVideoBitrateEditor *m_pEditorBitrate;
-        /** Holds the audio profile label instance. */
-        QLabel             *m_pLabelAudioProfile;
+        /** Holds the audio profile editor instance. */
+        UIRecordingAudioProfileEditor *m_pEditorAudioProfile;
         /** Holds the audio profile settings widget instance. */
         QWidget            *m_pWidgetAudioProfileSettings;
-        /** Holds the audio profile slider instance. */
-        QIAdvancedSlider   *m_pSliderAudioProfile;
-        /** Holds the audio profile min label instance. */
-        QLabel             *m_pLabelAudioProfileMin;
-        /** Holds the audio profile med label instance. */
-        QLabel             *m_pLabelAudioProfileMed;
-        /** Holds the audio profile max label instance. */
-        QLabel             *m_pLabelAudioProfileMax;
         /** Holds the size hint label instance. */
         QLabel             *m_pLabelSizeHint;
         /** Holds the screens label instance. */
