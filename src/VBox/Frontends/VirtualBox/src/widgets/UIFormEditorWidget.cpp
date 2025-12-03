@@ -1,4 +1,4 @@
-/* $Id: UIFormEditorWidget.cpp 111182 2025-09-30 09:38:54Z sergey.dubov@oracle.com $ */
+/* $Id: UIFormEditorWidget.cpp 111990 2025-12-03 12:17:11Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIFormEditorWidget class implementation.
  */
@@ -398,7 +398,7 @@ public:
     UIFormEditorCell(QITableViewRow *pParent, const QString &strText = QString());
 
     /** Returns the cell text. */
-    virtual QString text() const RT_OVERRIDE { return m_strText; }
+    virtual QString text() const RT_OVERRIDE RT_FINAL { return m_strText; }
 
     /** Defines the cell @a strText. */
     void setText(const QString &strText) { m_strText = strText; }
@@ -421,7 +421,7 @@ public:
       * @param  pFormEditorWidget  Brings the root form-editor widget reference. */
     UIFormEditorRow(QITableView *pParent, UIFormEditorWidget *pFormEditorWidget, const CFormValue &comValue);
     /** Destructs table row. */
-    virtual ~UIFormEditorRow() RT_OVERRIDE;
+    virtual ~UIFormEditorRow() RT_OVERRIDE RT_FINAL;
 
     /** Returns value type. */
     KFormValueType valueType() const { return m_enmValueType; }
@@ -476,9 +476,9 @@ public:
 protected:
 
     /** Returns the number of children. */
-    virtual int childCount() const RT_OVERRIDE;
+    virtual int childCount() const RT_OVERRIDE RT_FINAL;
     /** Returns the child item with @a iIndex. */
-    virtual QITableViewCell *childItem(int iIndex) const RT_OVERRIDE;
+    virtual QITableViewCell *childItem(int iIndex) const RT_OVERRIDE RT_FINAL;
 
 private:
 
@@ -596,7 +596,7 @@ public:
 protected:
 
     /** Returns whether item in the row indicated by the given @a iSourceRow and @a srcParenIdx should be included in the model. */
-    virtual bool filterAcceptsRow(int iSourceRow, const QModelIndex &srcParenIdx) const RT_OVERRIDE;
+    virtual bool filterAcceptsRow(int iSourceRow, const QModelIndex &srcParenIdx) const RT_OVERRIDE RT_FINAL;
 };
 
 
@@ -610,12 +610,12 @@ public:
     /** Constructs Form Editor table-view, passing @a pParent to the base-class. */
     UIFormEditorView(QWidget *pParent = 0);
     /** Destruts Form Editor table-view. */
-    virtual ~UIFormEditorView() RT_OVERRIDE;
+    virtual ~UIFormEditorView() RT_OVERRIDE RT_FINAL;
 
 protected:
 
     /** Handles @a pEvent. */
-    virtual bool event(QEvent *pEvent) RT_OVERRIDE;
+    virtual bool event(QEvent *pEvent) RT_OVERRIDE RT_FINAL;
 
 protected slots:
 
@@ -623,7 +623,7 @@ protected slots:
       * @param  parent  Brings the parent under which new rows being inserted.
       * @param  iStart  Brings the starting position (inclusive).
       * @param  iStart  Brings the end position (inclusive). */
-    virtual void rowsInserted(const QModelIndex &parent, int iStart, int iEnd) RT_OVERRIDE;
+    virtual void rowsInserted(const QModelIndex &parent, int iStart, int iEnd) RT_OVERRIDE RT_FINAL;
 
 private:
 
@@ -1123,12 +1123,12 @@ bool UIFormEditorRow::isGenerationChanged() const
 int UIFormEditorRow::childCount() const
 {
     /* Return cell count: */
-    return UIFormEditorDataType_Max;
+    return m_cells.size();
 }
 
 QITableViewCell *UIFormEditorRow::childItem(int iIndex) const
 {
-    /* Make sure index within the bounds: */
+    /* Sanity check: */
     AssertReturn(iIndex >= 0 && iIndex < m_cells.size(), 0);
     /* Return corresponding cell: */
     return m_cells.at(iIndex);
@@ -1141,11 +1141,13 @@ void UIFormEditorRow::prepare()
     /// @todo check for errors
 
     /* Create cells on the basis of variables we have: */
-    m_cells.resize(UIFormEditorDataType_Max);
+    if (!m_cells.isEmpty())
+        cleanup();
     const QString strName = m_comValue.GetLabel();
     /// @todo check for errors
-    m_cells[UIFormEditorDataType_Name] = new UIFormEditorCell(this, strName);
-    m_cells[UIFormEditorDataType_Value] = new UIFormEditorCell(this);
+    m_cells << new UIFormEditorCell(this, strName);
+    m_cells << new UIFormEditorCell(this);
+    Assert(m_cells.size() == UIFormEditorDataType_Max);
     updateValueCells();
 }
 
