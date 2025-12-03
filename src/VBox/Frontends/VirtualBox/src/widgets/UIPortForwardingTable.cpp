@@ -1,4 +1,4 @@
-/* $Id: UIPortForwardingTable.cpp 111985 2025-12-03 11:45:24Z sergey.dubov@oracle.com $ */
+/* $Id: UIPortForwardingTable.cpp 111993 2025-12-03 13:24:42Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIPortForwardingTable class implementation.
  */
@@ -245,38 +245,26 @@ public:
     /** Constructs table cell passing @a pParent to the base-class.
       * @param  strName  Brings the name. */
     UIPortForwardingCell(QITableViewRow *pParent, const NameData &strName)
-        : QITableViewCell(pParent)
-        , m_strText(strName)
+        : QITableViewCell(pParent, strName)
     {}
 
     /** Constructs table cell passing @a pParent to the base-class.
       * @param  enmProtocol  Brings the protocol type. */
     UIPortForwardingCell(QITableViewRow *pParent, KNATProtocol enmProtocol)
-        : QITableViewCell(pParent)
-        , m_strText(gpConverter->toString(enmProtocol))
+        : QITableViewCell(pParent, gpConverter->toString(enmProtocol))
     {}
 
     /** Constructs table cell passing @a pParent to the base-class.
       * @param  strIp  Brings the IP address. */
     UIPortForwardingCell(QITableViewRow *pParent, const IpData &strIp)
-        : QITableViewCell(pParent)
-        , m_strText(strIp)
+        : QITableViewCell(pParent, strIp)
     {}
 
     /** Constructs table cell passing @a pParent to the base-class.
       * @param  port  Brings the port. */
     UIPortForwardingCell(QITableViewRow *pParent, PortData port)
-        : QITableViewCell(pParent)
-        , m_strText(QString::number(port.value()))
+        : QITableViewCell(pParent, QString::number(port.value()))
     {}
-
-    /** Returns the cell text. */
-    virtual QString text() const RT_OVERRIDE RT_FINAL { return m_strText; }
-
-private:
-
-    /** Holds the cell text. */
-    QString  m_strText;
 };
 
 

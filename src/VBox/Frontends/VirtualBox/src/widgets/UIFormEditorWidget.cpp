@@ -1,4 +1,4 @@
-/* $Id: UIFormEditorWidget.cpp 111990 2025-12-03 12:17:11Z sergey.dubov@oracle.com $ */
+/* $Id: UIFormEditorWidget.cpp 111993 2025-12-03 13:24:42Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIFormEditorWidget class implementation.
  */
@@ -387,29 +387,6 @@ private:
 };
 
 
-/** QITableViewCell extension used as Form Editor table-view cell. */
-class UIFormEditorCell : public QITableViewCell
-{
-    Q_OBJECT;
-
-public:
-
-    /** Constructs table cell on the basis of certain @a strText, passing @a pParent to the base-class. */
-    UIFormEditorCell(QITableViewRow *pParent, const QString &strText = QString());
-
-    /** Returns the cell text. */
-    virtual QString text() const RT_OVERRIDE RT_FINAL { return m_strText; }
-
-    /** Defines the cell @a strText. */
-    void setText(const QString &strText) { m_strText = strText; }
-
-private:
-
-    /** Holds the cell text. */
-    QString  m_strText;
-};
-
-
 /** QITableViewRow extension used as Form Editor table-view row. */
 class UIFormEditorRow : public QITableViewRow
 {
@@ -515,7 +492,7 @@ private:
     RangedInteger64Data  m_rangedInteger64;
 
     /** Holds the cell instances. */
-    QVector<UIFormEditorCell*>  m_cells;
+    QVector<QITableViewCell*>  m_cells;
 };
 
 
@@ -856,17 +833,6 @@ RangedInteger64Data RangedInteger64Editor::rangedInteger64() const
 
 
 /*********************************************************************************************************************************
-*   Class UIFormEditorCell implementation.                                                                                       *
-*********************************************************************************************************************************/
-
-UIFormEditorCell::UIFormEditorCell(QITableViewRow *pParent, const QString &strText /* = QString() */)
-    : QITableViewCell(pParent)
-    , m_strText(strText)
-{
-}
-
-
-/*********************************************************************************************************************************
 *   Class UIFormEditorRow implementation.                                                                                        *
 *********************************************************************************************************************************/
 
@@ -1145,8 +1111,8 @@ void UIFormEditorRow::prepare()
         cleanup();
     const QString strName = m_comValue.GetLabel();
     /// @todo check for errors
-    m_cells << new UIFormEditorCell(this, strName);
-    m_cells << new UIFormEditorCell(this);
+    m_cells << new QITableViewCell(this, strName);
+    m_cells << new QITableViewCell(this);
     Assert(m_cells.size() == UIFormEditorDataType_Max);
     updateValueCells();
 }

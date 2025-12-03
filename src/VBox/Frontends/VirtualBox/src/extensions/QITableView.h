@@ -1,4 +1,4 @@
-/* $Id: QITableView.h 111940 2025-11-28 16:20:12Z sergey.dubov@oracle.com $ */
+/* $Id: QITableView.h 111993 2025-12-03 13:24:42Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: QITableView class declaration.
  */
@@ -53,9 +53,11 @@ public:
     /** Acquires QITableViewCell* from passed @a idx. */
     static QITableViewCell *toCell(const QModelIndex &idx);
 
-    /** Constructs table-view cell for passed @a pParentRow. */
-    QITableViewCell(QITableViewRow *pParentRow)
+    /** Constructs table-view cell for passed @a pParentRow.
+      * @param  strText  Brings the cell text (optionally). */
+    QITableViewCell(QITableViewRow *pParentRow, const QString &strText = QString())
         : m_pRow(pParentRow)
+        , m_strText(strText)
     {}
 
     /** Defines the parent @a pRow reference. */
@@ -64,12 +66,17 @@ public:
     QITableViewRow *row() const { return m_pRow; }
 
     /** Returns the cell text. */
-    virtual QString text() const = 0;
+    QString text() const { return m_strText; }
+    /** Defines the cell @a strText. */
+    void setText(const QString &strText) { m_strText = strText; }
 
 private:
 
     /** Holds the parent row reference. */
     QITableViewRow *m_pRow;
+
+    /** Holds the cell text. */
+    QString  m_strText;
 };
 
 
