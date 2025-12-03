@@ -1,4 +1,4 @@
-/* $Id: DevAHCI.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: DevAHCI.cpp 112000 2025-12-03 22:25:06Z knut.osmundsen@oracle.com $ */
 /** @file
  * DevAHCI - AHCI controller device (disk and cdrom).
  *
@@ -3844,8 +3844,9 @@ static DECLCALLBACK(int) ahciR3IoReqQueryBuf(PPDMIMEDIAEXPORT pInterface, PDMMED
     RT_NOREF(hIoReq);
 
     /* Only allow single 4KB page aligned buffers at the moment. */
+    uint32_t const cbPage = PDMDevHlpPhysGetPageSize(pDevIns);
     if (   pIoReq->cPrdtlEntries == 1
-        && pIoReq->cbTransfer    == _4K)
+        && pIoReq->cbTransfer    == cbPage)
     {
         RTGCPHYS GCPhysPrdt = pIoReq->GCPhysPrdtl;
         SGLEntry PrdtEntry;
@@ -3855,14 +3856,18 @@ static DECLCALLBACK(int) ahciR3IoReqQueryBuf(PPDMIMEDIAEXPORT pInterface, PDMMED
         RTGCPHYS GCPhysAddrDataBase = AHCI_RTGCPHYS_FROM_U32(PrdtEntry.u32DBAUp, PrdtEntry.u32DBA);
         uint32_t cbData = (PrdtEntry.u32DescInf & SGLENTRY_DESCINF_DBC) + 1;
 
-        if (   cbData >= _4K
-            && !(GCPhysAddrDataBase & (_4K - 1)))
+        if (   cbData >= cbPage
+            && !(GCPhysAddrDataBase & (cbPage - 1)))
         {
             rc = PDMDevHlpPCIPhysGCPhys2CCPtr(pDevIns, NULL /* pPciDev */, GCPhysAddrDataBase, 0, ppvBuf, &pIoReq->PgLck);
             if (RT_SUCCESS(rc))
             {
                 pIoReq->fMapped = true;
-                *pcbBuf = cbData;
+                *pcbBuf = cbData; /** @todo r=bird: This looks wrong. *ppvBuf points to a guest page, nothing
+                                   * more than that. cbData is allowed to be larger, see test 8 lines up. So,
+                                   * this gives the distinct impression that we may tell the caller this buffer
+                                   * is larger than a page, when really, it isn't. */
+                Assert(*pcbBuf <= cbData); /* See the above todo. */
             }
             else
                 rc = VERR_NOT_SUPPORTED;
