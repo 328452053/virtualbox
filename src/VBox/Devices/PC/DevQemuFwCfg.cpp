@@ -1,4 +1,4 @@
-/* $Id: DevQemuFwCfg.cpp 111419 2025-10-15 15:24:51Z alexander.eichner@oracle.com $ */
+/* $Id: DevQemuFwCfg.cpp 112001 2025-12-03 22:25:49Z knut.osmundsen@oracle.com $ */
 /** @file
  * DevQemuFwCfg - QEMU firmware configuration compatible device.
  */
@@ -1739,6 +1739,10 @@ static DECLCALLBACK(int) qemuFwCfgR3RamfbPortUpdateDisplay(PPDMIDISPLAYPORT pInt
 {
     PDEVQEMUFWCFG pThis = RT_FROM_MEMBER(pInterface, DEVQEMUFWCFG, IPortRamfb);
     PPDMDEVINS pDevIns = pThis->pDevIns;
+    unsigned const cGuestPageShift = PDMDevHlpPhysGetPageShift(pDevIns);
+    AssertReturn(cGuestPageShift >= 10 && cGuestPageShift <= 24, VERR_INTERNAL_ERROR);
+    uint32_t const cbGuestPage = RT_BIT_32(cGuestPageShift);
+    RTGCPHYS const offGuestPageMask = cbGuestPage - 1U;
 
     LogFlowFunc(("\n"));
 
@@ -1757,9 +1761,9 @@ static DECLCALLBACK(int) qemuFwCfgR3RamfbPortUpdateDisplay(PPDMIDISPLAYPORT pInt
             if (RT_UNLIKELY(!pThis->Ramfb.cPgLocks))
             {
                 size_t const cbFb = pThis->RamfbCfg.cbStride * pThis->RamfbCfg.cHeight;
-                uint32_t const cPages = (uint32_t)((cbFb + GUEST_PAGE_SIZE - 1) >> GUEST_PAGE_SHIFT);
-                RTGCPHYS GCPhysStart = pThis->RamfbCfg.GCPhysRamfbBase & ~(RTGCPHYS)GUEST_PAGE_OFFSET_MASK;
-                RTGCPHYS const offPage = pThis->RamfbCfg.GCPhysRamfbBase & (RTGCPHYS)GUEST_PAGE_OFFSET_MASK;
+                uint32_t const cPages = (uint32_t)((cbFb + cbGuestPage - 1) >> cGuestPageShift);
+                RTGCPHYS GCPhysStart = pThis->RamfbCfg.GCPhysRamfbBase & ~offGuestPageMask;
+                RTGCPHYS const offPage = pThis->RamfbCfg.GCPhysRamfbBase & offGuestPageMask;
 
                 pThis->Ramfb.paPgLocks = (PPGMPAGEMAPLOCK)RTMemAllocZ(cPages * (  sizeof(PGMPAGEMAPLOCK)
                                                                                 + sizeof(void *)
@@ -1776,7 +1780,7 @@ static DECLCALLBACK(int) qemuFwCfgR3RamfbPortUpdateDisplay(PPDMIDISPLAYPORT pInt
                 for (uint32_t i = 0; i < cPages; i++)
                 {
                     paGCPhysPages[i] = GCPhysStart;
-                    GCPhysStart += GUEST_PAGE_SIZE;
+                    GCPhysStart += cbGuestPage;
                 }
 
                 int rc = PDMDevHlpPhysBulkGCPhys2CCPtrReadOnly(pDevIns, cPages, paGCPhysPages, 0 /*fFlags*/,
@@ -1795,7 +1799,7 @@ static DECLCALLBACK(int) qemuFwCfgR3RamfbPortUpdateDisplay(PPDMIDISPLAYPORT pInt
                 uint32_t iSeg = 0;
 
                 pThis->Ramfb.paSegs[0].pvSeg = (void *)((const uint8_t *)pThis->Ramfb.papvPages[0] + offPage);
-                pThis->Ramfb.paSegs[0].cbSeg = GUEST_PAGE_SIZE - offPage;
+                pThis->Ramfb.paSegs[0].cbSeg = cbGuestPage - offPage;
 
                 for (uint32_t i = 1; i < pThis->Ramfb.cPgLocks; ++i)
                 {
@@ -1803,13 +1807,13 @@ static DECLCALLBACK(int) qemuFwCfgR3RamfbPortUpdateDisplay(PPDMIDISPLAYPORT pInt
                     if ((uintptr_t)pThis->Ramfb.papvPages[i] == (uintptr_t)pThis->Ramfb.paSegs[iSeg].pvSeg + pThis->Ramfb.paSegs[iSeg].cbSeg)
                     {
                         Assert(pThis->Ramfb.paSegs[iSeg].cbSeg);
-                        pThis->Ramfb.paSegs[iSeg].cbSeg += GUEST_PAGE_SIZE;
+                        pThis->Ramfb.paSegs[iSeg].cbSeg += cbGuestPage;
                     }
                     else
                     {
                         iSeg++;
                         pThis->Ramfb.paSegs[iSeg].pvSeg = (void *)pThis->Ramfb.papvPages[i];
-                        pThis->Ramfb.paSegs[iSeg].cbSeg = GUEST_PAGE_SIZE;
+                        pThis->Ramfb.paSegs[iSeg].cbSeg = cbGuestPage;
                     }
                 }
 
