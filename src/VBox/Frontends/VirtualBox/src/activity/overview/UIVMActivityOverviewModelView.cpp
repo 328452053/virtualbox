@@ -1,4 +1,4 @@
-/* $Id: UIVMActivityOverviewModelView.cpp 111991 2025-12-03 13:02:18Z sergey.dubov@oracle.com $ */
+/* $Id: UIVMActivityOverviewModelView.cpp 111992 2025-12-03 13:08:52Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMActivityOverviewModelView class implementation.
  */
@@ -113,7 +113,8 @@ protected:
 
 private:
 
-    void initCells();
+    void createCells();
+    void destroyCells();
 };
 
 
@@ -229,12 +230,12 @@ UIVMActivityOverviewRow::UIVMActivityOverviewRow(QITableView *pTableView, const 
     , m_strMachineName(strMachineName)
     , m_uTotalRAM(0)
 {
-    initCells();
+    createCells();
 }
 
 UIVMActivityOverviewRow::~UIVMActivityOverviewRow()
 {
-    qDeleteAll(m_cells);
+    destroyCells();
 }
 
 const QUuid &UIVMActivityOverviewRow::machineId() const
@@ -249,44 +250,54 @@ int UIVMActivityOverviewRow::childCount() const
 
 QITableViewCell *UIVMActivityOverviewRow::childItem(int iIndex) const
 {
-    return m_cells.value(iIndex, 0);
+    AssertReturn(iIndex >= 0 && iIndex < m_cells.size(), 0);
+    return m_cells.value(iIndex);
 }
 
 QString UIVMActivityOverviewRow::cellText(int iColumn) const
 {
-    if (!m_cells.contains(iColumn))
-        return QString();
-    if (!m_cells[iColumn])
-        return QString();
-    return m_cells[iColumn]->text();
+    QITableViewCell *pCell = childItem(iColumn);
+    AssertPtrReturn(pCell, QString());
+    return pCell->text();
 }
 
-int UIVMActivityOverviewRow::columnLength(int iColumnIndex) const
+int UIVMActivityOverviewRow::columnLength(int iColumn) const
 {
-    UIVMActivityOverviewCell *pCell = m_cells.value(iColumnIndex, 0);
-    if (!pCell)
-        return 0;
-    return pCell->text().length();
+    return cellText(iColumn).length();
 }
 
-void UIVMActivityOverviewRow::updateCellText(int /*VMActivityOverviewColumn*/ enmColumnIndex, const QString &strText)
+void UIVMActivityOverviewRow::updateCellText(int iIndex, const QString &strText)
 {
-    if (m_cells.value(enmColumnIndex, 0))
-        m_cells[enmColumnIndex]->setText(strText);
+    QITableViewCell *pCell = childItem(iIndex);
+    AssertPtrReturnVoid(pCell);
+    UIVMActivityOverviewCell *pOurCell = qobject_cast<UIVMActivityOverviewCell*>(pCell);
+    AssertPtrReturnVoid(pOurCell);
+    pOurCell->setText(strText);
 }
 
-void UIVMActivityOverviewRow::initCells()
+void UIVMActivityOverviewRow::createCells()
 {
-    /* Hide VM exits in release builds: */
+    if (!m_cells.isEmpty())
+        destroyCells();
+
     for (int i = (int) VMActivityOverviewColumn_Name; i < (int) VMActivityOverviewColumn_Max; ++i)
     {
 #ifndef DEBUG
+        /* Hide VM exits in release builds: */
         if (i == (int) VMActivityOverviewColumn_VMExits)
             continue;
 #endif
         m_cells[i] = new UIVMActivityOverviewCell(this);
     }
-    m_cells[VMActivityOverviewColumn_Name]->setText(m_strMachineName);
+
+    /* Update name cell: */
+    updateCellText(VMActivityOverviewColumn_Name, m_strMachineName);
+}
+
+void UIVMActivityOverviewRow::destroyCells()
+{
+    qDeleteAll(m_cells);
+    m_cells.clear();
 }
 
 
