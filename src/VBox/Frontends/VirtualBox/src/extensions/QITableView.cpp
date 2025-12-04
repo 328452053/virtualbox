@@ -1,4 +1,4 @@
-/* $Id: QITableView.cpp 111986 2025-12-03 11:46:56Z sergey.dubov@oracle.com $ */
+/* $Id: QITableView.cpp 112016 2025-12-04 13:53:47Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: QITableView class implementation.
  */
@@ -70,23 +70,15 @@ public:
     /** Returns the parent. */
     virtual QAccessibleInterface *parent() const RT_OVERRIDE
     {
-        /* Sanity check: */
-        QITableViewCell *pCell = cell();
-        AssertPtrReturn(pCell, 0);
-
         /* Return the parent: */
-        return QAccessible::queryAccessibleInterface(pCell->row());
+        return QAccessible::queryAccessibleInterface(row());
     }
 
     /** Returns the rect. */
     virtual QRect rect() const RT_OVERRIDE
     {
         /* Sanity check: */
-        QITableViewCell *pCell = cell();
-        AssertPtrReturn(pCell, QRect());
-        QITableViewRow *pRow = pCell->row();
-        AssertPtrReturn(pRow, QRect());
-        QITableView *pTable = pRow->table();
+        QITableView *pTable = table();
         AssertPtrReturn(pTable, QRect());
         QWidget *pViewport = pTable->viewport();
         AssertPtrReturn(pViewport, QRect());
@@ -134,12 +126,8 @@ public:
         /* Sanity check: */
         QITableViewCell *pCell = cell();
         AssertPtrReturn(pCell, QAccessible::State());
-        QITableViewRow *pRow = pCell->row();
-        AssertPtrReturn(pRow, QAccessible::State());
-        QITableView *pTable = pRow->table();
+        QITableView *pTable = table();
         AssertPtrReturn(pTable, QAccessible::State());
-        QAbstractItemModel *pModel = pTable->model();
-        AssertPtrReturn(pModel, QAccessible::State());
 
         /* Compose the state: */
         QAccessible::State myState;
@@ -182,6 +170,36 @@ private:
 
     /** Returns corresponding QITableViewCell. */
     QITableViewCell *cell() const { return qobject_cast<QITableViewCell*>(object()); }
+
+    /** Returns parent QITableViewRow. */
+    QITableViewRow *row() const
+    {
+        /* Sanity check: */
+        QITableViewCell *pCell = cell();
+        AssertPtrReturn(pCell, 0);
+
+        return pCell->row();
+    }
+
+    /** Returns root QITableView. */
+    QITableView *table() const
+    {
+        /* Sanity check: */
+        QITableViewRow *pRow = row();
+        AssertPtrReturn(pRow, 0);
+
+        return pRow->table();
+    }
+
+    /** Returns model root table has. */
+    QAbstractItemModel *model() const
+    {
+        /* Sanity check: */
+        QITableView *pTable = table();
+        AssertPtrReturn(pTable, 0);
+
+        return pTable->model();
+    }
 };
 
 
@@ -217,21 +235,15 @@ public:
     /** Returns the parent. */
     virtual QAccessibleInterface *parent() const RT_OVERRIDE
     {
-        /* Sanity check: */
-        QITableViewRow *pRow = row();
-        AssertPtrReturn(pRow, 0);
-
         /* Return the parent: */
-        return QAccessible::queryAccessibleInterface(pRow->table());
+        return QAccessible::queryAccessibleInterface(table());
     }
 
     /** Returns the rect. */
     virtual QRect rect() const RT_OVERRIDE
     {
         /* Sanity check: */
-        QITableViewRow *pRow = row();
-        AssertPtrReturn(pRow, QRect());
-        QITableView *pTable = pRow->table();
+        QITableView *pTable = table();
         AssertPtrReturn(pTable, QRect());
         QWidget *pViewport = pTable->viewport();
         AssertPtrReturn(pViewport, QRect());
@@ -298,8 +310,6 @@ public:
         AssertPtrReturn(pRow, QAccessible::State());
         QITableView *pTable = pRow->table();
         AssertPtrReturn(pTable, QAccessible::State());
-        QAbstractItemModel *pModel = pTable->model();
-        AssertPtrReturn(pModel, QAccessible::State());
 
         /* Compose the state: */
         QAccessible::State myState;
@@ -344,6 +354,26 @@ private:
 
     /** Returns corresponding QITableViewRow. */
     QITableViewRow *row() const { return qobject_cast<QITableViewRow*>(object()); }
+
+    /** Returns root QITableView. */
+    QITableView *table() const
+    {
+        /* Sanity check: */
+        QITableViewRow *pRow = row();
+        AssertPtrReturn(pRow, 0);
+
+        return pRow->table();
+    }
+
+    /** Returns model root table has. */
+    QAbstractItemModel *model() const
+    {
+        /* Sanity check: */
+        QITableView *pTable = table();
+        AssertPtrReturn(pTable, 0);
+
+        return pTable->model();
+    }
 };
 
 
@@ -582,6 +612,7 @@ QITableViewCell *QITableViewCell::toCell(const QModelIndex &idx)
 
     /* Internal pointer of idx currently points to row (not cell), so acquire it first: */
     QITableViewRow *pRow = reinterpret_cast<QITableViewRow*>(idxSource.internalPointer());
+    AssertPtrReturn(pRow, 0);
 
     /* Return cell finally: */
     return pRow->childItem(idx.column());
