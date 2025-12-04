@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA.h 112019 2025-12-04 17:44:20Z knut.osmundsen@oracle.com $ */
+/* $Id: DevVGA-SVGA.h 112029 2025-12-04 21:54:29Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMware SVGA device
  */
@@ -652,7 +652,7 @@ typedef VMSVGAGBODESCRIPTOR const *PCVMSVGAGBODESCRIPTOR;
 typedef struct VMSVGAGBOSEG
 {
     /** Pointer to the first byte in the segment. */
-    void    *pvSeg;
+    uint8_t *pbSeg;
     /** The segment size in bytes. */
     uint32_t cbSeg;
     /** The segment byte offset within the GBO. */
@@ -675,15 +675,21 @@ typedef struct VMSVGAGBO
     uint32_t                cDescriptors;
     PVMSVGAGBODESCRIPTOR    paDescriptors;
 #else
-    uint32_t                cSegsUsed;        /**< Number of segments used in VMSVGAGBO::paSegs. */
-    void                   *pvDescriptors;    /**< Pointer to the memory for holding all the parallel arrays. */
-    RTGCPHYS               *paGCPhysPages;    /**< Pointer to the array of guest physical address for the pages. */
-    PPGMPAGEMAPLOCK         paPageLocks;      /**< Pointer to the array of PGM page map locks. */
-    void                  **papvPages;        /**< Pointer to the host adresses of mapped pages. */
-    PVMSVGAGBOSEG           paSegs;           /**< Pointer to an array of segments (compressed w/ offset lookup). */
+    uint32_t                cSegsUsed;          /**< Number of segments used in VMSVGAGBO::paSegs. */
+    void                   *pvDescriptors;      /**< Pointer to the memory for holding all the parallel arrays. */
+    RTGCPHYS               *paGCPhysPages;      /**< Pointer to the array of guest physical address for the pages. */
+    PPGMPAGEMAPLOCK         paPageLocks;        /**< Pointer to the array of PGM page map locks. */
+    void                  **papvPages;          /**< Pointer to the host adresses of mapped pages. */
+    PVMSVGAGBOSEG           paSegs;             /**< Pointer to an array of segments (compressed w/ offset lookup). */
 #endif
-    void                   *pvHost; /* Pointer to cbTotal bytes on the host if VMSVGAGBO_F_HOST_BACKED is set. */
-    STAMPROFILE             StatTransfer;     /**< Profiles vmsvgaR3GboTransfer(). */
+    void                   *pvHost;             /**< Pointer to cbTotal bytes on the host if VMSVGAGBO_F_HOST_BACKED is set. */
+    /** Use a union to keep the structure layout & size the same, avoiding any
+     *  troubles if VBOX_WITH_STATISTICS is defined locally in a source file. */
+    union
+    {
+        STAMPROFILE         StatTransferPrf;    /**< VBOX_WITH_STATISTICS: Profiles vmsvgaR3GboTransfer(). */
+        STAMCOUNTER         StatTransferCalls;  /**< !VBOX_WITH_STATISTICS: Count vmsvgaR3GboTransfer() calls. */
+    } u;
 } VMSVGAGBO, *PVMSVGAGBO;
 typedef VMSVGAGBO const *PCVMSVGAGBO;
 

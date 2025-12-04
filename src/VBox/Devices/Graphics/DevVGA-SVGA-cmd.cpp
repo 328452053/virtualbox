@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA-cmd.cpp 112019 2025-12-04 17:44:20Z knut.osmundsen@oracle.com $ */
+/* $Id: DevVGA-SVGA-cmd.cpp 112029 2025-12-04 21:54:29Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMware SVGA device - implementation of VMSVGA commands.
  */
@@ -453,14 +453,14 @@ int vmsvgaR3GboMapPages(PPDMDEVINS pDevIns, PVMSVGAGBO pGbo)
     /* Compress the segment pointers. */
     uint32_t iSeg = 0;
 
-    pGbo->paSegs[0].pvSeg = pGbo->papvPages[0];
+    pGbo->paSegs[0].pbSeg = (uint8_t *)pGbo->papvPages[0];
     pGbo->paSegs[0].cbSeg = cbGuestPage;
     pGbo->paSegs[0].offSeg = 0;
 
     for (uint32_t i = 1; i < pGbo->cTotalPages; ++i)
     {
         /* Contiguous memory mapping? */
-        if ((uintptr_t)pGbo->papvPages[i] == (uintptr_t)pGbo->paSegs[iSeg].pvSeg + pGbo->paSegs[iSeg].cbSeg)
+        if ((uint8_t *)pGbo->papvPages[i] == &pGbo->paSegs[iSeg].pbSeg[pGbo->paSegs[iSeg].cbSeg])
         {
             Assert(pGbo->paSegs[iSeg].cbSeg);
             pGbo->paSegs[iSeg].cbSeg += cbGuestPage;
@@ -468,7 +468,7 @@ int vmsvgaR3GboMapPages(PPDMDEVINS pDevIns, PVMSVGAGBO pGbo)
         else
         {
             iSeg++;
-            pGbo->paSegs[iSeg].pvSeg = pGbo->papvPages[i];
+            pGbo->paSegs[iSeg].pbSeg = (uint8_t *)pGbo->papvPages[i];
             pGbo->paSegs[iSeg].cbSeg = cbGuestPage;
             pGbo->paSegs[iSeg].offSeg = i << cGuestPageShift;
         }
@@ -785,7 +785,11 @@ static int vmsvgaR3GboTransfer(PVMSVGAR3STATE pSvgaR3State, PVMSVGAGBO pGbo,
                                VMSVGAGboTransferDirection enmDirection)
 {
     //DEBUG_BREAKPOINT_TEST();
-    STAM_PROFILE_START(&pGbo->StatTransfer, a);
+#ifdef VBOX_WITH_STATISTICS
+    STAM_PROFILE_START(&pGbo->u.StatTransferPrf, a);
+#else
+    STAM_COUNTER_INC(&pGbo->u.StatTransferCalls);
+#endif
     int rc = VINF_SUCCESS;
     uint8_t *pu8CurrentHost  = (uint8_t *)pvData;
 
@@ -924,13 +928,13 @@ static int vmsvgaR3GboTransfer(PVMSVGAR3STATE pSvgaR3State, PVMSVGAGBO pGbo,
 
             uint32_t cbToCopy = RT_MIN(paSegs[iSeg].cbSeg - off, cbData);
 
-            void *pv = (void *)((uintptr_t)paSegs[iSeg].pvSeg + off);
-            Log5Func(("%s pv=%p\n", (enmDirection == VMSVGAGboTransferDirection_Read) ? "READ" : "WRITE", pv));
+            void *pbGuest = &paSegs[iSeg].pbSeg[off];
+            Log5Func(("%s pv=%p\n", (enmDirection == VMSVGAGboTransferDirection_Read) ? "READ" : "WRITE", pbGuest));
 
             if (enmDirection == VMSVGAGboTransferDirection_Read)
-                memcpy(pu8CurrentHost, pv, cbToCopy);
+                memcpy(pu8CurrentHost, pbGuest, cbToCopy);
             else
-                memcpy(pv, pu8CurrentHost, cbToCopy);
+                memcpy(pbGuest, pu8CurrentHost, cbToCopy);
 
             cbData         -= cbToCopy;
             pu8CurrentHost += cbToCopy;
@@ -941,7 +945,9 @@ static int vmsvgaR3GboTransfer(PVMSVGAR3STATE pSvgaR3State, PVMSVGAGBO pGbo,
 
     ASMMemoryFence();
 #endif /* VMSVGA_WITH_PGM_LOCKING */
-    STAM_PROFILE_STOP(&pGbo->StatTransfer, a);
+#ifdef VBOX_WITH_STATISTICS
+    STAM_PROFILE_STOP(&pGbo->u.StatTransferPrf, a);
+#endif
     return rc;
 }
 
