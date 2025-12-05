@@ -1,4 +1,4 @@
-/* $Id: SUPDrv.cpp 112036 2025-12-05 01:52:07Z knut.osmundsen@oracle.com $ */
+/* $Id: SUPDrv.cpp 112044 2025-12-05 13:20:20Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxDrv - The VirtualBox Support Driver - Common code.
  */
@@ -7234,9 +7234,10 @@ static void supdrvIOCtl_ArmGetSysRegsOnCpu(PSUPARMGETSYSREGS pReq, uint32_t cons
     /*
      * Reader macro.
      */
-    uint32_t const fSavedFlags = fFlags;
-    uint32_t       idxReg      = 0;
-    uint64_t       uRegVal;
+    uint32_t const         fSavedFlags = fFlags;
+    PSUPARMSYSREGVAL const paRegs      = &pReq->u.Out.aRegs[0]; /* to shut up UBSAN array warnings */
+    uint32_t               idxReg      = 0;
+    uint64_t               uRegVal;
 #  ifdef _MSC_VER
 #   define COMPILER_READ_SYS_REG(a_u64Dst, a_Op0, a_Op1, a_CRn, a_CRm, a_Op2) \
         (a_u64Dst) = (uint64_t)_ReadStatusReg(ARMV8_AARCH64_SYSREG_ID_CREATE(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2) & 0x7fff)
@@ -7255,9 +7256,9 @@ static void supdrvIOCtl_ArmGetSysRegsOnCpu(PSUPARMGETSYSREGS pReq, uint32_t cons
             { \
                 if (idxReg < cMaxRegs) \
                 { \
-                    pReq->u.Out.aRegs[idxReg].uValue = uRegVal; \
-                    pReq->u.Out.aRegs[idxReg].idReg  = ARMV8_AARCH64_SYSREG_ID_CREATE(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2); \
-                    pReq->u.Out.aRegs[idxReg].fFlags = 0; \
+                    paRegs[idxReg].uValue = uRegVal; \
+                    paRegs[idxReg].idReg  = ARMV8_AARCH64_SYSREG_ID_CREATE(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2); \
+                    paRegs[idxReg].fFlags = 0; \
                 } \
                 idxReg += 1; \
             } \
