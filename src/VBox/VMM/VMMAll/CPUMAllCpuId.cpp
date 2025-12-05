@@ -1,4 +1,4 @@
-/* $Id: CPUMAllCpuId.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: CPUMAllCpuId.cpp 112032 2025-12-05 01:32:22Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPUM - CPU ID part, common bits.
  */
@@ -82,7 +82,8 @@ typedef struct PARTNUMINFO
 /** ARM CPU info by part number. */
 static PARTNUMINFO const g_aPartNumDbArm[] =
 {
-    { 0xfff,    kCpumMicroarch_Unknown,             "TODO",                 "TODO" },
+    { 0xd85,    kCpumMicroarch_Arm_Blackhawk,       "ARM Cortex-X925",      "ARM Cortex-X925 (Blackhawk)",      kCpumCoreType_Performance },
+    { 0xd87,    kCpumMicroarch_Arm_Chaberton,       "ARM Cortex-A725",      "ARM Cortex-A725 (Chaberton)",      kCpumCoreType_Efficiency },
 };
 
 /** Broadcom CPU info by part number. */
@@ -878,6 +879,9 @@ VMMDECL(const char *) CPUMMicroarchName(CPUMMICROARCH enmMicroarch)
         CASE_RET_STR(kCpumMicroarch_Qualcomm_Kyro);
         CASE_RET_STR(kCpumMicroarch_Qualcomm_Oryon);
 
+        CASE_RET_STR(kCpumMicroarch_Arm_Chaberton);
+        CASE_RET_STR(kCpumMicroarch_Arm_Blackhawk);
+
         CASE_RET_STR(kCpumMicroarch_Unknown);
 
 #undef CASE_RET_STR
@@ -902,6 +906,7 @@ VMMDECL(const char *) CPUMMicroarchName(CPUMMICROARCH enmMicroarch)
         case kCpumMicroarch_NEC_End:
         case kCpumMicroarch_Apple_End:
         case kCpumMicroarch_Qualcomm_End:
+        case kCpumMicroarch_Arm_End:
         case kCpumMicroarch_32BitHack:
             break;
         /* no default! */

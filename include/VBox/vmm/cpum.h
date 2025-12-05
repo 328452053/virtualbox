@@ -303,6 +303,11 @@ typedef enum CPUMMICROARCH
     kCpumMicroarch_Qualcomm_Oryon,
     kCpumMicroarch_Qualcomm_End,
 
+    kCpumMicroarch_Arm_First,
+    kCpumMicroarch_Arm_Chaberton = kCpumMicroarch_Arm_First,    /**< ARM Cortex-A725 */
+    kCpumMicroarch_Arm_Blackhawk,                               /**< ARM Cortex-A925 */    
+    kCpumMicroarch_Arm_End,
+
     /*
      * Unknown.
      */
