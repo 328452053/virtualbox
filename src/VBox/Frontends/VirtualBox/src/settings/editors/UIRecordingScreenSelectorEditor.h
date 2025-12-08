@@ -1,4 +1,4 @@
-/* $Id: UIRecordingScreenSelectorEditor.h 112010 2025-12-04 10:38:35Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingScreenSelectorEditor.h 112058 2025-12-08 15:25:29Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingScreenSelectorEditor class declaration.
  */
@@ -39,7 +39,7 @@ class QGridLayout;
 class QLabel;
 class UIFilmContainer;
 
-/** UIEditor sub-class used as a recording settings editor. */
+/** UIEditor sub-class used as a recording screen selection editor. */
 class SHARED_LIBRARY_STUFF UIRecordingScreenSelectorEditor : public UIEditor
 {
     Q_OBJECT;
@@ -47,7 +47,7 @@ class SHARED_LIBRARY_STUFF UIRecordingScreenSelectorEditor : public UIEditor
 public:
 
     /** Constructs editor passing @a pParent to the base-class. */
-    UIRecordingScreenSelectorEditor(QWidget *pParent = 0, bool fShowInBasicMode = false);
+    UIRecordingScreenSelectorEditor(QWidget *pParent = 0);
 
     /** Defines enabled @a screens. */
     void setScreens(const QVector<bool> &screens);
@@ -71,12 +71,19 @@ private:
     /** Prepares widgets. */
     void prepareWidgets();
 
+    /** @name Values
+     * @{ */
+        /** Holds the screens. */
+        QVector<bool>  m_screens;
+    /** @} */
+
     /** @name Widgets
      * @{ */
-        /** Holds the screens label instance. */
+        /** Holds the main layout instance. */
         QGridLayout     *m_pLayout;
+        /** Holds the label instance. */
         QLabel          *m_pLabel;
-        /** Holds the screens scroller instance. */
+        /** Holds the scroller instance. */
         UIFilmContainer *m_pScroller;
     /** @} */
 };

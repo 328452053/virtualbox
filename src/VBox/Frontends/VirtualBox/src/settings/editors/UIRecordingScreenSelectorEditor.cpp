@@ -1,4 +1,4 @@
-/* $Id: UIRecordingScreenSelectorEditor.cpp 112010 2025-12-04 10:38:35Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingScreenSelectorEditor.cpp 112058 2025-12-08 15:25:29Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingScreenSelectorEditor class implementation.
  */
@@ -46,13 +46,31 @@
 /* COM includes: */
 #include "KRecordingFeature.h"
 
-UIRecordingScreenSelectorEditor::UIRecordingScreenSelectorEditor(QWidget *pParent /* = 0 */, bool fShowInBasicMode /* = false */)
-    : UIEditor(pParent, fShowInBasicMode)
+
+UIRecordingScreenSelectorEditor::UIRecordingScreenSelectorEditor(QWidget *pParent /* = 0 */)
+    : UIEditor(pParent, true /* show in basic mode? */)
     , m_pLayout(0)
     , m_pLabel(0)
     , m_pScroller(0)
 {
     prepare();
+}
+
+void UIRecordingScreenSelectorEditor::setScreens(const QVector<bool> &screens)
+{
+    /* Update cached value and
+     * editor if value has changed: */
+    if (m_screens != screens)
+    {
+        m_screens = screens;
+        if (m_pScroller)
+            m_pScroller->setValue(m_screens);
+    }
+}
+
+QVector<bool> UIRecordingScreenSelectorEditor::screens() const
+{
+    return m_pScroller ? m_pScroller->value() : m_screens;
 }
 
 int UIRecordingScreenSelectorEditor::minimumLabelHorizontalHint() const
@@ -64,17 +82,6 @@ void UIRecordingScreenSelectorEditor::setMinimumLayoutIndent(int iIndent)
 {
     if (m_pLayout)
         m_pLayout->setColumnMinimumWidth(0, iIndent + m_pLayout->spacing());
-}
-
-void UIRecordingScreenSelectorEditor::setScreens(const QVector<bool> &screens)
-{
-    if (m_pScroller && m_pScroller->value() != screens)
-        m_pScroller->setValue(screens);
-}
-
-QVector<bool> UIRecordingScreenSelectorEditor::screens() const
-{
-    return m_pScroller ? m_pScroller->value() : QVector<bool>();
 }
 
 void UIRecordingScreenSelectorEditor::sltRetranslateUI()
@@ -98,6 +105,7 @@ void UIRecordingScreenSelectorEditor::prepareWidgets()
     if (m_pLayout)
     {
         m_pLayout->setContentsMargins(0, 0, 0, 0);
+        m_pLayout->setColumnStretch(1, 1); // for scroller
 
         /* Prepare recording screens label: */
         m_pLabel = new QLabel(this);
@@ -112,7 +120,7 @@ void UIRecordingScreenSelectorEditor::prepareWidgets()
         {
             if (m_pLabel)
                 m_pLabel->setBuddy(m_pScroller);
-            m_pLayout->addWidget(m_pScroller, 0, 1, 1, 5);
+            m_pLayout->addWidget(m_pScroller, 0, 1);
         }
     }
 }

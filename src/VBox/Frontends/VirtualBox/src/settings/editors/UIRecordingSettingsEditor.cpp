@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.cpp 112057 2025-12-08 14:48:42Z sergey.dubov@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.cpp 112058 2025-12-08 15:25:29Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class implementation.
  */
@@ -196,19 +196,13 @@ QString UIRecordingSettingsEditor::audioProfile() const
 
 void UIRecordingSettingsEditor::setScreens(const QVector<bool> &screens)
 {
-    /* Update cached value and
-     * editor if value has changed: */
-    if (m_screens != screens)
-    {
-        m_screens = screens;
-        if (m_pEditorScreenSelector)
-            m_pEditorScreenSelector->setScreens(m_screens);
-    }
+    if (m_pEditorScreenSelector)
+        m_pEditorScreenSelector->setScreens(screens);
 }
 
 QVector<bool> UIRecordingSettingsEditor::screens() const
 {
-    return m_pEditorScreenSelector ? m_pEditorScreenSelector->screens() : m_screens;
+    return m_pEditorScreenSelector ? m_pEditorScreenSelector->screens() : QVector<bool>();
 }
 
 void UIRecordingSettingsEditor::handleFilterChange()
@@ -349,7 +343,7 @@ void UIRecordingSettingsEditor::prepareWidgets()
                 if (m_pLabelSizeHint)
                     m_pLayoutSettings->addWidget(m_pLabelSizeHint, ++iLayoutSettingsRow, 1);
                 /* Prepare screen selector editor: */
-                m_pEditorScreenSelector = new UIRecordingScreenSelectorEditor(this, true);
+                m_pEditorScreenSelector = new UIRecordingScreenSelectorEditor(this);
                 if (m_pEditorScreenSelector)
                 {
                     addEditor(m_pEditorScreenSelector);
