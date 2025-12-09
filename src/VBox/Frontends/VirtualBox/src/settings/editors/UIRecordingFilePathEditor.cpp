@@ -1,4 +1,4 @@
-/* $Id: UIRecordingFilePathEditor.cpp 111914 2025-11-27 11:37:23Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingFilePathEditor.cpp 112067 2025-12-09 13:13:28Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingFilePathEditor class implementation.
  */
@@ -33,8 +33,8 @@
 #include "UIFilePathSelector.h"
 #include "UIRecordingFilePathEditor.h"
 
-UIRecordingFilePathEditor::UIRecordingFilePathEditor(QWidget *pParent /* = 0 */, bool fShowInBasicMode /* = false */)
-    : UIEditor(pParent, fShowInBasicMode)
+UIRecordingFilePathEditor::UIRecordingFilePathEditor(QWidget *pParent /* = 0 */)
+    : UIEditor(pParent)
     , m_pLabel(0)
     , m_pSelector(0)
 {

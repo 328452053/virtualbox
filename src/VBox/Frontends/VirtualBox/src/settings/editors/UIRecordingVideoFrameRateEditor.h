@@ -1,4 +1,4 @@
-/* $Id: UIRecordingVideoFrameRateEditor.h 111914 2025-11-27 11:37:23Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingVideoFrameRateEditor.h 112067 2025-12-09 13:13:28Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingVideoFrameRateEditor class declaration.
  */
@@ -54,7 +54,7 @@ signals:
 public:
 
     /** Constructs editor passing @a pParent to the base-class. */
-    UIRecordingVideoFrameRateEditor(QWidget *pParent = 0, bool fShowInBasicMode = false);
+    UIRecordingVideoFrameRateEditor(QWidget *pParent = 0);
 
     /** Defines frame @a iRate. */
     void setFrameRate(int iRate);

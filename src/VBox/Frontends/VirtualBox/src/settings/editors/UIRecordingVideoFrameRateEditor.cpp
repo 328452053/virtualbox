@@ -1,4 +1,4 @@
-/* $Id: UIRecordingVideoFrameRateEditor.cpp 111921 2025-11-27 12:51:44Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingVideoFrameRateEditor.cpp 112067 2025-12-09 13:13:28Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingVideoFrameRateEditor class implementation.
  */
@@ -35,8 +35,8 @@
 #include "UICommon.h"
 #include "UIRecordingVideoFrameRateEditor.h"
 
-UIRecordingVideoFrameRateEditor::UIRecordingVideoFrameRateEditor(QWidget *pParent /* = 0 */, bool fShowInBasicMode /* = false */)
-: UIEditor(pParent, fShowInBasicMode)
+UIRecordingVideoFrameRateEditor::UIRecordingVideoFrameRateEditor(QWidget *pParent /* = 0 */)
+: UIEditor(pParent)
     , m_pLabel(0)
     , m_pSlider(0)
     , m_pSpinbox(0)
