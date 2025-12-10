@@ -1,4 +1,4 @@
-/* $Id: fileio-r0drv-linux.c 112085 2025-12-10 08:48:06Z knut.osmundsen@oracle.com $ */
+/* $Id: fileio-r0drv-linux.c 112086 2025-12-10 08:51:26Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - File I/O, R0 Driver, Linux.
  */
@@ -45,6 +45,7 @@
 #if RTLNX_VER_MIN(4,11,0)
 # include <linux/sched/xacct.h>
 #endif
+#include <linux/file.h>
 
 #include <iprt/file.h>
 #include "internal/iprt.h"
