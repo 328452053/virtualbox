@@ -1,4 +1,4 @@
-; $Id: VBoxRTImp.def 112096 2025-12-10 10:11:09Z knut.osmundsen@oracle.com $
+; $Id: VBoxRTImp.def 112101 2025-12-10 12:12:15Z knut.osmundsen@oracle.com $
 ;; @file
 ; VirtualBox Runtime DLL - Stable Interface Definition file.
 ;
@@ -2040,10 +2040,10 @@ EXPORTS
     RTThreadYield
     RTTimeCompare
     RTTimeConvertToZulu
-    RTTimeDbgBad
-    RTTimeDbgExpired
-    RTTimeDbgRaces
-    RTTimeDbgSteps
+    RTTimeDbgBad                                        ; with-gip
+    RTTimeDbgExpired                                    ; with-gip
+    RTTimeDbgRaces                                      ; with-gip
+    RTTimeDbgSteps                                      ; with-gip
     RTTimeExplode
     RTTimeImplode
     RTTimeIsLeapYear
