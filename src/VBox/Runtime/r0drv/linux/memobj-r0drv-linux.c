@@ -1,4 +1,4 @@
-/* $Id: memobj-r0drv-linux.c 112097 2025-12-10 10:12:10Z knut.osmundsen@oracle.com $ */
+/* $Id: memobj-r0drv-linux.c 112106 2025-12-11 08:24:43Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Ring-0 Memory Objects, Linux.
  */
@@ -2132,29 +2132,40 @@ DECLHIDDEN(int) rtR0MemObjNativeProtect(PRTR0MEMOBJINTERNAL pMem, size_t offSub,
         preempt_enable();
         return VINF_SUCCESS;
     }
+
 # elif defined(IPRT_USE_APPLY_TO_PAGE_RANGE_FOR_EXEC)
     PRTR0MEMOBJLNX pMemLnx = (PRTR0MEMOBJLNX)pMem;
     if (   pMemLnx->fExecutable
         && pMemLnx->fMappedToRing0)
     {
-        LNXAPPLYPGRANGE Args;
-        Args.pMemLnx = pMemLnx;
-        Args.fPg = rtR0MemObjLinuxConvertProt(fProt, true /*fKernel*/);
-#  if defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86) /** @todo check why not using init_mm works on x86/amd64... */
-        int rcLnx = apply_to_page_range(current->active_mm, (unsigned long)pMemLnx->Core.pv + offSub, cbSub,
-                                        rtR0MemObjLinuxApplyPageRange, (void *)&Args);
-#  else
-        /* We really need the init_mm here, or the mapping will end up in the
-           process map on arm and we'll crash later when trying to access the
-           kernel address.  Problem, though, is that init_mm isn't exported.
-           So, we're forced to scan kallsyms to find it's whereabouts. */
+        /*
+         * The apply_to_page_range call should take init_mm as parameter.
+         *
+         * For arm64 this is essential, as arm has separate page table roots
+         * for kernel and userland, and messing around with the user land
+         * one (active_mm) isn't helpful and will end up with us crashing
+         * later.
+         *
+         * On amd64 & x86, we've usually been able to get away with using
+         * active_mm here, but we really should use init_mm. So, since the
+         * code for getting init_mm doesn't currently support too old kernels
+         * and using active_mm works, we just quietly fall back on the latter
+         * if the former is unavailable.
+         */
+        int               rcLnx;
+        LNXAPPLYPGRANGE   Args;
         struct mm_struct *pInitMm = g_pLnxInitMm;
         if (!pInitMm)
+#  if defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86)
+            pInitMm = current->active_mm;
+#  else
             return VERR_SYMBOL_NOT_FOUND;
-
-        int rcLnx = apply_to_page_range(pInitMm, (unsigned long)pMemLnx->Core.pv + offSub, cbSub,
-                                        rtR0MemObjLinuxApplyPageRange, (void *)&Args);
 #  endif
+        Args.pMemLnx = pMemLnx;
+        Args.fPg = rtR0MemObjLinuxConvertProt(fProt, true /*fKernel*/);
+        rcLnx = apply_to_page_range(pInitMm,
+                                    (unsigned long)pMemLnx->Core.pv + offSub, cbSub,
+                                    rtR0MemObjLinuxApplyPageRange, (void *)&Args);
         if (rcLnx)
             return VERR_NOT_SUPPORTED;
 
