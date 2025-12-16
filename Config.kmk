@@ -1,4 +1,4 @@
-# $Id: Config.kmk 112041 2025-12-05 13:02:03Z knut.osmundsen@oracle.com $
+# $Id: Config.kmk 112133 2025-12-16 13:15:16Z knut.osmundsen@oracle.com $
 ## @file
 # The global build configuration file for VBox.
 #
@@ -5644,6 +5644,9 @@ ifeq ($(VBOX_LDR_FMT),elf)
  endif
  TEMPLATE_VBoxR0_CFLAGS.amd64       = -m64 -mno-red-zone -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -fasynchronous-unwind-tables -ffreestanding
  TEMPLATE_VBoxR0_CXXFLAGS.amd64     = -m64 -mno-red-zone -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -fasynchronous-unwind-tables
+ TEMPLATE_VBoxR0_CXXFLAGS.arm64     = -mabi=lp64 -mgeneral-regs-only -ffixed-x18 -fconserve-stack \
+ 	-fno-stack-check -fno-stack-clash-protection -fno-allow-store-data-races -fno-delete-null-pointer-checks # (linux 6.11)
+ # arm64: Add -mbranch-protection=pac-ret ?
  TEMPLATE_VBoxR0_CXXFLAGS.freebsd   = -ffreestanding
  if $(VBOX_GCC_VERSION_CC) < 30400
   TEMPLATE_VBoxR0_DEFS             += RT_WITHOUT_PRAGMA_ONCE
@@ -9442,7 +9445,7 @@ SVN                    ?= svn$(HOSTSUFF_EXE)
 GIT                    ?= git$(HOSTSUFF_EXE)
 VBOX_SVN_REV_KMK        = $(PATH_OUT)/revision.kmk
 ifndef VBOX_SVN_REV
- VBOX_SVN_REV_CONFIG_FALLBACK := $(patsubst %:,,  $Rev: 112041 $  )
+ VBOX_SVN_REV_CONFIG_FALLBACK := $(patsubst %:,,  $Rev: 112133 $  )
  VBOX_SVN_REV_FALLBACK := $(if-expr $(VBOX_SVN_REV_CONFIG_FALLBACK) > $(VBOX_SVN_REV_VERSION_FALLBACK),$(VBOX_SVN_REV_CONFIG_FALLBACK),$(VBOX_SVN_REV_VERSION_FALLBACK))
  VBOX_SVN_DEP          := $(firstword $(wildcard $(PATH_ROOT)/.svn/wc.db $(abspath $(PATH_ROOT)/../.svn/wc.db) $(abspath $(PATH_ROOT)/../../.svn/wc.db) $(PATH_ROOT)/.svn/entries))
  VBOX_GIT_DEP          := $(firstword $(wildcard $(PATH_ROOT)/.git/config $(abspath $(PATH_ROOT)/../.git/config) $(abspath $(PATH_ROOT)/../../.git/config)))
@@ -9456,7 +9459,7 @@ ifndef VBOX_SVN_REV
  ifneq ($(VBOX_GIT_DEP),)
   #
   # VBOX_SVN_REV_CONFIG_FALLBACK is not properly populated for a git checkout,
-  # as the $Rev: 112041 $ is not expanded, so we have to set it based on the information in the repo.
+  # as the $Rev: 112133 $ is not expanded, so we have to set it based on the information in the repo.
   #
   VBOX_SVN_REV_FALLBACK := $(shell $(GIT) log -1 $(PATH_ROOT)/Config.kmk | $(SED) -e 's/^[ \t]*//' -e '/svn:sync-xref-src-repo-rev\: r/!d' -e 's/svn:sync-xref-src-repo-rev\: r*//; t a; :a q')
  endif
