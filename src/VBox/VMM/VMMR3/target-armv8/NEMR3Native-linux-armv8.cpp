@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-armv8.cpp 112132 2025-12-16 13:11:37Z knut.osmundsen@oracle.com $ */
+/* $Id: NEMR3Native-linux-armv8.cpp 112137 2025-12-16 14:51:30Z knut.osmundsen@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend arm64 version.
  */
@@ -595,6 +595,16 @@ static DECLCALLBACK(int) nemR3LnxArmLoadDone(PVM pVM, PSSMHANDLE pSSM)
 static int nemR3LnxInitSetupVm(PVM pVM, PRTERRINFO pErrInfo)
 {
     AssertReturn(pVM->nem.s.fdVm != -1, RTErrInfoSet(pErrInfo, VERR_WRONG_ORDER, "Wrong initalization order"));
+
+    /*
+     * We want KVM_EXIT_ARM_NISV exits (instead of ENOSYS).
+     */
+    errno = 0;
+    struct kvm_enable_cap CapArmNisvToUser = { KVM_CAP_ARM_NISV_TO_USER, 0 };
+    int rcLnx = ioctl(pVM->nem.s.fdVm, KVM_ENABLE_CAP, &CapArmNisvToUser);
+    if (rcLnx != 0)
+        return RTErrInfoSetF(pErrInfo, VERR_NEM_VM_CREATE_FAILED,
+                             "KVM_ENABLE_CAP/KVM_CAP_ARM_NISV_TO_USER failed: %d (rcLnx=%d)", errno, rcLnx);
 
     /*
      * Create the VCpus.
@@ -1417,6 +1427,10 @@ static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run
         case KVM_EXIT_HYPERCALL:
             STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatExitHypercall);
             return nemHCLnxHandleExitHypercall(pVM, pVCpu, pRun);
+
+        case KVM_EXIT_ARM_NISV: /* Since v5.18-ish */
+            AssertLogRelMsgFailedReturn(("KVM_EXIT_ARM_NISV on VCpu #%u! esr_iss=%#llx fault_ipa=%#llx\n",
+                                         pVCpu->idCpu, pRun->arm_nisv.esr_iss, pRun->arm_nisv.fault_ipa), VERR_NEM_IPE_1);
 
 #if 0
         case KVM_EXIT_DEBUG:
