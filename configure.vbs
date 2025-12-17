@@ -1,4 +1,4 @@
-' $Id: configure.vbs 112142 2025-12-17 09:36:01Z andreas.loeffler@oracle.com $
+' $Id: configure.vbs 112143 2025-12-17 10:47:51Z andreas.loeffler@oracle.com $
 ' Thin VBScript wrapper to call configure.py with passed arguments.
 
 '
@@ -41,29 +41,66 @@ Next
 strPythonPath = ""
 strPythonBin  = ""
 
+' Returns the value of a given command line argument.
+Function GetArgValue(sArgName)
+    Dim i, sArg, sTemp, sValue, sArgNext, idxSep
+    GetArgValue = ""
+    uArgLen = Len(sArgName)
+    i = 0
+    Do While i < objArgs.Count
+        sArg = Trim(objArgs(i))
+        If LCase(Left(sArg, uArgLen)) = LCase(sArgName) Then
+            sTemp = Trim(Mid(sArg, uArgLen + 1)) ' Everything after the flag.
+            ' Remove all spaces between flag and =
+            If sTemp <> "" Then
+                sTemp = Replace(sTemp, " ", "") ' Remove ALL spaces from temp.
+            End If
+            idxSep = InStr(sTemp, "=")
+            If idxSep > 0 Then
+                ' --arg=value, --arg =value, --arg=   value, --arg   =value
+                sValue = Trim(Mid(sTemp, idxSep + 1))
+                GetArgValue = sValue
+                Exit Function
+            ElseIf sTemp = "" Then
+               ' Handle space after flag: --arg value or --arg = value or --arg      = value
+                If i + 1 < objArgs.Count Then
+                    sArgNext = Trim(objArgs(i + 1))
+                    If Left(sArgNext, 1) = "=" Then
+                        sValue = Trim(Mid(sArgNext, 2)) ' Remove any spaces after equal sign.
+                        GetArgValue = sValue
+                    Else
+                        GetArgValue = sArgNext
+                    End If
+                    Exit Function
+                End If
+            End If
+        End If
+        i = i + 1
+    Loop
+End Function
+
+strPythonPath = GetArgValue("--with-python-path")
+if strPythonPath = "" Then
+   strPythonPath = GetArgValue("--with-python")
+End If
+
 ' Python binaries to search for. Sorted by likely-ness.
 arrBin = Array("python.exe", "python3.exe")
 
-' Is the Python interpreter specified via argument?
-For i = 0 To objArgs.Count - 2 ' Ensure room for the value after the argument.
-    If objArgs(i) = "--with-python" _
-    Or objArgs(i) = "--with-python-path" Then
-        strCurPath = objArgs(i + 1)
-        For Each strCurBin In arrBin
-            strCurBinPath = objFSO.BuildPath(strCurPath, strCurBin)
-            If objFSO.FileExists(strCurBinPath) Then
-                strPythonPath = strCurPath
-                strPythonBin  = strCurBinPath
-                Exit For
-            End If
-        Next
-        if strPythonBin = "" Then
-            WScript.Echo "Error: No valid Python installation found at: " & strCurPath
-            WScript.Quit 1
-        End If
-        Exit For
-    End If
-Next
+if strPythonPath <> "" Then
+
+   For Each strCurBin In arrBin
+      strCurBinPath = objFSO.BuildPath(strPythonPath, strCurBin)
+      If objFSO.FileExists(strCurBinPath) Then
+         strPythonBin  = strCurBinPath
+         Exit For
+      End If
+   Next
+   if strPythonBin = "" Then
+       WScript.Echo "Error: Not valid Python installation found at: " & strPythonPath
+       WScript.Quit 1
+   End if
+End If
 
 ' Not specified above? Try python3, then just python.
 If strPythonBin = "" Then
