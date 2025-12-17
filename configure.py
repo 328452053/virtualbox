@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112151 2025-12-17 14:21:35Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112152 2025-12-17 14:22:22Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112151 $"
+__revision__ = "$Revision: 112152 $"
 
 import argparse
 import ctypes
@@ -125,7 +125,7 @@ class BuildTarget:
     HAIKU = "haiku";
     UNKNOWN = "unknown";
 
-g_fDebug = False;             # Enables debug mode. Only for development.
+g_fDebug = True;              # Enables debug mode. Only for development.
 g_fContOnErr = False;         # Continue on fatal errors.
 g_fCompatMode = True;         # Enables compatibility mode to mimic the old build scripts. Enabled by default (for now).
 g_sEnvVarPrefix = 'VBOX_';
