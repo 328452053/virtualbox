@@ -13147,7 +13147,7 @@
     uuid="5bae19d0-ca40-4ca2-a485-c8065190bbe5"
     wsmap="managed"
     rest="managed"
-    reservedMethods="4" reservedAttributes="16"
+    reservedMethods="3" reservedAttributes="16"
     >
     <desc>
       Properties of a specific virtualization platform.
@@ -13519,6 +13519,24 @@
       </param>
     </method>
 
+    <method name="getMinGuestRAM">
+      <desc>Returns minimum guest system memory size in Megabytes for the
+        given firmware choice.
+
+        The firmwares have built-in expectations about how much memory must
+        be present in the system for them to work.  These limits are not
+        enforced anywhere, so you can still configure a VM with as little as
+        <link to="ISystemProperties::minGuestRAM"/> specifies, it just is not
+        very likely to boot up.</desc>
+
+      <param name="firmware" type="FirmwareType" dir="in">
+        <desc>The chipset type to get the value for.</desc>
+      </param>
+      <param name="minMegabytes" type="unsigned long" dir="return">
+        <desc>Minimum number of megabytes (mebibytes).</desc>
+      </param>
+    </method>
+
   </interface>
 
   <!--
@@ -13561,7 +13579,10 @@
     </attribute>
 
     <attribute name="minGuestRAM" type="unsigned long" readonly="yes">
-      <desc>Minimum guest system memory in Megabytes.</desc>
+      <desc>Minimum guest system memory in Megabytes.
+
+      See also <link to="IPlatformProperties::getMinGuestRAM"/>,
+      <link to="IGuestOSType::recommendedRAM"/>.</desc>
     </attribute>
 
     <attribute name="maxGuestRAM" type="unsigned long" readonly="yes">
