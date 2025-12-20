@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112181 2025-12-20 22:16:56Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the Main API.
 #
@@ -70,6 +70,7 @@
 /UnattendedTemplates/*.sif:             --external-copyright
 /UnattendedTemplates/*.xml:             --dont-set-svn-eol --no-convert-eol
 /UnattendedTemplates/os2_response_files.rsp: --treat-as batch --external-copyright
+/UnattendedTemplates/ubuntu_autoinstall_*data: --treat-as shell --external-copyright
 
 # The webservice is fun.
 /webservice/Makefile.webtest:           --treat-as Makefile
