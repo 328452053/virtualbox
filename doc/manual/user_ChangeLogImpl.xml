@@ -80,7 +80,11 @@ Rules for adding a changelog entry to make them look more uniform:
     <itemizedlist>
 
       <listitem>
-        <para>placeholder</para>
+        <para>Building the OSE Edition: Implemented a new configure.py script which
+          unifies the ./configure (non-Windows) and configure.vbs (Windows) scripts
+          Please adjust your building process accordingly, as the compatibility wrapper
+          scripts ./configure and configure.vbs are now marked as being deprecated and
+          will be removed in a future version of VirtualBox.</para>
       </listitem>
 
     </itemizedlist>
