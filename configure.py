@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112201 2025-12-23 11:54:21Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112202 2025-12-23 12:04:01Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112201 $"
+__revision__ = "$Revision: 112202 $"
 
 import argparse
 import ctypes
@@ -125,9 +125,9 @@ class BuildTarget:
     HAIKU = "haiku";
     UNKNOWN = "unknown";
 
-g_fDebug = True;              # Enables debug mode. Only for development. Defaults to True for now (development phase).
+g_fDebug = False;             # Enables debug mode. Only for development. Defaults to True for now (development phase).
 g_fContOnErr = False;         # Continue on fatal errors.
-g_fCompatMode = True;         # Enables compatibility mode to mimic the old build scripts. Enabled by default (for now).
+g_fCompatMode = False;        # Enables compatibility mode to mimic the old build scripts. Enabled by default (for now).
 g_sEnvVarPrefix = 'VBOX_';
 g_sFileLog = 'configure.log'; # Log file path.
 g_cVerbosity = 4;             # Verbosity level (0=none, 1=min, 5=max). Defaults to 4 for now (development phase).
@@ -2913,7 +2913,7 @@ def main():
     #
     oParser = argparse.ArgumentParser(description='Checks and configures the build environment', add_help=False);
     oParser.add_argument('-h', '--help', help="Displays this help", action='store_true');
-    oParser.add_argument('-v', '--verbose', help="Enables verbose output", action='count', default=0, dest='config_verbose');
+    oParser.add_argument('-v', '--verbose', help="Enables verbose output", action='count', default=4, dest='config_verbose');
     oParser.add_argument('-V', '--version', help="Prints the version of this script", action='store_true');
     for oLibCur in g_aoLibs:
         oParser.add_argument(f'--disable-{oLibCur.sName}', f'--without-{oLibCur.sName}', action='store_true', default=None, dest=f'config_libs_disable_{oLibCur.sName}');
@@ -2948,8 +2948,8 @@ def main():
     # Note: '--out-base-dir' is kept for backwards compatibility.
     oParser.add_argument('--output-build-dir', '--out-base-dir', help='Specifies the build output directory', default=os.path.join(g_sScriptPath, 'out'), dest='config_build_dir');
     oParser.add_argument('--ose', help='Builds the OSE version', action='store_true', default=None, dest='VBOX_OSE=1');
-    oParser.add_argument('--compat', help='Runs in compatibility mode. Only use for development', action='store_true', default=False, dest='config_compat');
-    oParser.add_argument('--debug', help='Runs in debug mode. Only use for development', action='store_true', default=False, dest='config_debug');
+    oParser.add_argument('--compat', help='Runs in compatibility mode. Only use for development', action='store_true', default=True, dest='config_compat');
+    oParser.add_argument('--debug', help='Runs in debug mode. Only use for development', action='store_true', default=True, dest='config_debug');
     oParser.add_argument('--nofatal', '--continue-on-error', help='Continues execution on fatal errors', action='store_true', dest='config_nofatal');
     oParser.add_argument('--build-profile', help='Build with a profiling support', action='store_true', default=None, dest='KBUILD_TYPE=profile');
     oParser.add_argument('--build-target', help='Specifies the build target', action='store_true', default=None, dest='config_build_target');
@@ -3001,6 +3001,15 @@ def main():
     print(f'Using Python {sys.version} (platform: {sysconfig.get_platform()})');
     print();
 
+    g_cVerbosity = oArgs.config_verbose;
+    if not g_fCompatMode:
+        g_fCompatMode = oArgs.config_compat;
+    g_fDebug = oArgs.config_debug;
+    g_fContOnErr = oArgs.config_nofatal;
+
+    if g_cVerbosity > 0:
+        print(f'Verbosity level set to {g_cVerbosity}');
+
     if g_fDebug:
         print('\n'.join(f"{k}: {v}" for k, v in sysconfig.get_config_vars().items()));
         print();
@@ -3023,12 +3032,6 @@ def main():
     sys.stderr = Log(sys.stderr, g_fhLog);
 
     printLogHeader();
-
-    g_cVerbosity = oArgs.config_verbose;
-    if not g_fCompatMode:
-        g_fCompatMode = oArgs.config_compat;
-    g_fDebug = oArgs.config_debug;
-    g_fContOnErr = oArgs.config_nofatal;
 
     # Set defaults.
     g_oEnv.set('KBUILD_HOST', g_enmHostTarget);
