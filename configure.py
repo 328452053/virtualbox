@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112203 2025-12-23 12:07:21Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112204 2025-12-23 12:12:05Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112203 $"
+__revision__ = "$Revision: 112204 $"
 
 import argparse
 import ctypes
@@ -2768,9 +2768,9 @@ g_aoTools = [
     # Windows exclusive tools below (so that it can be invoked with --with-win-nsis-path, for instance).
     ToolCheck("win-sdk10", asCmd = [ ], fnCallback = ToolCheck.checkCallback_Win10SDK, aeTargets = [ BuildTarget.WINDOWS ] ),
     ToolCheck("win-ddk", asCmd = [ ], fnCallback = ToolCheck.checkCallback_WinDDK, aeTargets = [ BuildTarget.WINDOWS ] ),
-    ToolCheck("win-nsis", asCmd = [ ], fnCallback = ToolCheck.checkCallback_WinNSIS),
-    ToolCheck("win-msi", asCmd = [ ], fnCallback = ToolCheck.checkCallback_WinMSI),
-    ToolCheck("win-wix", asCmd = [ ], fnCallback = ToolCheck.checkCallback_WinWIX)
+    ToolCheck("win-nsis", asCmd = [ ], fnCallback = ToolCheck.checkCallback_WinNSIS, aeTargets = [ BuildTarget.WINDOWS ]),
+    ToolCheck("win-msi", asCmd = [ ], fnCallback = ToolCheck.checkCallback_WinMSI, aeTargets = [ BuildTarget.WINDOWS ]),
+    ToolCheck("win-wix", asCmd = [ ], fnCallback = ToolCheck.checkCallback_WinWIX, aeTargets = [ BuildTarget.WINDOWS ])
 ];
 
 def write_autoconfig_kmk(sFilePath, enmBuildTarget, oEnv, aoLibs, aoTools):
