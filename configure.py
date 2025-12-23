@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112199 2025-12-23 11:41:19Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112200 2025-12-23 11:46:20Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112199 $"
+__revision__ = "$Revision: 112200 $"
 
 import argparse
 import ctypes
@@ -3213,18 +3213,19 @@ def main():
         BuildTarget.WINDOWS: [ ], # Done via own callbacks in the ToolCheck class down below.
         BuildTarget.SOLARIS: [ 'pkg-config', 'cc', 'gmake' ]
     };
-    aOsToolsToCheck = aOsTools.get( g_oEnv[ 'KBUILD_TARGET' ], [] );
-    oOsToolsTable = SimpleTable([ 'Tool', 'Status', 'Version', 'Path' ]);
-    for sTarget , sBinary in aOsToolsToCheck.items():
-        if not sBinary:
-            continue;
-        printVerbose(1, f'Checking for {sTarget} OS tool: {sBinary}');
-        sCmdPath, sVer = checkWhich(sBinary, sBinary);
-        oOsToolsTable.addRow(( sBinary,
-                               'ok' if sCmdPath else 'failed',
-                               sVer if sVer else "-",
-                               "-" ));
-    oOsToolsTable.print();
+    aOsToolsToCheck = aOsTools.get( g_oEnv[ 'KBUILD_TARGET' ], None);
+    if aOsToolsToCheck is None:
+        printWarn(f"Unsupported build target \'{ g_oEnv['KBUILD_TARGET'] }\' for OS tool checks, probably leading to build errors");
+    else:
+        oOsToolsTable = SimpleTable([ 'Tool', 'Status', 'Version', 'Path' ]);
+        for sBinary in aOsToolsToCheck:
+            printVerbose(1, f'Checking for OS tool: {sBinary}');
+            sCmdPath, sVer = checkWhich(sBinary, sBinary);
+            oOsToolsTable.addRow(( sBinary,
+                                'ok' if sCmdPath else 'failed',
+                                sVer if sVer else "-",
+                                "-" ));
+        oOsToolsTable.print();
 
     #
     # Perform tool checks.
