@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112209 2025-12-23 20:21:33Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112210 2025-12-23 20:34:00Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112209 $"
+__revision__ = "$Revision: 112210 $"
 
 import argparse
 import ctypes
@@ -2739,8 +2739,8 @@ g_aoLibs = [
     LibraryCheck("dxvk", [ "dxvk/dxvk.h" ], [ "libdxvk" ],  [ BuildTarget.LINUX ],
                  '#include <dxvk/dxvk.h>\nint main() { printf("<found>"); return 0; }\n',
                  asDefinesToDisableIfNotFound = [ 'VBOX_WITH_DXVK' ]),
-    LibraryCheck("libasound", [ "asoundlib.h", "alsa/version.h" ], [ "libasound" ], [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
-                 '#include <asoundlib.h>\n#include <alsa/version.h>\nint main() { snd_pcm_info_sizeof(); printf("%s", SND_LIB_VERSION_STR); return 0; }\n'),
+    LibraryCheck("libasound", [ "alsa/asoundlib.h", "alsa/version.h" ], [ "libasound" ], [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
+                 '#include <alsa/asoundlib.h>\n#include <alsa/version.h>\nint main() { snd_pcm_info_sizeof(); printf("%s", SND_LIB_VERSION_STR); return 0; }\n'),
     LibraryCheck("libcap", [ "sys/capability.h" ], [ "libcap" ], [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  '#include <sys/capability.h>\nint main() { cap_t c = cap_init(); printf("<found>"); return 0; }\n'),
     LibraryCheck("libcursor", [ "X11/cursorfont.h" ], [ "libXcursor" ], [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
