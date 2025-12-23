@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112200 2025-12-23 11:46:20Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112201 2025-12-23 11:54:21Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112200 $"
+__revision__ = "$Revision: 112201 $"
 
 import argparse
 import ctypes
@@ -125,12 +125,12 @@ class BuildTarget:
     HAIKU = "haiku";
     UNKNOWN = "unknown";
 
-g_fDebug = True;              # Enables debug mode. Only for development.
+g_fDebug = True;              # Enables debug mode. Only for development. Defaults to True for now (development phase).
 g_fContOnErr = False;         # Continue on fatal errors.
 g_fCompatMode = True;         # Enables compatibility mode to mimic the old build scripts. Enabled by default (for now).
 g_sEnvVarPrefix = 'VBOX_';
 g_sFileLog = 'configure.log'; # Log file path.
-g_cVerbosity = 0;
+g_cVerbosity = 4;             # Verbosity level (0=none, 1=min, 5=max). Defaults to 4 for now (development phase).
 g_cErrors = 0;                # Number of error messages.
 g_asErrors = [];              # List of error messages.
 g_cWarnings = 0;              # Number of warning messages.
@@ -3214,6 +3214,7 @@ def main():
         BuildTarget.SOLARIS: [ 'pkg-config', 'cc', 'gmake' ]
     };
     aOsToolsToCheck = aOsTools.get( g_oEnv[ 'KBUILD_TARGET' ], None);
+    printVerbose(1, f'Checking for essential OS tools: {aOsToolsToCheck}');
     if aOsToolsToCheck is None:
         printWarn(f"Unsupported build target \'{ g_oEnv['KBUILD_TARGET'] }\' for OS tool checks, probably leading to build errors");
     else:
