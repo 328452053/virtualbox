@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112223 2025-12-24 11:33:52Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112224 2025-12-24 11:51:19Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112223 $"
+__revision__ = "$Revision: 112224 $"
 
 import argparse
 import ctypes
@@ -3155,8 +3155,7 @@ def main():
         oArgs.config_tools_disable_openwatcom = True;
         oArgs.config_tools_disable_python_modules = True;
         oArgs.config_tools_disable_yasm = True;
-        g_oEnv.set('VBOX_OSE', '1'); # Do an OSE build if running in compatibility mode.
-
+        
     if not oArgs.config_file_log:
         g_sFileLog = os.path.join(oArgs.config_out_dir, 'configure.log');
     else:
