@@ -1,4 +1,4 @@
-/* $Id: ntDisplay.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: ntDisplay.cpp 112234 2025-12-26 16:16:48Z dmitrii.grigorev@oracle.com $ */
 /** @file
  * Test cases for Display device and DirectX 3D rendering - NT.
  */
@@ -175,6 +175,7 @@ static HWND   g_aHWnd[DISPLAYS_NUM_MAX];
 static HWND   g_hWndPrimary = NULL;
 static HBRUSH g_ahBrush[3];
 static WNDCLASSEX g_WindowClass;
+static char *g_pszWallPaperPath;
 
 LRESULT CALLBACK WindowProcGDIFullScreen(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -354,6 +355,7 @@ int main(int argc, char **argv)
     {
         { "--enable",       'e',  RTGETOPT_REQ_UINT32  },
         { "--quiet",        'q',  RTGETOPT_REQ_NOTHING },
+        { "--wallpaper",    'w',  RTGETOPT_REQ_STRING  },
         { "--verbose",      'v',  RTGETOPT_REQ_NOTHING },
     };
 
@@ -368,13 +370,22 @@ int main(int argc, char **argv)
             case 'e': SetDisplayDeviceState(RT_BOOL(ValueUnion.u32)); break;
             case 'q': g_cVerbosity = 0; break;
             case 'v': g_cVerbosity += 1; break;
+            case 'w': g_pszWallPaperPath = RTStrDup(ValueUnion.psz); break;
             case 'h':
-                RTPrintf("usage: ntDisplay.exe [-e|--enable <0 or 1>]\n");
+                RTPrintf("Usage: ntDisplay.exe [-e|--enable <0 or 1>] [-w|--wallpaper <filename>]\n");
                 return 0;
 
             default:
                 return RTGetOptPrintError(chOpt, &ValueUnion);
         }
+    }
+
+    if (g_pszWallPaperPath)
+    {
+        rc = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (PVOID)g_pszWallPaperPath, SPIF_SENDCHANGE);
+        RTPrintf("SystemParametersInfo SPI_SETDESKWALLPAPER returns %d for '%s'\n", rc, g_pszWallPaperPath);
+        RTStrFree(g_pszWallPaperPath);
+        return 0;
     }
 
     ShowFullScreenWindows();
