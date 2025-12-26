@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112227 2025-12-24 13:18:47Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112235 2025-12-26 20:03:52Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112227 $"
+__revision__ = "$Revision: 112235 $"
 
 import argparse
 import ctypes
@@ -3056,6 +3056,7 @@ def main():
         oParser.add_argument(f'--only-{oToolCur.sName}', action='store_true', default=None, dest=f'config_tools_only_{sToolName}');
 
     oParser.add_argument('--disable-docs', '--without-docs', help='Disables building the documentation', action='store_true', default=None, dest='VBOX_WITH_DOCS=');
+    oParser.add_argument('--disable-dtrace', '--without-dtrace', help='Disables building features requiring DTrace ', action='store_true', default=None, dest='config_disable_dtrace');
     oParser.add_argument('--disable-java', '--without-java', help='Disables building components which require Java', action='store_true', default=None, dest='config_disable_java');
     oParser.add_argument('--disable-python', '--without-python', help='Disables building the Python bindings', action='store_true', default=None, dest='config_disable_python');
     oParser.add_argument('--disable-pylint', '--without-pylint', help='Disables using pylint', action='store_true', default=None, dest='VBOX_WITH_PYLINT=');
@@ -3156,6 +3157,9 @@ def main():
         oArgs.config_tools_disable_openwatcom = True;
         oArgs.config_tools_disable_python_modules = True;
         oArgs.config_tools_disable_yasm = True;
+
+        g_oEnv.set('VBOX_WITH_EXTPACK_VBOXDTRACE', '');
+        g_oEnv.set('VBOX_WITH_DTRACE', '');
 
     if not oArgs.config_file_log:
         g_sFileLog = os.path.join(oArgs.config_out_dir, 'configure.log');
@@ -3326,6 +3330,9 @@ def main():
         lambda env: { 'VBOX_WITH_PYTHON': '' } if g_oEnv['config_disable_python'] else {},
         # Python is mandatory nowadays.
         lambda env: { 'VBOX_BLD_PYTHON': os.path.join(g_oEnv['config_python_path'], 'python' + getExeSuff() ) } if g_oEnv['config_python_path'] else {},
+        # Disable DTrace stuff if specified.
+        lambda env: { 'VBOX_WITH_EXTPACK_VBOXDTRACE': '', \
+                      'VBOX_WITH_DTRACE': ''  } if g_oEnv['config_disable_dtrace'] else {},
 
         #
         # Windows
