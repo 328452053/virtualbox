@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112236 2025-12-26 22:30:28Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112237 2025-12-27 10:19:10Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112236 $"
+__revision__ = "$Revision: 112237 $"
 
 import argparse
 import ctypes
@@ -2951,12 +2951,6 @@ def write_autoconfig_kmk(sFilePath, enmBuildTarget, oEnv, aoLibs, aoTools):
             g_oEnv.write_single(fh, 'PATH_SDK_WINDDK71');
             g_oEnv.write_single(fh, 'SDK_WINDDK71_VERSION'); # Not official, but good to have (I guess).
 
-            # Extension Pack.
-            g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK');
-            g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK_PUEL');
-            g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK_PUEL_BUILD');
-            g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK_VBOXDTRACE');
-
         if g_fDebug:
             abBuf = None;
             print(f'Contents of {sFilePath}:');
@@ -3081,19 +3075,19 @@ def main():
     oParser.add_argument('--disable-additions', '--without-additions', help='Disables building the Guest Additions', action='store_true', default=None, dest='VBOX_WITH_ADDITIONS=');
     oParser.add_argument('--disable-opengl', '--without-opengl', help='Disables building features which require OpenGL', action='store_true', default=None, dest='config_disable_opengl');
     # Disables building the Extension Pack explicitly. Only makes sense for the non-OSE build.
-    oParser.add_argument('--disable-extpack', '--without-extpack', help='Disables building the Extension Pack', action='store_true', default=None, dest='VBOX_WITH_EXTPACK=');
+    oParser.add_argument('--disable-extpack', '--without-extpack', help='Disables building the Extension Pack', action='store_true', default=None, dest='config_disable_extpack');
     oParser.add_argument('--with-hardening', help='Enables hardening', action='store_true', default=None, dest='VBOX_WITH_HARDENING=1');
     oParser.add_argument('--disable-hardening', '--without-hardening', help='Disables hardening', action='store_true', default=None, dest='VBOX_WITH_HARDENING=');
     oParser.add_argument('--output-file-autoconfig', help='Path to output AutoConfig.kmk file', default=None, dest='config_file_autoconfig');
     oParser.add_argument('--output-file-env', help='Path to output env[.bat|.sh] file', default=None, dest='config_file_env');
     oParser.add_argument('--output-file-log', help='Path to output log file', default=None, dest='config_file_log');
-    oParser.add_argument('--only-additions', help='Only build Guest Additions related libraries and tools', action='store_true', default=None, dest='VBOX_ONLY_ADDITIONS=');
+    oParser.add_argument('--only-additions', help='Only build Guest Additions related libraries and tools', action='store_true', default=None, dest='config_only_additions');
     oParser.add_argument('--only-docs', help='Only build the documentation', action='store_true', default=None, dest='VBOX_ONLY_DOCS=1');
     # Note: '--odir' is kept for backwards compatibility.
     oParser.add_argument('--output-dir', '--odir', help='Specifies the output directory for all output files', default=g_sScriptPath, dest='config_out_dir');
     # Note: '--out-base-dir' is kept for backwards compatibility.
     oParser.add_argument('--output-build-dir', '--out-base-dir', help='Specifies the build output directory', default=os.path.join(g_sScriptPath, 'out'), dest='config_build_dir');
-    oParser.add_argument('--ose', help='Builds the OSE version', action='store_true', default=None, dest='VBOX_OSE=1');
+    oParser.add_argument('--ose', help='Builds the OSE version', action='store_true', default=None, dest='config_ose');
     oParser.add_argument('--compat', help='Runs in compatibility mode. Only use for development', action='store_true', default=True, dest='config_compat');
     oParser.add_argument('--debug', help='Runs in debug mode. Only use for development', action='store_true', default=True, dest='config_debug');
     oParser.add_argument('--nofatal', '--continue-on-error', help='Continues execution on fatal errors', action='store_true', dest='config_nofatal');
@@ -3173,9 +3167,6 @@ def main():
         oArgs.config_tools_disable_openwatcom = True;
         oArgs.config_tools_disable_python_modules = True;
         oArgs.config_tools_disable_yasm = True;
-
-        g_oEnv.set('VBOX_WITH_EXTPACK_VBOXDTRACE', '');
-        g_oEnv.set('VBOX_WITH_DTRACE', '');
 
     if not oArgs.config_file_log:
         g_sFileLog = os.path.join(oArgs.config_out_dir, 'configure.log');
@@ -3268,7 +3259,7 @@ def main():
     #
     # Handle OSE building.
     #
-    fOSE = True if g_oEnv.get('VBOX_OSE') == '1' else None;
+    fOSE = True if g_oEnv.get('config_ose') else None;
     if  not fOSE  \
     and pathExists('src/VBox/ExtPacks/Puel/ExtPack.xml'):
         print('Found ExtPack, assuming to build PUEL version');
@@ -3276,7 +3267,8 @@ def main():
     else:
         fOSE = True; # Default
 
-    g_oEnv.set('VBOX_OSE', '1' if fOSE else '');
+    if fOSE:
+        g_oEnv.set('VBOX_OSE', '1' if fOSE else '');
 
     print('Building %s version' % ('OSE' if (fOSE is None or fOSE is True) else 'PUEL'));
     print();
@@ -3291,23 +3283,23 @@ def main():
         #
         # Generic
         #
+        lambda env: { 'VBOX_ONLY_ADDITIONS': '1' } if g_oEnv['config_only_additions'] else {},
         # Disabling building the docs when only building Additions or explicitly disabled building the docs.
-        lambda env: { 'VBOX_WITH_DOCS_PACKING': ''} if g_oEnv['VBOX_ONLY_ADDITIONS'] or g_oEnv['VBOX_WITH_DOCS'] == '' else {},
-        lambda env: { 'VBOX_WITH_WEBSERVICES': '' } if g_oEnv['VBOX_ONLY_ADDITIONS'] else {},
+        lambda env: { 'VBOX_WITH_DOCS_PACKING': '' } if g_oEnv['config_only_additions']
+                                                     or g_oEnv['VBOX_WITH_DOCS'] == '' else {},
+        lambda env: { 'VBOX_WITH_WEBSERVICES': '' } if g_oEnv['config_only_additions'] else {},
         # Disable stuff which aren't available in OSE.
-        lambda env: { 'VBOX_WITH_VALIDATIONKIT': '' , 'VBOX_WITH_WIN32_ADDITIONS': '' } if g_oEnv['VBOX_OSE'] else {},
+        lambda env: { 'VBOX_WITH_VALIDATIONKIT': '' , 'VBOX_WITH_WIN32_ADDITIONS': '' } if g_oEnv['config_ose'] else {},
         # Disable building the Extension Pack VNC feature when only building Additions.
-        lambda env: { 'VBOX_WITH_EXTPACK_VNC': '' } if g_oEnv['VBOX_ONLY_ADDITIONS'] else {},
+        lambda env: { 'VBOX_WITH_EXTPACK_VNC': '' } if g_oEnv['config_only_additions']
+                                                    or g_oEnv['config_ose'] else {},
         # Disable Extension Pack PUEL features when building OSE.
         lambda env: { 'VBOX_WITH_EXTPACK_PUEL': '', \
-                      'VBOX_WITH_EXTPACK_PUEL_BUILD': '' } if g_oEnv['VBOX_OSE'] == '1' else {},
+                      'VBOX_WITH_EXTPACK_PUEL_BUILD': '' } if g_oEnv['config_ose'] else {},
         # Disable Extension Pack feature (plus PUEL stuff) when building only Guest Additions
         # or with Extension Pack feature disabled.
-        lambda env: { 'VBOX_WITH_EXTPACK': '', \
-                      'VBOX_WITH_EXTPACK_PUEL': '', \
-                      'VBOX_WITH_EXTPACK_PUEL_BUILD': '', \
-                      'VBOX_WITH_EXTPACK_VBOXDTRACE': '' } if  g_oEnv['VBOX_ONLY_ADDITIONS'] == '1'
-                                                            or g_oEnv['VBOX_WITH_EXTPACK'] == '' else {},
+        lambda env: { 'VBOX_WITH_EXTPACK_PUEL_BUILD': '' } if g_oEnv['config_only_additions']
+                                                           or g_oEnv['config_disable_extpack'] else {},
         # Disable FE/Qt if qt6 is disabled.
         lambda env: { 'VBOX_WITH_QTGUI': '' } if g_oEnv['config_libs_disable_qt6'] else {},
         # Disable components if we want to build headless.
