@@ -1,4 +1,4 @@
-/* $Id: stream.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: stream.cpp 112238 2025-12-27 12:03:55Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - I/O Stream.
  */
@@ -215,6 +215,7 @@ typedef struct RTSTRMWRAPPEDSTATE
     uint32_t    cchLine;            /**< The current line length (valid chars in szLine). */
     uint32_t    cLines;             /**< Number of lines written. */
     uint32_t    cchIndent;          /**< The indent (determined from the first line). */
+    uint64_t    bmSep[3];           /**< Separator character bitmap. */
     int         rcStatus;           /**< The output status. */
     uint8_t     cchHangingIndent;   /**< Hanging indent (from fFlags). */
     char        szLine[0x1000+1];   /**< We must buffer output so we can do proper word splitting. */
@@ -2495,6 +2496,15 @@ static void rtStrmWrapppedIndent(RTSTRMWRAPPEDSTATE *pState, uint32_t cchIndent)
 
 
 /**
+ * RT_C_IS_BLANK-like helper for detecting acceptable places to split a line.
+ */
+DECL_FORCE_INLINE(bool) rtStrmWrapIsBlankOrSep(RTSTRMWRAPPEDSTATE *pState, int ch)
+{
+    return (pState->bmSep[(unsigned)ch < 128 ? (unsigned)ch / 64 : 2] & RT_BIT_64((unsigned)ch & 63)) != 0;
+}
+
+
+/**
  * Flushes the current line.
  *
  * @param   pState      The wrapped output state.
@@ -2510,9 +2520,10 @@ static void rtStrmWrappedFlushLine(RTSTRMWRAPPEDSTATE *pState, bool fPartial)
     if (cchIndent == UINT32_MAX)
     {
         pState->cchIndent = 0;
-        cchIndent = pState->cchHangingIndent;
+        cchIndent = 0;
         while (RT_C_IS_BLANK(pState->szLine[cchIndent]))
             cchIndent++;
+        cchIndent += pState->cchHangingIndent;
     }
 
     /*
@@ -2550,7 +2561,7 @@ static void rtStrmWrappedFlushLine(RTSTRMWRAPPEDSTATE *pState, bool fPartial)
             offSplit = pState->cchWidth - pState->cchIndent;
 
         /* Find the start of the current word: */
-        while (offSplit > 0 && !RT_C_IS_BLANK(pState->szLine[offSplit - 1]))
+        while (offSplit > 0 && !rtStrmWrapIsBlankOrSep(pState, pState->szLine[offSplit - 1]))
             offSplit--;
 
         /* Skip spaces. */
@@ -2561,12 +2572,12 @@ static void rtStrmWrappedFlushLine(RTSTRMWRAPPEDSTATE *pState, bool fPartial)
         /* If the first word + indent is wider than the screen width, so just output it in full. */
         if (offSplit == 0) /** @todo Split words, look for hyphen...  This code is currently a bit crude. */
         {
-            while (offSplit < cchLine && !RT_C_IS_BLANK(pState->szLine[offSplit]))
+            while (offSplit < cchLine && !rtStrmWrapIsBlankOrSep(pState, pState->szLine[offSplit]))
                 offSplit++;
             offNextLine = offSplit;
         }
 
-        while (offNextLine < cchLine && RT_C_IS_BLANK(pState->szLine[offNextLine]))
+        while (offNextLine < cchLine && rtStrmWrapIsBlankOrSep(pState, pState->szLine[offNextLine]))
             offNextLine++;
 
         /*
@@ -2648,6 +2659,14 @@ RTDECL(int32_t) RTStrmWrappedPrintfV(PRTSTREAM pStream, uint32_t fFlags, const c
         if (!State.cchHangingIndent)
             State.cchHangingIndent = 4;
     }
+    State.bmSep[0]          = RT_BIT_64(32) /*space*/ | RT_BIT_64(9) /*horizontal tab*/;
+    State.bmSep[1]          = 0;
+    State.bmSep[2]          = 0;
+    if (fFlags & RTSTRMWRAPPED_F_SPLIT_ON_PIPE)
+        State.bmSep[1]     |= RT_BIT_64(124 & 0x3f) /* vertical bar */;
+    Assert(rtStrmWrapIsBlankOrSep(&State, ' '));
+    Assert(rtStrmWrapIsBlankOrSep(&State, '\t'));
+    Assert(!rtStrmWrapIsBlankOrSep(&State, 'k'));
 
     int rc = RTStrmQueryTerminalWidth(pStream, &State.cchWidth);
     if (RT_SUCCESS(rc))
