@@ -1,4 +1,4 @@
-/* $Id: HostDnsService.h 112213 2025-12-24 03:41:13Z jack.doherty@oracle.com $ */
+/* $Id: HostDnsService.h 112243 2025-12-28 23:13:34Z knut.osmundsen@oracle.com $ */
 /** @file
  * Host DNS listener.
  */
@@ -220,8 +220,8 @@ public:
 protected:
 
     HRESULT readResolvConf(void);
-    int i_rcpParse(const char *, HostDnsInformation&);
-    char *i_getToken(char *, char **);
+    static int i_rcpParse(const char *, HostDnsInformation &) RT_NOEXCEPT;
+    static int i_rcpParseInner(struct RTSTREAM *a_pStream, HostDnsInformation &);
 
 protected:
 

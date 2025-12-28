@@ -1,4 +1,4 @@
-/* $Id: HostDnsServiceResolvConf.cpp 112242 2025-12-28 15:50:23Z knut.osmundsen@oracle.com $ */
+/* $Id: HostDnsServiceResolvConf.cpp 112243 2025-12-28 23:13:34Z knut.osmundsen@oracle.com $ */
 /** @file
  * Base class for Host DNS & Co services.
  */
@@ -38,6 +38,7 @@
 #include <iprt/assert.h>
 #include <iprt/errcore.h>
 #include <iprt/critsect.h>
+#include <iprt/ctype.h>
 #include <iprt/file.h>
 #include <iprt/net.h>
 #include <iprt/stream.h>
@@ -112,188 +113,41 @@ HRESULT HostDnsServiceResolvConf::readResolvConf(void)
     return S_OK;
 }
 
-int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformation &dnsInfo)
+/*static*/ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformation &dnsInfo) RT_NOEXCEPT
 {
-    if (RT_UNLIKELY(filename == NULL /*impossible as c_str() never returns NULL*/ || *filename == '\0'))
-        return VERR_INVALID_PARAMETER;
-
-    PRTSTREAM stream;
-    int vrc = RTStrmOpen(filename, "r", &stream);
-    if (RT_FAILURE(vrc))
-        return vrc;
-
-    char buf[RCPS_BUFFER_SIZE];
-    unsigned i = 0;
-    for (;;)
+    /*
+     * This just opens the file and parses the content.
+     */
+    int vrc = VERR_INVALID_PARAMETER;
+    if (filename != NULL /*impossible as c_str() never returns NULL*/ && *filename != '\0')
     {
-        vrc = RTStrmGetLine(stream, buf, sizeof(buf));
-        if (RT_FAILURE(vrc))
+        PRTSTREAM pStream = NULL;
+        vrc = RTStrmOpen(filename, "r", &pStream);
+        if (RT_SUCCESS(vrc))
         {
-            if (vrc == VERR_EOF)
-                vrc = VINF_SUCCESS;
-            break;
+            try
+            {
+                vrc = i_rcpParseInner(pStream, dnsInfo);
+            }
+            catch (std::bad_alloc &)
+            {
+                vrc = VERR_NO_MEMORY;
+            }
+            catch (...)
+            {
+                vrc = VERR_UNEXPECTED_EXCEPTION;
+            }
+
+            RTStrmClose(pStream);
         }
-
-        /*
-         * Strip comment if present.
-         *
-         * This is not how ad-hoc parser in bind's res_init.c does it,
-         * btw, so this code will accept more input as valid compared
-         * to res_init.  (e.g. "nameserver 1.1.1.1; comment" is
-         * misparsed by res_init).
-         */
-        char *s;
-        for (s = buf; *s != '\0'; ++s)
-        {
-            if (*s == '#' || *s == ';')
-            {
-                *s = '\0';
-                break;
-            }
-        }
-
-        char *tok = i_getToken(buf, &s);
-        if (tok == NULL)
-            continue;
-
-
-        /*
-         * NAMESERVER
-         */
-        if (RTStrCmp(tok, "nameserver") == 0)
-        {
-            if (RT_UNLIKELY(dnsInfo.servers.size() >= RCPS_MAX_NAMESERVERS))
-            {
-                LogRel(("HostDnsServiceResolvConf: too many nameserver lines, ignoring %s\n", s));
-                continue;
-            }
-
-            /*
-             * parse next token as an IP address
-             */
-            tok = i_getToken(NULL, &s);
-            char * const pszAddr = tok;
-            if (tok == NULL)
-            {
-                LogRel(("HostDnsServiceResolvConf: nameserver line without value\n"));
-                continue;
-            }
-
-            RTNETADDR NetAddr = { { {0, 0} }, RTNETADDRTYPE_INVALID, RTNETADDR_PORT_NA };
-
-            /* Check if entry is IPv4 nameserver, save if true */
-            char *pszNext = NULL;
-            vrc = RTNetStrToIPv4AddrEx(tok, &NetAddr.uAddr.IPv4, &pszNext);
-            if (RT_SUCCESS(vrc))
-            {
-                if (*pszNext == '\0')
-                    NetAddr.enmType = RTNETADDRTYPE_IPV4;
-                else
-                {
-                    LogRel(("HostDnsServiceResolvConf: garbage at the end of IPv4 address %s\n", tok));
-                    continue;
-                }
-
-                LogRel(("HostDnsServiceResolvConf: IPv4 nameserver %RTnaddr\n", &NetAddr));
-
-                RTStrPurgeEncoding(pszAddr);
-                dnsInfo.servers.push_back(pszAddr);
-            }
-
-            /* Check if entry is IPv6 nameserver, save if true */
-            /** @todo r=bird: Why try IPv6 parsing if IPv4 succeeded? */
-            vrc = RTNetStrToIPv6AddrEx(tok, &NetAddr.uAddr.IPv6, &pszNext);
-            if (RT_SUCCESS(vrc))
-            {
-                if (*pszNext == '%') /** @todo XXX: TODO: IPv6 zones */
-                {
-                    size_t zlen = RTStrOffCharOrTerm(pszNext, '.');
-                    LogRel(("HostDnsServiceResolvConf: FIXME: ignoring IPv6 zone %*.*s\n",
-                            zlen, zlen, pszNext));
-                    pszNext += zlen;
-                }
-
-                if (*pszNext == '\0')
-                    NetAddr.enmType = RTNETADDRTYPE_IPV6;
-                else
-                {
-                    LogRel(("HostDnsServiceResolvConf: garbage at the end of IPv6 address %s\n", tok));
-                    continue;
-                }
-
-                LogRel(("HostDnsServiceResolvConf: IPv6 nameserver %RTnaddr\n", &NetAddr));
-
-                RTStrPurgeEncoding(pszAddr);
-                dnsInfo.serversV6.push_back(pszAddr);
-            }
-
-            if (NetAddr.enmType == RTNETADDRTYPE_INVALID)
-            {
-                LogRel(("HostDnsServiceResolvConf: bad nameserver address %s\n", tok));
-                continue;
-            }
-
-
-            tok = i_getToken(NULL, &s);
-            if (tok != NULL)
-                LogRel(("HostDnsServiceResolvConf: ignoring unexpected trailer on the nameserver line\n"));
-        }
-        /*
-         * DOMAIN
-         */
-        else if (RTStrCmp(tok, "domain") == 0)
-        {
-            if (dnsInfo.domain.isNotEmpty())
-            {
-                LogRel(("HostDnsServiceResolvConf: ignoring multiple domain lines\n"));
-                continue;
-            }
-
-            tok = i_getToken(NULL, &s);
-            if (tok == NULL)
-            {
-                LogRel(("HostDnsServiceResolvConf: domain line without value\n"));
-                continue;
-            }
-
-            /** @todo r=bird: RTStrNLen is pointless here, use strlen. */
-            if (RTStrNLen(tok, 255) > 253) /* Max FQDN Length */
-            {
-                LogRel(("HostDnsServiceResolvConf: domain name too long\n"));
-                continue;
-            }
-
-            RTStrPurgeEncoding(tok);
-            dnsInfo.domain = tok;
-        }
-        /*
-         * SEARCH
-         */
-        else if (RTStrCmp(tok, "search") == 0)
-        {
-            while ((tok = i_getToken(NULL, &s)) && tok != NULL)
-            {
-                if (RT_UNLIKELY(i >= RCPS_MAX_SEARCHLIST))
-                {
-                    LogRel(("HostDnsServiceResolvConf: too many search domains, ignoring %s\n", tok));
-                    continue;
-                }
-
-                LogRel(("HostDnsServiceResolvConf: search domain %s", tok));
-
-                RTStrPurgeEncoding(tok);
-                dnsInfo.searchList.push_back(tok);
-            }
-        }
-        else
-            LogRel(("HostDnsServiceResolvConf: ignoring \"%s %s\"\n", tok, s));
     }
-
-    RTStrmClose(stream);
     return vrc;
 }
 
-char *HostDnsServiceResolvConf::i_getToken(char *psz, char **ppszSavePtr)
+/**
+ * Internal helper for isolating the next word (token) from the given string.
+ */
+static char *getToken(char *psz, char **ppszSavePtr)
 {
     AssertPtrReturn(ppszSavePtr, NULL);
 
@@ -305,7 +159,7 @@ char *HostDnsServiceResolvConf::i_getToken(char *psz, char **ppszSavePtr)
     }
 
     /* skip leading blanks. */
-    while (*psz == ' ' || *psz == '\t')
+    while (RT_C_IS_BLANK(*psz))
         ++psz;
 
     if (*psz == '\0')
@@ -318,10 +172,11 @@ char *HostDnsServiceResolvConf::i_getToken(char *psz, char **ppszSavePtr)
     char * const pszToken = psz;
 
     /* Find the end so we can terminate it. */
-    while (*psz && *psz != ' ' && *psz != '\t')
+    char ch;
+    while ((ch = *psz) != '\0' && !RT_C_IS_BLANK(ch))
         ++psz;
 
-    if (*psz == '\0')
+    if (ch == '\0')
         psz = NULL;
     else
         *psz++ = '\0';
@@ -329,3 +184,153 @@ char *HostDnsServiceResolvConf::i_getToken(char *psz, char **ppszSavePtr)
     *ppszSavePtr = psz;
     return pszToken;
 }
+
+/*static*/ int HostDnsServiceResolvConf::i_rcpParseInner(PRTSTREAM a_pStream, HostDnsInformation &dnsInfo)
+{
+    unsigned i = 0; /** @todo pointless. */
+    for (unsigned iLine = 1;; iLine++)
+    {
+        char buf[RCPS_BUFFER_SIZE];
+        int vrc = RTStrmGetLine(a_pStream, buf, sizeof(buf));
+        if (RT_FAILURE(vrc))
+            return vrc == VERR_EOF ? VINF_SUCCESS : vrc;
+
+        /*
+         * Strip comment if present.
+         *
+         * This is not how ad-hoc parser in bind's res_init.c does it,
+         * btw, so this code will accept more input as valid compared
+         * to res_init.  (e.g. "nameserver 1.1.1.1; comment" is
+         * misparsed by res_init).
+         *
+         * Update: glibc 2.42.9000 accepts ';' as a trailing comment for
+         * sortlist, but not any other directives.
+         */
+        char *s = strchr(buf, '#');
+        if (s)
+            *s = '\0';
+        s = strchr(buf, ';');
+        if (s)
+            *s = '\0';
+
+        char *tok = getToken(buf, &s);
+        if (tok == NULL)
+            continue;
+
+        /*
+         * NAMESERVER
+         */
+        if (RTStrCmp(tok, "nameserver") == 0)
+        {
+            if (RT_UNLIKELY(dnsInfo.servers.size() >= RCPS_MAX_NAMESERVERS))
+                LogRel(("HostDnsServiceResolvConf: line %u: too many nameserver lines, ignoring %s\n", iLine, s));
+            else
+            {
+
+                /*
+                 * parse next token as an IP address
+                 */
+                tok = getToken(NULL, &s);
+                char * const pszAddr = tok;
+                if (tok == NULL)
+                    LogRel(("HostDnsServiceResolvConf: line %u: nameserver line without value\n", iLine));
+                else
+                {
+                    RTNETADDR NetAddr = { { {0, 0} }, RTNETADDRTYPE_INVALID, RTNETADDR_PORT_NA };
+
+                    /* Check if entry is IPv4 nameserver, save if true */
+                    char *pszNext = NULL;
+                    vrc = RTNetStrToIPv4AddrEx(tok, &NetAddr.uAddr.IPv4, &pszNext);
+                    if (RT_SUCCESS(vrc))
+                    {
+                        if (*pszNext == '\0')
+                        {
+                            LogRel(("HostDnsServiceResolvConf: line %u: IPv4 nameserver %RTnaddr\n", iLine, &NetAddr));
+                            RTStrPurgeEncoding(pszAddr);
+                            dnsInfo.servers.push_back(pszAddr);
+
+                            if ((tok = getToken(NULL, &s)) != NULL)
+                                LogRel(("HostDnsServiceResolvConf: line %u: ignoring unexpected trailer on the IPv4 nameserver line (%s)\n", iLine, tok));
+                        }
+                        else
+                            LogRel(("HostDnsServiceResolvConf: line %u: garbage at the end of IPv4 address %s\n", iLine, tok));
+                    }
+                    else
+                    {
+                        /* Check if entry is IPv6 nameserver, save if true */
+                        vrc = RTNetStrToIPv6AddrEx(tok, &NetAddr.uAddr.IPv6, &pszNext);
+                        if (RT_SUCCESS(vrc))
+                        {
+                            if (*pszNext == '%') /** @todo XXX: TODO: IPv6 zones */
+                            {
+                                size_t zlen = RTStrOffCharOrTerm(pszNext, '.');
+                                LogRel(("HostDnsServiceResolvConf: line %u: FIXME: ignoring IPv6 zone %*.*s\n",
+                                        iLine, zlen, zlen, pszNext));
+                                pszNext += zlen;
+                            }
+
+                            if (*pszNext == '\0')
+                            {
+                                RTStrPurgeEncoding(pszAddr);
+                                LogRel(("HostDnsServiceResolvConf: line %u: IPv6 nameserver %RTnaddr\n", iLine, &NetAddr));
+                                dnsInfo.serversV6.push_back(pszAddr);
+
+                                if ((tok = getToken(NULL, &s)) != NULL)
+                                    LogRel(("HostDnsServiceResolvConf: line %u: ignoring unexpected trailer on the IPv4 nameserver line (%s)\n", iLine, tok));
+                            }
+                            else
+                                LogRel(("HostDnsServiceResolvConf: line %u: garbage at the end of IPv6 address %s\n", iLine, tok));
+                        }
+                        else
+                            LogRel(("HostDnsServiceResolvConf: line %u: bad nameserver address %s\n", iLine, tok));
+                    }
+                }
+            }
+        }
+        /*
+         * DOMAIN
+         */
+        else if (RTStrCmp(tok, "domain") == 0)
+        {
+            if (dnsInfo.domain.isNotEmpty())
+                LogRel(("HostDnsServiceResolvConf: line %u: ignoring multiple domain lines\n", iLine));
+            else
+            {
+                tok = getToken(NULL, &s);
+                if (tok == NULL)
+                    LogRel(("HostDnsServiceResolvConf: line %u: domain line without value\n", iLine));
+                else if (strlen(tok) > 253) /* Max FQDN Length */
+                    LogRel(("HostDnsServiceResolvConf: line %u: domain name too long\n", iLine));
+                else
+                {
+                    RTStrPurgeEncoding(tok);
+                    vrc = dnsInfo.domain.assignNoThrow(tok);
+                    if (RT_FAILURE(vrc))
+                        return vrc;
+                }
+            }
+        }
+        /*
+         * SEARCH
+         */
+        else if (RTStrCmp(tok, "search") == 0)
+        {
+            while ((tok = getToken(NULL, &s)) && tok != NULL)
+            {
+                if (RT_UNLIKELY(i >= RCPS_MAX_SEARCHLIST)) /** @todo r=bird: i isn't modified, so this isn't doing any good... */
+                    LogRel(("HostDnsServiceResolvConf: line %u: too many search domains, ignoring %s\n", iLine, tok));
+                else
+                {
+                    RTStrPurgeEncoding(tok);
+                    dnsInfo.searchList.push_back(tok);
+                    LogRel(("HostDnsServiceResolvConf: line %u: search domain %s", iLine, tok));
+                }
+            }
+        }
+        else
+            LogRel(("HostDnsServiceResolvConf: line %u: ignoring: %s%s%s\n", iLine, tok, s ? " " : "", s ? s : ""));
+    }
+
+    return VINF_SUCCESS;
+}
+
