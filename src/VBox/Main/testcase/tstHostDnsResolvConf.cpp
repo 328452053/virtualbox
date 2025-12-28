@@ -1,4 +1,4 @@
-/* $Id: tstHostDnsResolvConf.cpp 112213 2025-12-24 03:41:13Z jack.doherty@oracle.com $ */
+/* $Id: tstHostDnsResolvConf.cpp 112242 2025-12-28 15:50:23Z knut.osmundsen@oracle.com $ */
 /** @file
  * HostDnsServiceResolvConf parsing tests.
  *
@@ -118,6 +118,7 @@ static int createTempFileWith(const char *pszContent, com::Utf8Str &rPath)
 *********************************************************************************************************************************/
 static void testNullFilename(RTTEST hTest)
 {
+    /** @todo r=bird: Not useful, as impossible as c_str() never returns NULL.   */
     RTTestSub(hTest, "NULL filename");
     HostDnsServiceResolvConfTest o;
     HostDnsInformation Info;
@@ -174,11 +175,11 @@ static void testNameserverIPv6AndComments(RTTEST hTest)
 {
     RTTestSub(hTest, "IPv6 and comment stripping");
     com::Utf8Str Path;
-    const char *psz =
+    static const char *s_psz =
         "# full line comment\n"
         "   ; another comment\n"
         "nameserver 2001:db8::1   # trailing comment\n";
-    int rc = createTempFileWith(psz, Path);
+    int rc = createTempFileWith(s_psz, Path);
     RTTESTI_CHECK_RC_OK(rc);
     if (RT_SUCCESS(rc))
     {
@@ -196,12 +197,12 @@ static void testNameserverLimit(RTTEST hTest)
 {
     RTTestSub(hTest, "nameserver count limit");
     com::Utf8Str Path;
-    const char *psz =
+    static const char * const s_psz =
         "nameserver 1.1.1.1\n"
         "nameserver 2.2.2.2\n"
         "nameserver 3.3.3.3\n"
         "nameserver 4.4.4.4\n"; /* Should be ignored as per RCPS_MAX_NAMESERVERS=3 */
-    int rc = createTempFileWith(psz, Path);
+    int rc = createTempFileWith(s_psz, Path);
     RTTESTI_CHECK_RC_OK(rc);
     if (RT_SUCCESS(rc))
     {
@@ -258,8 +259,9 @@ int main()
     }
     return rcExit;
 }
-#else
-#include <iprt/test.h>
+
+#else  /* !(defined(RT_OS_LINUX) || defined(RT_OS_FREEBSD) || defined(RT_OS_SOLARIS)) */
+# include <iprt/test.h>
 
 int main()
 {
@@ -273,4 +275,5 @@ int main()
     }
     return rcExit;
 }
-#endif
+
+#endif /* !(defined(RT_OS_LINUX) || defined(RT_OS_FREEBSD) || defined(RT_OS_SOLARIS)) */

@@ -1,4 +1,4 @@
-/* $Id: HostDnsServiceResolvConf.cpp 112217 2025-12-24 04:53:04Z jack.doherty@oracle.com $ */
+/* $Id: HostDnsServiceResolvConf.cpp 112242 2025-12-28 15:50:23Z knut.osmundsen@oracle.com $ */
 /** @file
  * Base class for Host DNS & Co services.
  */
@@ -41,7 +41,6 @@
 #include <iprt/file.h>
 #include <iprt/net.h>
 #include <iprt/stream.h>
-
 
 #include <VBox/log.h>
 
@@ -115,25 +114,18 @@ HRESULT HostDnsServiceResolvConf::readResolvConf(void)
 
 int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformation &dnsInfo)
 {
-    PRTSTREAM stream;
-    char buf[RCPS_BUFFER_SIZE];
-
-    int vrc;
-
-    if (RT_UNLIKELY(filename == NULL))
+    if (RT_UNLIKELY(filename == NULL /*impossible as c_str() never returns NULL*/ || *filename == '\0'))
         return VERR_INVALID_PARAMETER;
-    else
-    {
-        vrc = RTStrmOpen(filename, "r", &stream);
-        if (RT_FAILURE(vrc))
-            return vrc;
-    }
 
+    PRTSTREAM stream;
+    int vrc = RTStrmOpen(filename, "r", &stream);
+    if (RT_FAILURE(vrc))
+        return vrc;
+
+    char buf[RCPS_BUFFER_SIZE];
     unsigned i = 0;
     for (;;)
     {
-        char *s, *tok;
-
         vrc = RTStrmGetLine(stream, buf, sizeof(buf));
         if (RT_FAILURE(vrc))
         {
@@ -150,6 +142,7 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
          * to res_init.  (e.g. "nameserver 1.1.1.1; comment" is
          * misparsed by res_init).
          */
+        char *s;
         for (s = buf; *s != '\0'; ++s)
         {
             if (*s == '#' || *s == ';')
@@ -159,7 +152,7 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
             }
         }
 
-        tok = i_getToken(buf, &s);
+        char *tok = i_getToken(buf, &s);
         if (tok == NULL)
             continue;
 
@@ -169,10 +162,6 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
          */
         if (RTStrCmp(tok, "nameserver") == 0)
         {
-            RTNETADDR NetAddr;
-            char *pszAddr;
-            char *pszNext;
-
             if (RT_UNLIKELY(dnsInfo.servers.size() >= RCPS_MAX_NAMESERVERS))
             {
                 LogRel(("HostDnsServiceResolvConf: too many nameserver lines, ignoring %s\n", s));
@@ -183,17 +172,17 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
              * parse next token as an IP address
              */
             tok = i_getToken(NULL, &s);
-            pszAddr = tok;
+            char * const pszAddr = tok;
             if (tok == NULL)
             {
                 LogRel(("HostDnsServiceResolvConf: nameserver line without value\n"));
                 continue;
             }
 
-            RT_ZERO(NetAddr);
-            NetAddr.uPort = RTNETADDR_PORT_NA;
+            RTNETADDR NetAddr = { { {0, 0} }, RTNETADDRTYPE_INVALID, RTNETADDR_PORT_NA };
 
             /* Check if entry is IPv4 nameserver, save if true */
+            char *pszNext = NULL;
             vrc = RTNetStrToIPv4AddrEx(tok, &NetAddr.uAddr.IPv4, &pszNext);
             if (RT_SUCCESS(vrc))
             {
@@ -211,11 +200,12 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
                 dnsInfo.servers.push_back(pszAddr);
             }
 
-            /* Check if entry is IPv6 nameserver, save if true*/
+            /* Check if entry is IPv6 nameserver, save if true */
+            /** @todo r=bird: Why try IPv6 parsing if IPv4 succeeded? */
             vrc = RTNetStrToIPv6AddrEx(tok, &NetAddr.uAddr.IPv6, &pszNext);
             if (RT_SUCCESS(vrc))
             {
-                if (*pszNext == '%') /* XXX: TODO: IPv6 zones */
+                if (*pszNext == '%') /** @todo XXX: TODO: IPv6 zones */
                 {
                     size_t zlen = RTStrOffCharOrTerm(pszNext, '.');
                     LogRel(("HostDnsServiceResolvConf: FIXME: ignoring IPv6 zone %*.*s\n",
@@ -247,16 +237,13 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
             tok = i_getToken(NULL, &s);
             if (tok != NULL)
                 LogRel(("HostDnsServiceResolvConf: ignoring unexpected trailer on the nameserver line\n"));
-
-            continue;
         }
-
         /*
          * DOMAIN
          */
-        if (RTStrCmp(tok, "domain") == 0)
+        else if (RTStrCmp(tok, "domain") == 0)
         {
-            if (dnsInfo.domain != NULL)
+            if (dnsInfo.domain.isNotEmpty())
             {
                 LogRel(("HostDnsServiceResolvConf: ignoring multiple domain lines\n"));
                 continue;
@@ -269,6 +256,7 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
                 continue;
             }
 
+            /** @todo r=bird: RTStrNLen is pointless here, use strlen. */
             if (RTStrNLen(tok, 255) > 253) /* Max FQDN Length */
             {
                 LogRel(("HostDnsServiceResolvConf: domain name too long\n"));
@@ -277,17 +265,11 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
 
             RTStrPurgeEncoding(tok);
             dnsInfo.domain = tok;
-
-            continue;
         }
-
-
         /*
          * SEARCH
          */
-
-
-        if (RTStrCmp(tok, "search") == 0)
+        else if (RTStrCmp(tok, "search") == 0)
         {
             while ((tok = i_getToken(NULL, &s)) && tok != NULL)
             {
@@ -302,26 +284,17 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
                 RTStrPurgeEncoding(tok);
                 dnsInfo.searchList.push_back(tok);
             }
-
-            continue;
         }
-
-        LogRel(("HostDnsServiceResolvConf: ignoring \"%s %s\"\n", tok, s));
+        else
+            LogRel(("HostDnsServiceResolvConf: ignoring \"%s %s\"\n", tok, s));
     }
 
-    if (filename != NULL)
-        RTStrmClose(stream);
-
-    if (RT_FAILURE(vrc))
-        return vrc;
-
-    return VINF_SUCCESS;
+    RTStrmClose(stream);
+    return vrc;
 }
 
 char *HostDnsServiceResolvConf::i_getToken(char *psz, char **ppszSavePtr)
 {
-    char *pszToken;
-
     AssertPtrReturn(ppszSavePtr, NULL);
 
     if (psz == NULL)
@@ -331,6 +304,7 @@ char *HostDnsServiceResolvConf::i_getToken(char *psz, char **ppszSavePtr)
             return NULL;
     }
 
+    /* skip leading blanks. */
     while (*psz == ' ' || *psz == '\t')
         ++psz;
 
@@ -340,7 +314,10 @@ char *HostDnsServiceResolvConf::i_getToken(char *psz, char **ppszSavePtr)
         return NULL;
     }
 
-    pszToken = psz;
+    /* Found the start of the token we will be returning. */
+    char * const pszToken = psz;
+
+    /* Find the end so we can terminate it. */
     while (*psz && *psz != ' ' && *psz != '\t')
         ++psz;
 
