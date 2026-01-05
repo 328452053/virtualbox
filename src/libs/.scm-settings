@@ -1,4 +1,4 @@
-# $Id: .scm-settings 112263 2026-01-05 03:13:52Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112264 2026-01-05 03:35:53Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for src/libs.
 #
@@ -47,7 +47,7 @@
 #
 # Generic 3rd party extension and file mappings:
 #
-*.adoc|*.build|*.checksrc|*.in|*.lua|*.cs|*.yaml|*.yml|*.hlsl|*.js|*.svg|*.1|*.3|*.5|*.css|*.LICENSE|*.rtf|*.m4|*.tex: --treat-as plaintext
+*.adoc|*.build|*.checksrc|*.in|*.lua|*.cs|*.hlsl|*.js|*.svg|*.1|*.3|*.5|*.css|*.LICENSE|*.rtf|*.m4|*.tex: --treat-as plaintext
 .clang-format|.clangd|.git|COPYING|CHANGELOG|Makefile.mk|Makefile.soname|Dockerfile|BUILD.bazel|change.log|doxygen.config: --treat-as plaintext
 *.dsp|*.dsw|*.sln|*.Doxyfile:               --treat-as hashtext
 *.lib|*.chm|*.docx|*.icc|*.ppm:             --treat-as binary

@@ -1,4 +1,4 @@
-/* $Id: scm.cpp 112257 2026-01-05 02:18:01Z knut.osmundsen@oracle.com $ */
+/* $Id: scm.cpp 112264 2026-01-05 03:35:53Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT Testcase / Tool - Source Code Massager.
  */
@@ -828,6 +828,19 @@ static PCSCMREWRITERCFG const g_apRewritersFor_RpmSpec[] =
     &g_Copyright_HashComment,
 };
 
+static PCSCMREWRITERCFG const g_apRewritersFor_YAML[] =
+{
+    &g_ForceNativeEol,
+    &g_ExpandTabs,
+    &g_StripTrailingBlanks,
+    &g_AdjustTrailingLines,
+    &g_SvnKeywords,
+    &g_SvnNoExecutable,
+    &g_SvnSyncProcess,
+    &g_UnicodeChecks,
+    &g_Copyright_HashComment,
+};
+
 static PCSCMREWRITERCFG const g_apRewritersFor_TextFiles[] =
 {
     &g_ForceNativeEol,
@@ -931,6 +944,7 @@ static SCMCFGENTRY const g_aConfigs[] =
     SCM_CFG_ENTRY("sif",        g_apRewritersFor_SifFiles,         false, "*.sif" ),
     SCM_CFG_ENTRY("sql",        g_apRewritersFor_SqlFiles,         false, "*.pgsql|*.sql" ),
     SCM_CFG_ENTRY("gas",        g_apRewritersFor_GnuAsm,           false, "*.S" ),
+    SCM_CFG_ENTRY("yaml",       g_apRewritersFor_YAML,             false, "*.yml|*.yaml" ),
     SCM_CFG_ENTRY("rpmspec",    g_apRewritersFor_RpmSpec,          false, "*.spec" ),
     SCM_CFG_ENTRY("binary",     g_apRewritersFor_BinaryFiles,      true,  "*.bin|*.pdf|*.zip|*.bz2|*.gz" ),
     /* These should be be last: */
@@ -3385,7 +3399,7 @@ int main(int argc, char **argv)
             case 'V':
             {
                 /* The following is assuming that svn does it's job here. */
-                static const char s_szRev[] = "$Revision: 112257 $";
+                static const char s_szRev[] = "$Revision: 112264 $";
                 const char *psz = RTStrStripL(strchr(s_szRev, ' '));
                 RTPrintf("r%.*s\n", strchr(psz, ' ') - psz, psz);
                 return 0;
