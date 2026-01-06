@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112288 2026-01-06 13:38:13Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the debian packaging.
 #
@@ -25,10 +25,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
-/rules: --treat-as Makefile --no-convert-eol --dont-set-svn-executable
-/changelog:           --treat-as plaintext --external-copyright --del-action force-native-eol --add-action force-lf
-/compat:              --treat-as plaintext --external-copyright --del-action force-native-eol --add-action force-lf
-/control:             --treat-as plaintext --external-copyright --del-action force-native-eol --add-action force-lf
-/dirs:                --treat-as plaintext --external-copyright --del-action force-native-eol --add-action force-lf
-/lintian-override.in: --treat-as plaintext --external-copyright --del-action force-native-eol --add-action force-lf
-/templates:           --treat-as plaintext --external-copyright --no-strip-trailing-blanks
+--svn-sync-process-export all   # Everything is exported here.
+
+/rules:                 --treat-as Makefile --dont-set-svn-executable --del-action force-native-eol --add-action force-lf
+/changelog:             --treat-as plaintext --external-copyright     --del-action force-native-eol --add-action force-lf
+/compat:                --treat-as plaintext --external-copyright     --del-action force-native-eol --add-action force-lf
+/control:               --treat-as plaintext --external-copyright     --del-action force-native-eol --add-action force-lf
+/dirs:                  --treat-as plaintext --external-copyright     --del-action force-native-eol --add-action force-lf
+/lintian-override.in:   --treat-as plaintext --external-copyright     --del-action force-native-eol --add-action force-lf
+/templates:             --treat-as plaintext --external-copyright --no-strip-trailing-blanks
