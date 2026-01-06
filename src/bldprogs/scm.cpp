@@ -1,4 +1,4 @@
-/* $Id: scm.cpp 112264 2026-01-05 03:35:53Z knut.osmundsen@oracle.com $ */
+/* $Id: scm.cpp 112280 2026-01-06 01:46:44Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT Testcase / Tool - Source Code Massager.
  */
@@ -1993,6 +1993,11 @@ static int scmSettingsLoadFile(PSCMSETTINGS pSettings, const char *pszFilename)
             if (cchLine < 1 || *pchLine == '#')
                 continue;
 
+            /* Ignore trailing comments. */
+            char *pchHash = (char *)memchr(pchLine, '#', cchLine);
+            if (pchHash)
+                cchLine = (size_t)(pchHash - pchLine);
+
             /* Deal with escaped newlines. */
             size_t  iFirstLine  = ~(size_t)0;
             char   *pszFreeLine = NULL;
@@ -3399,7 +3404,7 @@ int main(int argc, char **argv)
             case 'V':
             {
                 /* The following is assuming that svn does it's job here. */
-                static const char s_szRev[] = "$Revision: 112264 $";
+                static const char s_szRev[] = "$Revision: 112280 $";
                 const char *psz = RTStrStripL(strchr(s_szRev, ' '));
                 RTPrintf("r%.*s\n", strchr(psz, ' ') - psz, psz);
                 return 0;
