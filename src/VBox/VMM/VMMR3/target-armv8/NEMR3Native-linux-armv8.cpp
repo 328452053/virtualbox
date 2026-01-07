@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-armv8.cpp 112141 2025-12-16 22:54:26Z knut.osmundsen@oracle.com $ */
+/* $Id: NEMR3Native-linux-armv8.cpp 112358 2026-01-07 22:03:25Z knut.osmundsen@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend arm64 version.
  */
@@ -423,8 +423,8 @@ DECL_FORCE_INLINE(int) nemR3LnxKvmSetQueryReg(PVMCPUCC pVCpu, bool fQuery, uint6
      * at a time is horribly inefficient.
      */
     int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, fQuery ? KVM_GET_ONE_REG : KVM_SET_ONE_REG, &Reg);
-    if (!rcLnx)
-        return 0;
+    if (RT_LIKELY(!rcLnx))
+        return VINF_SUCCESS;
 
     return RTErrConvertFromErrno(-rcLnx);
 }
@@ -803,6 +803,8 @@ static int nemHCLnxImportState(PVMCPUCC pVCpu, uint64_t fWhat, PCPUMCTX pCtx)
         hrc = hv_vcpu_get_sys_reg(pVCpu->nem.s.hVCpu, HV_SYS_REG_CNTV_CVAL_EL0, &pVCpu->cpum.GstCtx.CntvCValEl0);
 #endif
 
+    /** @todo Fix bogus rc handling (overwritten/ignored). Optimize. */
+
     int rc = VINF_SUCCESS;
     if (fWhat & (CPUMCTX_EXTRN_GPRS_MASK | CPUMCTX_EXTRN_FP | CPUMCTX_EXTRN_LR | CPUMCTX_EXTRN_PC))
     {
@@ -951,9 +953,12 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
 {
     uint64_t const fExtrn = ~pCtx->fExtrn & CPUMCTX_EXTRN_ALL;
     Assert((~fExtrn & CPUMCTX_EXTRN_ALL) != CPUMCTX_EXTRN_ALL); RT_NOREF(fExtrn);
+    int rc = VINF_SUCCESS;
 
     RT_NOREF(pVM);
-    int rc = VINF_SUCCESS;
+
+    /** @todo optimize all of this! */
+
     if (   (pVCpu->cpum.GstCtx.fExtrn & (CPUMCTX_EXTRN_GPRS_MASK | CPUMCTX_EXTRN_FP | CPUMCTX_EXTRN_LR | CPUMCTX_EXTRN_PC))
         !=                              (CPUMCTX_EXTRN_GPRS_MASK | CPUMCTX_EXTRN_FP | CPUMCTX_EXTRN_LR | CPUMCTX_EXTRN_PC))
     {
@@ -967,22 +972,19 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
         }
     }
 
-    if (   rc == VINF_SUCCESS
-        && !(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_FPCR))
+    if (!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_FPCR))
     {
         uint32_t u32Tmp = pVCpu->cpum.GstCtx.fpcr;
         rc |= nemR3LnxKvmSetRegU32(pVCpu, KVM_ARM64_REG_FP_FPCR, &u32Tmp);
     }
 
-    if (   rc == VINF_SUCCESS
-        && !(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_FPSR))
+    if (!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_FPSR))
     {
         uint32_t u32Tmp = pVCpu->cpum.GstCtx.fpsr;
         rc |= nemR3LnxKvmSetRegU32(pVCpu, KVM_ARM64_REG_FP_FPSR, &u32Tmp);
     }
 
-    if (   rc == VINF_SUCCESS
-        && !(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_V0_V31))
+    if (!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_V0_V31))
     {
         /* SIMD/FP registers. */
         for (uint32_t i = 0; i < RT_ELEMENTS(s_aCpumFpRegs); i++)
@@ -992,8 +994,7 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
         }
     }
 
-    if (   rc == VINF_SUCCESS
-        && !(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_SYSREG_DEBUG))
+    if (!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_SYSREG_DEBUG))
     {
         /* Debug registers. */
         for (uint32_t i = 0; i < RT_ELEMENTS(s_aCpumDbgRegs); i++)
@@ -1003,8 +1004,7 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
         }
     }
 
-    if (   rc == VINF_SUCCESS
-        && !(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_SYSREG_PAUTH_KEYS))
+    if (!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_SYSREG_PAUTH_KEYS))
     {
         /* PAuth registers. */
         for (uint32_t i = 0; i < RT_ELEMENTS(s_aCpumPAuthKeyRegs); i++)
@@ -1014,9 +1014,8 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
         }
     }
 
-    if (   rc == VINF_SUCCESS
-        &&     (pVCpu->cpum.GstCtx.fExtrn & (CPUMCTX_EXTRN_SPSR | CPUMCTX_EXTRN_ELR | CPUMCTX_EXTRN_SP | CPUMCTX_EXTRN_SCTLR_TCR_TTBR | CPUMCTX_EXTRN_SYSREG_MISC))
-            !=                              (CPUMCTX_EXTRN_SPSR | CPUMCTX_EXTRN_ELR | CPUMCTX_EXTRN_SP | CPUMCTX_EXTRN_SCTLR_TCR_TTBR | CPUMCTX_EXTRN_SYSREG_MISC))
+    if (   (pVCpu->cpum.GstCtx.fExtrn & (CPUMCTX_EXTRN_SPSR | CPUMCTX_EXTRN_ELR | CPUMCTX_EXTRN_SP | CPUMCTX_EXTRN_SCTLR_TCR_TTBR | CPUMCTX_EXTRN_SYSREG_MISC))
+        !=                              (CPUMCTX_EXTRN_SPSR | CPUMCTX_EXTRN_ELR | CPUMCTX_EXTRN_SP | CPUMCTX_EXTRN_SCTLR_TCR_TTBR | CPUMCTX_EXTRN_SYSREG_MISC))
     {
         /* System registers. */
         for (uint32_t i = 0; i < RT_ELEMENTS(s_aCpumSysRegs); i++)
@@ -1029,8 +1028,7 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
         }
     }
 
-    if (   rc == VINF_SUCCESS
-        && !(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_SCTLR_TCR_TTBR))
+    if (!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_SCTLR_TCR_TTBR))
     {
         for (uint32_t i = 0; i < RT_ELEMENTS(s_aCpumSysRegsPg); i++)
         {
@@ -1039,8 +1037,7 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
         }
     }
 
-    if (   rc == VINF_SUCCESS
-        && !(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_PSTATE))
+    if (!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_PSTATE))
     {
         uint64_t u64Tmp = pVCpu->cpum.GstCtx.fPState;
         rc = nemR3LnxKvmSetRegU64(pVCpu, KVM_ARM64_REG_PSTATE, &u64Tmp);
@@ -1050,7 +1047,7 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
      * KVM now owns all the state.
      */
     pCtx->fExtrn = CPUMCTX_EXTRN_KEEPER_NEM | CPUMCTX_EXTRN_ALL;
-    return VINF_SUCCESS;
+    return rc;
 }
 
 
@@ -1143,11 +1140,9 @@ DECLHIDDEN(bool) nemR3NativeNotifyDebugEventChangedPerCpu(PVM pVM, PVMCPU pVCpu,
 
 DECL_FORCE_INLINE(int) nemR3LnxKvmUpdateIntrState(PVM pVM, PVMCPU pVCpu, bool fIrq, bool fAsserted)
 {
+    LogFlowFunc(("pVM=%p pVCpu=%p fIrq=%RTbool fAsserted=%RTbool\n", pVM, pVCpu, fIrq, fAsserted));
+
     struct kvm_irq_level IrqLvl;
-
-    LogFlowFunc(("pVM=%p pVCpu=%p fIrq=%RTbool fAsserted=%RTbool\n",
-                 pVM, pVCpu, fIrq, fAsserted));
-
     IrqLvl.irq   =   ((uint32_t)KVM_ARM_IRQ_TYPE_CPU << 24)        /* Directly drives CPU interrupt lines. */
                    | (pVCpu->idCpu & 0xff) << 16
                    | (fIrq ? 0 : 1);
@@ -1164,13 +1159,10 @@ DECL_FORCE_INLINE(int) nemR3LnxKvmUpdateIntrState(PVM pVM, PVMCPU pVCpu, bool fI
  */
 static VBOXSTRICTRC nemHCLnxHandleInterruptFF(PVM pVM, PVMCPU pVCpu)
 {
-    LogFlowFunc(("pVCpu=%p{.idCpu=%u} fIrq=%RTbool fFiq=%RTbool\n",
-                 pVCpu, pVCpu->idCpu,
-                 VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INTERRUPT_IRQ),
-                 VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INTERRUPT_FIQ)));
+    bool const fIrq = VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INTERRUPT_IRQ);
+    bool const fFiq = VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INTERRUPT_FIQ);
 
-    bool fIrq = VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INTERRUPT_IRQ);
-    bool fFiq = VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INTERRUPT_FIQ);
+    LogFlowFunc(("pVCpu=%p{.idCpu=%u} fIrq=%RTbool fFiq=%RTbool\n", pVCpu, pVCpu->idCpu, fIrq, fFiq));
 
     /* Update the pending interrupt state. */
     if (fIrq != pVCpu->nem.s.fIrqLastSeen)
