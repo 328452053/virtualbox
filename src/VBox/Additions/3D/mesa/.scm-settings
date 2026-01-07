@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112299 2026-01-07 00:27:58Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for 3D additions stuff.
 #
@@ -25,13 +25,63 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
+# Have to reset the directory filters to prevent 'layout' directories form being excluded.
+--filter-out-dirs ""
 
---filter-out-dirs "/mesa-*/docs/header-stubs/."
+/mesa-*!xcpt!*.kmk|/mesa-*VBox*|/mesa-*vbox*: \
+    --dont-set-svn-keywords --3rd-party --no-fix-flower-box-markers
 
-/mesa-*/.gitlab-ci/bare-metal/poe-off|/mesa-*/.gitlab-ci/bare-metal/poe-on: --treat-as shell --no-update-license --external-copyright --no-convert-tabs --no-strip-trailing-blanks --dont-set-svn-keywords
-/mesa-*/*.sh|/mesa-*/*.py: --no-update-license --external-copyright --no-convert-tabs --no-strip-trailing-blanks --dont-set-svn-keywords
-/mesa-*/*.txt|/mesa-*/README*|/mesa-*/*/README*|/mesa-*/*/TODO: --no-update-license --external-copyright --no-convert-tabs --no-strip-trailing-blanks --dont-set-svn-keywords
-/mesa-*/src/amd/vulkan/radix_sort/LICENSE: --no-update-license --external-copyright --no-convert-tabs --no-strip-trailing-blanks --dont-set-svn-keywords
-/mesa-*/*.h|/mesa-*/*.hpp: --no-update-license --external-copyright --dont-set-svn-keywords --no-pragma-once --no-fix-header-guards --no-convert-tabs --no-force-final-eol --no-strip-trailing-blanks --strip-no-trailing-lines
-/mesa-*/*.c|/mesa-*/*.cc|/mesa-*/*.cpp|/mesa-*/*.S|/mesa-*/*.asm|/mesa-*/*/Makefile|/mesa-*/*.def|/mesa-*/*.xml|/mesa-*/*.xsl: --no-update-license --external-copyright --dont-set-svn-keywords --no-convert-tabs --no-force-final-eol --no-strip-trailing-blanks --strip-no-trailing-lines --no-fix-todos --no-fix-flower-box-markers
+/mesa-*/.gitlab-ci/bare-metal/poe-off|/mesa-*/.gitlab-ci/bare-metal/poe-on|/mesa-*/src/intel/tools/intel_*.in: \
+    --treat-as shell
+/mesa-*/src/glx/tests/dispatch-index-check|/mesa-*/.gitlab-ci/windows/Dockerfile_*: \
+    --treat-as shell
+/mesa-*/*.y|/mesa-*/*.yy|/mesa-*/*.cl|/mesa-*/*.grl|/mesa-*/*.glsl|/mesa-*/*.rs|/mesa-*/*.comp|/mesa-*/*.frag|/mesa-*/*.vert: \
+    --treat-as c
+/mesa-*/*.mme: \
+    --treat-as c
+/mesa-*/*.h.in|/mesa-*/*.h.pump: \
+    --treat-as h
+/mesa-*/*.masm: \
+    --treat-as asm
+/mesa-*/*.lua: \
+    --treat-as plaintext --add-action copyright-sql-style
+/mesa-*/docs/*.spec|/mesa-*/docs/*.rst|/mesa-*/docs/*.svg|/mesa-*/docs/*.css|/mesa-*/docs/*.css_t|/mesa-*/docs/*.conf: \
+    --treat-as plaintext
+/mesa-*/docs/ci/fdo-cache|/mesa-*/docs/relnotes/6.4|/mesa-*/docs/_static/relnotes/*|/mesa-*/docs/_static/_redirects: \
+    --treat-as plaintext
+/mesa-*/*.csv|/mesa-*/*.asc|/mesa-*/*.map|/mesa-*/tests/*.expected|/mesa-*/*.l||/mesa-*/*.ll|/mesa-*/*.sym|/mesa-*/*.sym.in: \
+    --treat-as plaintext
+/mesa-*/*.icd.in|/mesa-*/*.cfg|/mesa-*/.dir-locals.el|/mesa-*/*.log|/mesa-*/*.devcore: \
+    --treat-as plaintext
+/mesa-*/ADDING|/mesa-*/HOW_TO_RUN|/mesa-*/RELEASE_NOTES|/mesa-*/src/gallium/drivers/r300/compiler/tests/*.test|/mesa-*/*.dyn: \
+    --treat-as plaintext
+/mesa-*/.mailmap|/mesa-*/.gitlab-ci/*.diff|/mesa-*/.gitlab-ci/*.patch|/mesa-*/*.gql|/mesa-*/*.key: \
+    --treat-as plaintext
+/mesa-*/.gitlab-ci/cross-xfail-*|/mesa-*/subprojects/*.wrap|/mesa-*/VERSION: \
+    --treat-as plaintext
+/mesa-*/meson.build|/mesa-*/*-meson.build|/mesa-*/*.toml|/mesa-*/.clang-format*|/mesa-*/.git-blame-ignore-revs: \
+    --treat-as hashtext
+/mesa-*/.gitlab-ci/container/build-skqp_base.gn|/mesa-*/CODEOWNERS: \
+    --treat-as hashtext
+/mesa-*/src/util/*.conf|/mesa-*/*.xsd|/mesa-*/src/util/tests/drirc_configdir/01-unused|/mesa-*/src/util/tests/drirc_home/.drirc: \
+    --treat-as xml
+/mesa-*/*.def.in: \
+    --treat-as def
+/mesa-*/*.fw: \
+    --treat-as binary
+/mesa-*/.gitlab-ci/b2c/b2c.yml.jinja2.jinja2: \
+    --treat-as yaml
+/mesa-*/android/*.mk: \
+    --treat-as make
 
+# zero byte files, try treat them as plaintext...
+/mesa-*/*.ci-farms/*: --treat-as plaintext
+/mesa-*/*.ci-farms-disabled/*:  --treat-as plaintext
+
+# funny executable .yml file (removed in 25.x)
+/mesa-*/.gitlab-ci/lava/lava-gitlab-ci.yml: --dont-set-svn-executable
+
+
+# Exporting libs-style here, so we can stage a new mesa release w/o exporting if we like.
+--svn-sync-process-export subdir-either-or
+*!xcpt!/mesa-*: --svn-sync-process-export all
