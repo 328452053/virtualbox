@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112322 2026-01-07 03:41:34Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for EFI.
 #
@@ -26,8 +26,7 @@
 #
 
 
-/DevEFI.h: --license-ose-dual
+/DevEFI.h:              --license-ose-dual
 
-# Ignore binary files.
---filter-out-files /FirmwareBin/*.fd
+/FirmwareBin/*.fd:      --treat-as binary
 
