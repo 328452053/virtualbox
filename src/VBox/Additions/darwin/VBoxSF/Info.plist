@@ -35,7 +35,7 @@
             <key>com.apple.iokit.IOPCIFamily</key> <string>2.5</string>
             <key>com.apple.kpi.bsd</key>           <string>10.6</string>
             <key>com.apple.kpi.iokit</key>         <string>10.6</string>
-            <key>com.apple.kpi.libkern</key>       <string>10.6</string> 
+            <key>com.apple.kpi.libkern</key>       <string>10.6</string>
             <key>com.apple.kpi.mach</key>          <string>10.6</string>
             <key>com.apple.kpi.unsupported</key>   <string>10.6</string>
             <key>org.virtualbox.kext.VBoxGuest</key>    <string>@VBOX_VERSION_MAJOR@.@VBOX_VERSION_MINOR@.@VBOX_VERSION_BUILD@</string>

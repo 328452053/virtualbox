@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112303 2026-01-07 01:00:00Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for OS X guest additions installer.
 #
@@ -26,12 +26,11 @@
 #
 
 
---filter-out-files /VBoxGuestAdditions_mpkg/Conclusion.rtf
---filter-out-files /VBoxGuestAdditions_mpkg/Welcome.rtf
---filter-out-files /VBoxGuestAdditions_mpkg/Localizable.strings
 
-/DiskImage/Uninstall.tool:                              --treat-as .sh
-/VBoxGuestAdditionsKEXTs/postflight:                    --treat-as .sh
-/VBoxGuestAdditionsToolsAndServices/VBoxServiceWrapper: --treat-as .sh
-/VBoxGuestAdditions_mpkg/distribution.dist:             --treat-as .xml
+/DiskImage/Uninstall.tool:                              --treat-as shell
+/VBoxGuestAdditionsKEXTs/postflight:                    --treat-as shell
+/VBoxGuestAdditionsToolsAndServices/VBoxServiceWrapper: --treat-as shell
+/VBoxGuestAdditions_mpkg/distribution.dist:             --treat-as xml
+/VBoxGuestAdditions_mpkg/*.rtf:                         --treat-as plaintext
+/VBoxGuestAdditions_mpkg/*.strings:                     --treat-as plaintext
 
