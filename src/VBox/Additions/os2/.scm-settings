@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112307 2026-01-07 01:24:00Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the OS/2 guest additions.
 #
@@ -25,28 +25,31 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
+# Not everything is exported here, but the default is exporting stuff.
+--svn-sync-process-export all
+/Bin/*|/VBoxGradd/*|/VBoxGrext/*|/VBoxMouse/*: --svn-sync-process-export none
 
---filter-out-files "*.dll|*.sys|makefile|endlib.mak"
---filter-out-files /Bin/readme.txt
+/VBoxSF/*:                      --external-copyright
 
-/VBoxSF/*:        --external-copyright
+/*/makefile:                    --external-copyright --dont-set-svn-keywords
 
-/VBoxGradd/*.c:   --external-copyright
-/VBoxGradd/*.asm: --external-copyright --no-convert-tabs
-/VBoxGradd/*.inc: --external-copyright --no-convert-tabs
-/VBoxGradd/*.h:   --external-copyright --no-fix-header-guards
-/VBoxGradd/vboxioctl.c: --no-external-copyright
-/VBoxGradd/vboxioctl.h: --no-external-copyright
+/VBoxGradd/*.c:                 --external-copyright
+/VBoxGradd/*.asm:               --external-copyright --no-convert-tabs
+/VBoxGradd/*.inc:               --external-copyright --no-convert-tabs
+/VBoxGradd/*.h:                 --external-copyright --no-fix-header-guards
+/VBoxGradd/vboxioctl.c:         --no-external-copyright
+/VBoxGradd/vboxioctl.h:         --no-external-copyright
 
-/VBoxGrext/*.c:   --external-copyright
-/VBoxGrext/*.h:   --external-copyright --no-fix-header-guards
+/VBoxGrext/*.c:                 --external-copyright
+/VBoxGrext/*.h:                 --external-copyright --no-fix-header-guards
 
-/VBoxMouse/*.c:   --external-copyright --no-convert-tabs
-/VBoxMouse/*.asm: --external-copyright --no-convert-tabs
-/VBoxMouse/*.inc: --external-copyright --no-convert-tabs
-/VBoxMouse/*.h:   --external-copyright --no-convert-tabs --no-fix-header-guards
-/VBoxMouse/crtstuff.c:       --no-external-copyright --convert-tabs
-/VBoxMouse/VBoxMouse.c:      --no-external-copyright --convert-tabs
-/VBoxMouse/VBoxMouse.h:      --no-external-copyright --convert-tabs
-/VBoxMouse/VBoxMouseDebug.c: --no-external-copyright --convert-tabs
+/VBoxMouse/*.c:                 --external-copyright --no-convert-tabs
+/VBoxMouse/*.asm:               --external-copyright --no-convert-tabs
+/VBoxMouse/*.inc:               --external-copyright --no-convert-tabs
+/VBoxMouse/*.h:                 --external-copyright --no-convert-tabs --no-fix-header-guards
+/VBoxMouse/*.mak:               --external-copyright --dont-set-svn-keywords --treat-as make
+/VBoxMouse/crtstuff.c:          --no-external-copyright --convert-tabs
+/VBoxMouse/VBoxMouse.c:         --no-external-copyright --convert-tabs
+/VBoxMouse/VBoxMouse.h:         --no-external-copyright --convert-tabs
+/VBoxMouse/VBoxMouseDebug.c:    --no-external-copyright --convert-tabs
 
