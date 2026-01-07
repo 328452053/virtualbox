@@ -1,6 +1,6 @@
 # $Id: .scm-settings 112306 2026-01-07 01:12:33Z knut.osmundsen@oracle.com $
 ## @file
-# Source code massager settings for linux drm driver.
+# Source code massager settings for the Linux guest additions.
 #
 
 #
@@ -25,11 +25,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
-
-#Sources are MIT licensed for simplier upstreaming, several files are external.
-/*.c|/*.h:     --license-based-on-mit --no-convert-tabs
-/vbox_hgsmi.c: --license-mit
-/Makefile.module.kms: --treat-as Makefile
-
-/README.testing: --treat-as plaintext
-
+# Exporting everything.
+--svn-sync-process-export all
