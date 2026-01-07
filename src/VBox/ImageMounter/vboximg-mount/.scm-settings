@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112334 2026-01-07 12:55:30Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the includes.
 #
@@ -25,6 +25,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
+# All is exported here.
+--svn-sync-process-export all
 
 # Some headers actually shouldn't have include guards:
 /fuse-calls.h:                     --no-fix-header-guards
