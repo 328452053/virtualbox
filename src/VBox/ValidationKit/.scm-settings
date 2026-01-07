@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112357 2026-01-07 22:02:05Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the Validation Kit.
 #
@@ -34,6 +34,13 @@
 # SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 #
 
+# Most of this should be exported.
+--svn-sync-process-export all
+/tests/api/tdOci*|/tests/api/oci*|/tests/api/tdCloud*:   --svn-sync-process-export none
+## @todo export: Why is the docker stuff kept private?
+/testmanager/docker*:                   --svn-sync-process-export none
+## @todo export: Why is the usbtest.service kept private?
+/utils/usb/linux/usbtest.service:       --svn-sync-process-export none
 
 # The validation kit is dual licensed.
 --license-ose-dual
@@ -47,26 +54,29 @@
 
 /testdriver/*.ps1:                      --treat-as Makefile
 /testmanager/apache-template-*.conf:    --treat-as Makefile
+/testmanager/misc/htpasswd-*:           --treat-as plaintext
 
-# Skip stuff without licenses and such.
---filter-out-files *.txt
---filter-out-files *.html
---filter-out-files *.svg
---filter-out-files /testmanager/misc/htpasswd-logout
---filter-out-files /testmanager/misc/htpasswd-sample
+# No (C) or license in the html templates.
+/testmanager/webui/*.html:              --external-copyright # generated from the .txt files
 
-# Skip the XML for database diagrams.
---filter-out-files /testmanager/db/TestManagerDatabase/*.xml
---filter-out-files /testmanager/db/TestManagerDatabase.dmd
+# Some stuff without (easily locatable) licenses and such.
+/docs/*.html:                           --external-copyright # generated from the .txt files
 
-# Skip ova test data
---filter-out-files *.ova
---filter-out-files *.pem
+# XML for database diagrams.
+/testmanager/db/TestManagerDatabase.dmd:    --3rd-party --treat-as xml
+/testmanager/db/TestManagerDatabase/*.xml:  --3rd-party
 
-# Skip some plain config files
---filter-out-files /utils/TestExecServ/linux/vboxtxs.service
---filter-out-files /utils/TestExecServ/win/*.reg
---filter-out-files /utils/usb/linux/usbtest.service
+# Test data.
+/tests/*.nvram:                         --treat-as binary
+/tests/*.pem:                           --treat-as plaintext --no-strip-trailing-blanks
+/tests/*.ova:                           --treat-as binary
+/tests/*.vdi:                           --treat-as binary
+/utils/usb/linux/usbtest.service:       --treat-as plaintext --del-action force-native-eol --add-action force-lf
+
+# TXS configure files.
+/utils/TestExecServ/linux/*.desktop:    --treat-as plaintext --del-action force-native-eol --add-action force-lf
+/utils/TestExecServ/linux/*.service:    --treat-as plaintext --del-action force-native-eol --add-action force-lf
+/utils/TestExecServ/win/*.reg:          --treat-as plaintext --del-action force-native-eol --add-action force-crlf
 
 # misc
 /bootsectors/bs3kit/bs3kit-mangling-code.h:        --no-fix-header-guards

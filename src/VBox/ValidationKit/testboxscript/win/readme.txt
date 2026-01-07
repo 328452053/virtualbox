@@ -1,12 +1,12 @@
-$Id: readme.txt 72214 2018-05-15 09:31:45Z klaus.espenlaub@oracle.com $
+$Id: readme.txt 112357 2026-01-07 22:02:05Z knut.osmundsen@oracle.com $
 
 
 Preparations:
 
-0. Make sure the computer name (what hostname prints) is the same as the DNS 
+0. Make sure the computer name (what hostname prints) is the same as the DNS
    returns (sans domain) for the host IP.
 
-1. Install Python 2.7.x from python.org to C:\Python27 or Python 3.y.x to 
+1. Install Python 2.7.x from python.org to C:\Python27 or Python 3.y.x to
    C:\Python3%y%,  where y >= 5.  Matching bit count as the host windows version.
 
 2. Install the win32 extension for python.
