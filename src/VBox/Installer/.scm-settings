@@ -1,4 +1,4 @@
-# $Id: .scm-settings 112375 2026-01-08 13:53:25Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112377 2026-01-08 14:08:54Z klaus.espenlaub@oracle.com $
 ## @file
 # Source code massager settings for the host installers.
 #
@@ -28,7 +28,7 @@
 # Much of the stuff is exported here.
 --svn-sync-process-export all
 /common/keygen*|/win/InstallHelper/internal*: --svn-sync-process-export none
-## @todo export: Explain why the following is private.
+## @todo export: Explain why the following is private. Reason: work in progress stuck in a very incomplete, early stage. To be exported when it becomes somewhat buildable/usable.
 /linux/rpm-kmod*|/linux/rpm-VBoxGuestAdditions*: --svn-sync-process-export none
 
 # External stuff.
