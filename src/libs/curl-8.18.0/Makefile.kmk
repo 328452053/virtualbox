@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112335 2026-01-07 15:36:15Z alexander.rudnev@oracle.com $
+# $Id: Makefile.kmk 112378 2026-01-08 15:15:26Z alexander.rudnev@oracle.com $
 ## @file
 # Sub-Makefile for the libcurl library.
 #
@@ -27,7 +27,7 @@
 
 SUB_DEPTH = ../../..
 include $(KBUILD_PATH)/subheader.kmk
-VBOX_PATH_LIBCURL = $(PATH_ROOT)/src/libs/curl-8.11.1
+VBOX_PATH_LIBCURL = $(PATH_ROOT)/src/libs/curl-8.18.0
 
 LIBRARIES += VBox-libcurl
 VBox-libcurl_TEMPLATE       = VBoxR3RuntimeDllNonPedantic
@@ -133,7 +133,6 @@ VBox-libcurl_SOURCES        = \
 	lib/slist.c \
 	lib/socketpair.c \
 	lib/socks.c \
-	lib/speedcheck.c \
 	lib/splay.c \
 	lib/strcase.c \
 	lib/strdup.c \
