@@ -1,4 +1,4 @@
-# $Id: .scm-settings 112361 2026-01-07 23:49:26Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112371 2026-01-08 13:27:58Z klaus.espenlaub@oracle.com $
 ## @file
 # Top level source code massager settings.
 #
@@ -118,6 +118,4 @@ Doxyfile*: --treat-as hashtext --external-copyright --no-update-copyright-year
 /.dir-locals.el|/.gitmodules:           --treat-as plaintext
 /.dir-locals.el:                        --treat-as plaintext
 /COPYING|/COPYING.CDDL|/COPYING.LIB:    --treat-as plaintext
-## @todo export: Why isn't COPYING.LIB exported? Do we still need it in root?
-/COPYING.LIB: --svn-sync-process-export none
 
