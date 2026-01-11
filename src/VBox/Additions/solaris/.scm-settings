@@ -1,4 +1,4 @@
-# $Id: .scm-settings 112309 2026-01-07 01:34:24Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112402 2026-01-11 19:04:26Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the Solaris guest additions.
 #
@@ -40,7 +40,7 @@
 # Exporting everything.
 --svn-sync-process-export all
 
-/DRM/include/*: --3rd-party
+/DRM/include/*: --3rd-party --no-update-copyright-year
 
 /Installer/vboxguest.depend:    --treat-as plaintext --del-action force-native-eol --add-action force-lf
 /Installer/vboxguest.pkginfo:   --treat-as plaintext --del-action force-native-eol --add-action force-lf
@@ -52,7 +52,7 @@
 
 /SharedFolders/*:               --no-convert-tabs
 /SharedFolders/solaris10/*:     --svn-sync-process-export none
-/SharedFolders/solaris10/sys/*: --3rd-party
+/SharedFolders/solaris10/sys/*: --3rd-party --no-update-copyright-year
 
 /DRM/vboxvideo_drm.c: --no-convert-tabs
 
