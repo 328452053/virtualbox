@@ -3,7 +3,7 @@
     manpage for RTIsoMaker/VISO
 -->
 <!--
-    Copyright (C) 2006-2025 Oracle and/or its affiliates.
+    Copyright (C) 2006-2026 Oracle and/or its affiliates.
 
     This file is part of VirtualBox base platform packages, as
     available from https://www.virtualbox.org.
@@ -36,7 +36,7 @@
 <refentry id="viso" lang="en">
 
   <refentryinfo>
-    <pubdate>$Date: 2025-10-20 13:08:46 +0200 (Mon, 20 Oct 2025) $</pubdate>
+    <pubdate>$Date: 2026-01-11 20:29:08 +0100 (Sun, 11 Jan 2026) $</pubdate>
     <title>VISO file format / RTIsoMaker</title>
   </refentryinfo>
 

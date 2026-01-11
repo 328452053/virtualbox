@@ -1,10 +1,10 @@
-/* $Id: VBoxVMM.d 111854 2025-11-24 15:59:46Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxVMM.d 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxVMM - Static dtrace probes.
  */
 
 /*
- * Copyright (C) 2009-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2009-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

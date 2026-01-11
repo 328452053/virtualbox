@@ -1,10 +1,10 @@
-/* $Id: vrdpdefs.h 111617 2025-11-11 08:26:46Z alexander.eichner@oracle.com $ */
+/* $Id: vrdpdefs.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Remote Desktop Protocol - Header to include VBox headers and define common VRDP stuff.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

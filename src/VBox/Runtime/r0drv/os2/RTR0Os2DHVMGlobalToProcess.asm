@@ -1,4 +1,4 @@
-; $Id: RTR0Os2DHVMGlobalToProcess.asm 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+; $Id: RTR0Os2DHVMGlobalToProcess.asm 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ;; @file
 ; IPRT - DevHelp_VMGlobalToProcess, Ring-0 Driver, OS/2.
 ;
@@ -6,7 +6,7 @@
 ;
 ; Contributed by knut st. osmundsen.
 ;
-; Copyright (C) 2007-2025 Oracle and/or its affiliates.
+; Copyright (C) 2007-2026 Oracle and/or its affiliates.
 ;
 ; This file is part of VirtualBox base platform packages, as
 ; available from https://www.virtualbox.org.

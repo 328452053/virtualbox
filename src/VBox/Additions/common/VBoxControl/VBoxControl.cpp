@@ -1,10 +1,10 @@
-/* $Id: VBoxControl.cpp 111555 2025-11-06 09:49:17Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxControl.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxControl - Guest Additions Command Line Management Interface.
  */
 
 /*
- * Copyright (C) 2008-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2008-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

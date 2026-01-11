@@ -1,10 +1,10 @@
-/* $Id: VMMR3.cpp 111960 2025-12-01 13:37:37Z alexander.eichner@oracle.com $ */
+/* $Id: VMMR3.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMM - The Virtual Machine Monitor Core.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

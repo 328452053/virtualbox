@@ -1,10 +1,10 @@
-/* $Id: UIRecordingAudioProfileEditor.h 112057 2025-12-08 14:48:42Z sergey.dubov@oracle.com $ */
+/* $Id: UIRecordingAudioProfileEditor.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingAudioProfileEditor class declaration.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: VBoxClipboard.cpp 111941 2025-11-28 17:42:23Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxClipboard.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxClipboard - Shared clipboard, Windows Guest Implementation.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

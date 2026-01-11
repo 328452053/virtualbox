@@ -1,4 +1,4 @@
-/* $Id: d3d11screen.hlsl 110764 2025-08-19 17:40:32Z vitali.pelenjow@oracle.com $ */
+/* $Id: d3d11screen.hlsl 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /*
  * Screen updates.
  *
@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2022-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2022-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

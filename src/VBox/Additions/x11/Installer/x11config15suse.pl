@@ -1,11 +1,11 @@
 #!/usr/bin/perl -w
-# $Id: x11config15suse.pl 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: x11config15suse.pl 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # Guest Additions X11 config update script
 #
 
 #
-# Copyright (C) 2006-2025 Oracle and/or its affiliates.
+# Copyright (C) 2006-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

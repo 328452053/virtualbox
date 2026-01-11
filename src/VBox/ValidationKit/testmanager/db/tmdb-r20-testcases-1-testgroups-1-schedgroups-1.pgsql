@@ -1,11 +1,11 @@
--- $Id: tmdb-r20-testcases-1-testgroups-1-schedgroups-1.pgsql 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+-- $Id: tmdb-r20-testcases-1-testgroups-1-schedgroups-1.pgsql 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 --- @file
 -- VBox Test Manager Database - Adds sComment to TestCases, TestGroups
 --                              and SchedGroups.
 --
 
 --
--- Copyright (C) 2013-2025 Oracle and/or its affiliates.
+-- Copyright (C) 2013-2026 Oracle and/or its affiliates.
 --
 -- This file is part of VirtualBox base platform packages, as
 -- available from https://www.virtualbox.org.

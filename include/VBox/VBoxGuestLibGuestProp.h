@@ -1,10 +1,10 @@
-/* $Id: VBoxGuestLibGuestProp.h 111555 2025-11-06 09:49:17Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxGuestLibGuestProp.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxGuestLib - Guest Properties Interface (both user & kernel mode).
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation

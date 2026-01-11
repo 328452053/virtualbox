@@ -1,10 +1,10 @@
-; $Id: VBoxUSB.inf 111174 2025-09-29 16:57:21Z klaus.espenlaub@oracle.com $
+; $Id: VBoxUSB.inf 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ;; @file
 ; VBox host drivers - USB drivers - Win32 USB device
 ;
 
 ;
-; Copyright (C) 2011-2025 Oracle and/or its affiliates.
+; Copyright (C) 2011-2026 Oracle and/or its affiliates.
 ;
 ; This file is part of VirtualBox base platform packages, as
 ; available from https://www.virtualbox.org.

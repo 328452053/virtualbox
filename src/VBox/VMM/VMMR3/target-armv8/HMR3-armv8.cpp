@@ -1,10 +1,10 @@
-/* $Id: HMR3-armv8.cpp 111713 2025-11-13 15:27:35Z knut.osmundsen@oracle.com $ */
+/* $Id: HMR3-armv8.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * HM - VM Hardware Support Manager, ARMv8 shim.
  */
 
 /*
- * Copyright (C) 2023-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2023-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

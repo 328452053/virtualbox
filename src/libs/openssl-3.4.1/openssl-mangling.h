@@ -1,10 +1,10 @@
-/* $Id: openssl-mangling.h 109305 2025-04-22 13:23:25Z aleksey.ilyushin@oracle.com $ */
+/* $Id: openssl-mangling.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Autogenerate symbol mangling header for openssl.
  */
 
 /*
- * Copyright (C) 2011-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2011-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

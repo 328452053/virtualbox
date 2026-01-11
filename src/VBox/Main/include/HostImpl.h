@@ -1,10 +1,10 @@
-/* $Id: HostImpl.h 112386 2026-01-08 23:07:58Z jack.doherty@oracle.com $ */
+/* $Id: HostImpl.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Implementation of IHost.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

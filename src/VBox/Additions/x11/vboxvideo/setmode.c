@@ -1,10 +1,10 @@
-/* $Id: setmode.c 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: setmode.c 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Linux Additions X11 graphics driver, mode setting
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  * This file is based on X11 VESA driver (hardly any traces left here):
  *
  * Copyright (c) 2000 by Conectiva S.A. (http://www.conectiva.com)

@@ -1,11 +1,11 @@
-/* $Id: Intel_Pentium_N3530_2_16GHz.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: Intel_Pentium_N3530_2_16GHz.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPU database entry "Intel Pentium N3530 2.16GHz".
  * Generated at 2016-04-29T13:34:27Z by VBoxCpuReport v5.0.51r106929 on win.amd64.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

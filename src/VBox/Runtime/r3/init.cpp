@@ -1,10 +1,10 @@
-/* $Id: init.cpp 112039 2025-12-05 11:15:47Z alexander.eichner@oracle.com $ */
+/* $Id: init.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Init Ring-3.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: VBoxGuestR3LibGuestCtrl.cpp 111555 2025-11-06 09:49:17Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxGuestR3LibGuestCtrl.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxGuestR3Lib - Ring-3 Support Library for VirtualBox guest additions, guest control.
  */
 
 /*
- * Copyright (C) 2010-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2010-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

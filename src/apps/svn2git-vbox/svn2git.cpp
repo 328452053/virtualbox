@@ -1,10 +1,10 @@
-/* $Id: svn2git.cpp 111727 2025-11-14 10:30:08Z alexander.eichner@oracle.com $ */
+/* $Id: svn2git.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * svn2git - Convert a svn repository to git.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.
@@ -434,7 +434,7 @@ static RTEXITCODE s2gParseArguments(PS2GCTX pThis, int argc, char **argv)
             case 'V':
             {
                 /* The following is assuming that svn does it's job here. */
-                static const char s_szRev[] = "$Revision: 111727 $";
+                static const char s_szRev[] = "$Revision: 112403 $";
                 const char *psz = RTStrStripL(strchr(s_szRev, ' '));
                 RTMsgInfo("r%.*s\n", strchr(psz, ' ') - psz, psz);
                 return RTEXITCODE_SUCCESS;

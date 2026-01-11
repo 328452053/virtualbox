@@ -1,11 +1,11 @@
-/* $Id: DrvDirectCardReader2.cpp 111612 2025-11-11 07:09:27Z alexander.eichner@oracle.com $ */
+/* $Id: DrvDirectCardReader2.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * DrvDirectCardReader - Test USB Card Reader Driver allowing access
  *                       direct to the device attached to the host.
  */
 
 /*
- * Copyright (C) 2011-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2011-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

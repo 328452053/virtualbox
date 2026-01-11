@@ -1,10 +1,10 @@
-# $Id: VBoxXClang.kmk 108915 2025-03-24 15:26:59Z alexander.eichner@oracle.com $
+# $Id: VBoxXClang.kmk 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # kBuild Tool Config - clang 20.x cross compiler, for various targets.
 #
 
 #
-# Copyright (C) 2025 Oracle and/or its affiliates.
+# Copyright (C) 2025-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

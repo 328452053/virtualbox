@@ -1,10 +1,10 @@
-/* $Id: PDMR3Ldr.cpp 111695 2025-11-13 13:31:17Z knut.osmundsen@oracle.com $ */
+/* $Id: PDMR3Ldr.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * PDM - Pluggable Device Manager, module loader.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

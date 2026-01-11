@@ -1,10 +1,10 @@
-; $Id: libapr-1.def 109867 2025-06-16 09:40:54Z alexander.eichner@oracle.com $
+; $Id: libapr-1.def 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ;; @file
 ; libapor-1 - Definition file for lazy import generation for svn2git.
 ;
 
 ;
-; Copyright (C) 2025 Oracle and/or its affiliates.
+; Copyright (C) 2025-2026 Oracle and/or its affiliates.
 ;
 ; This file is part of VirtualBox base platform packages, as
 ; available from https://www.virtualbox.org.

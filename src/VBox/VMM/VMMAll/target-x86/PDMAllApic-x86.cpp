@@ -1,10 +1,10 @@
-/* $Id: PDMAllApic-x86.cpp 111875 2025-11-26 08:53:04Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: PDMAllApic-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * PDM - APIC (Advanced Programmable Interrupt Controller) Interface.
  */
 
 /*
- * Copyright (C) 2024-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2024-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: VBoxServiceToolBox.cpp 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceToolBox.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxServiceToolbox - Internal (BusyBox-like) toolbox.
  */
 
 /*
- * Copyright (C) 2012-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2012-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

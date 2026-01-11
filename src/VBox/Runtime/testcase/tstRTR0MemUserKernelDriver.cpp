@@ -1,10 +1,10 @@
-/* $Id: tstRTR0MemUserKernelDriver.cpp 112079 2025-12-10 08:39:16Z knut.osmundsen@oracle.com $ */
+/* $Id: tstRTR0MemUserKernelDriver.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT R0 Testcase - Thread Preemption, driver program.
  */
 
 /*
- * Copyright (C) 2009-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2009-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

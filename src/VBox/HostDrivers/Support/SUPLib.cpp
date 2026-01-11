@@ -1,10 +1,10 @@
-/* $Id: SUPLib.cpp 112081 2025-12-10 08:42:34Z knut.osmundsen@oracle.com $ */
+/* $Id: SUPLib.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VirtualBox Support Library - Common code.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

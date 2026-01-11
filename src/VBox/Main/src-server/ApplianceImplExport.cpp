@@ -1,10 +1,10 @@
-/* $Id: ApplianceImplExport.cpp 110930 2025-09-08 16:34:44Z aleksey.ilyushin@oracle.com $ */
+/* $Id: ApplianceImplExport.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IAppliance and IVirtualSystem COM class implementations.
  */
 
 /*
- * Copyright (C) 2008-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2008-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

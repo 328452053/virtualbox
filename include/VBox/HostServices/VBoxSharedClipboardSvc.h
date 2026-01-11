@@ -1,11 +1,11 @@
-/* $Id: VBoxSharedClipboardSvc.h 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $ */
+/* $Id: VBoxSharedClipboardSvc.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Shared Clipboard Service - header file for shared clipboard data transfer
  * interfaces and platform-dependent backend functionality.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

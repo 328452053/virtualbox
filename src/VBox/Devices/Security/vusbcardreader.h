@@ -1,10 +1,10 @@
-/* $Id: vusbcardreader.h 111611 2025-11-11 06:58:47Z alexander.eichner@oracle.com $ */
+/* $Id: vusbcardreader.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * vusbcardreader.h - defines usb related types.
  */
 
 /*
- * Copyright (C) 2011-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2011-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: VBoxServiceCpuHotPlug.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceCpuHotPlug.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Guest Additions CPU Hot-Plugging Service.
  */
 
 /*
- * Copyright (C) 2010-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2010-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,11 +1,11 @@
-# $Id: Makefile 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: Makefile 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # Makefile for java samples.
 #
 
 
 #
-# Copyright (C) 2008-2025 Oracle and/or its affiliates.
+# Copyright (C) 2008-2026 Oracle and/or its affiliates.
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation

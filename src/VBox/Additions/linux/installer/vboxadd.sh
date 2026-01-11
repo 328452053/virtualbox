@@ -1,11 +1,11 @@
 #! /bin/sh
-# $Id: vboxadd.sh 111518 2025-10-29 15:18:27Z vadim.galitsyn@oracle.com $
+# $Id: vboxadd.sh 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
-# Linux Additions kernel module init script ($Revision: 111518 $)
+# Linux Additions kernel module init script ($Revision: 112403 $)
 #
 
 #
-# Copyright (C) 2006-2025 Oracle and/or its affiliates.
+# Copyright (C) 2006-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

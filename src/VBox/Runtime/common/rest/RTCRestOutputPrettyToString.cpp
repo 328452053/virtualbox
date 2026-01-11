@@ -1,10 +1,10 @@
-/* $Id: RTCRestOutputPrettyToString.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: RTCRestOutputPrettyToString.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - C++ REST, RTCRestOutputPrettyToString implementation.
  */
 
 /*
- * Copyright (C) 2018-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2018-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

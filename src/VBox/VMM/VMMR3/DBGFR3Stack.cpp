@@ -1,10 +1,10 @@
-/* $Id: DBGFR3Stack.cpp 111956 2025-12-01 12:31:49Z alexander.eichner@oracle.com $ */
+/* $Id: DBGFR3Stack.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * DBGF - Debugger Facility, Call Stack Analyser.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

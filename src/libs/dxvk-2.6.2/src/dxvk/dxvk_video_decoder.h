@@ -1,10 +1,10 @@
-/* $Id: dxvk_video_decoder.h 112399 2026-01-11 18:46:00Z knut.osmundsen@oracle.com $ */
+/* $Id: dxvk_video_decoder.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxDxVk - Video decoder.
  */
 
 /*
- * Copyright (C) 2024-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2024-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

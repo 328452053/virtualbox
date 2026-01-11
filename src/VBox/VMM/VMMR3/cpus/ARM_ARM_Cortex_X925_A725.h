@@ -1,11 +1,11 @@
-/* $Id: ARM_ARM_Cortex_X925_A725.h 112034 2025-12-05 01:44:37Z knut.osmundsen@oracle.com $ */
+/* $Id: ARM_ARM_Cortex_X925_A725.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPU database entry "ARM_Cortex_X925_A725".
  * Generated at 2025-12-05T01:36:04Z by VBoxCpuReport v7.2.97r171671 on linux.arm64.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

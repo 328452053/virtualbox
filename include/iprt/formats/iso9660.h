@@ -1,10 +1,10 @@
-/* $Id: iso9660.h 111441 2025-10-18 03:08:10Z knut.osmundsen@oracle.com $ */
+/* $Id: iso9660.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT, ISO 9660 File System
  */
 
 /*
- * Copyright (C) 2017-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2017-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

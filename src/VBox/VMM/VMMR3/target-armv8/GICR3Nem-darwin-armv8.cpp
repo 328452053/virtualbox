@@ -1,10 +1,10 @@
-/* $Id: GICR3Nem-darwin-armv8.cpp 111783 2025-11-18 08:47:19Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: GICR3Nem-darwin-armv8.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * GIC - Generic Interrupt Controller Architecture (GIC) - Hypervisor.framework in kernel interface.
  */
 
 /*
- * Copyright (C) 2024-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2024-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

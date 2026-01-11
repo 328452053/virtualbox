@@ -1,10 +1,10 @@
-/* $Id: VBoxDisasm.cpp 110844 2025-09-01 11:17:03Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxDisasm.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Testcase - Generic Disassembler Tool.
  */
 
 /*
- * Copyright (C) 2008-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2008-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.
@@ -637,7 +637,7 @@ int main(int argc, char **argv)
                 break;
 
             case 'V':
-                RTPrintf("$Revision: 110844 $\n");
+                RTPrintf("$Revision: 112403 $\n");
                 return 0;
 
             default:

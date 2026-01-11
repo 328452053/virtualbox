@@ -1,10 +1,10 @@
-/* $Id: tstDnDTransferList.cpp 111895 2025-11-26 15:19:14Z alexander.eichner@oracle.com $ */
+/* $Id: tstDnDTransferList.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * DnD transfer list  tests.
  */
 
 /*
- * Copyright (C) 2020-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2020-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

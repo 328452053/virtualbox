@@ -1,10 +1,10 @@
-/* $Id: alignmentchecks.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: alignmentchecks.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Internal header for hacking alignment checks on x86 and AMD64.
  */
 
 /*
- * Copyright (C) 2009-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2009-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

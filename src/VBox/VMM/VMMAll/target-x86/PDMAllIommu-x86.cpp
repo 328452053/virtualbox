@@ -1,10 +1,10 @@
-/* $Id: PDMAllIommu-x86.cpp 111876 2025-11-26 09:00:39Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: PDMAllIommu-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * PDM IOMMU - All Contexts.
  */
 
 /*
- * Copyright (C) 2021-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2021-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

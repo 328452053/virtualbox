@@ -1,4 +1,4 @@
-/* $Id: VBoxMPIf.h 111731 2025-11-14 12:02:32Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxMPIf.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox WDDM Miniport driver.
  *
@@ -11,7 +11,7 @@
  */
 
 /*
- * Copyright (C) 2011-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2011-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

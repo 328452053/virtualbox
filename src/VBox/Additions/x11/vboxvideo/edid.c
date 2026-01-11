@@ -1,11 +1,11 @@
-/* $Id: edid.c 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: edid.c 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  *
  * Linux Additions X11 graphics driver, EDID construction
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  * This file is based on drmmode_display.c from the X.Org xf86-video-intel
  * driver with the following copyright notice:
  *

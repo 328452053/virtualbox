@@ -1,10 +1,10 @@
-/* $Id: clipboard-transfers.cpp 111865 2025-11-25 13:30:00Z andreas.loeffler@oracle.com $ */
+/* $Id: clipboard-transfers.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Shared Clipboard: Common clipboard transfer handling code.
  */
 
 /*
- * Copyright (C) 2019-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2019-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: RTSystemGetNativeArch-win.cpp 111917 2025-11-27 12:35:01Z knut.osmundsen@oracle.com $ */
+/* $Id: RTSystemGetNativeArch-win.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - RTSystemGetNativeArch, Windows ring-3.
  */
 
 /*
- * Copyright (C) 2024-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2024-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

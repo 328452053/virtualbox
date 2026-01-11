@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id: virtual_test_sheriff.py 111782 2025-11-18 08:41:25Z knut.osmundsen@oracle.com $
+# $Id: virtual_test_sheriff.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 # pylint: disable=line-too-long
 
 """
@@ -16,7 +16,7 @@ from __future__ import print_function;
 
 __copyright__ = \
 """
-Copyright (C) 2012-2025 Oracle and/or its affiliates.
+Copyright (C) 2012-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.
@@ -45,7 +45,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111782 $"
+__version__ = "$Revision: 112403 $"
 
 
 # Standard python imports
@@ -353,7 +353,7 @@ class VirtualTestSheriff(object): # pylint: disable=too-few-public-methods
 
         if self.oConfig.sLogFile:
             self.oLogFile = open(self.oConfig.sLogFile, "a");   # pylint: disable=consider-using-with,unspecified-encoding
-            self.oLogFile.write('VirtualTestSheriff: $Revision: 111782 $ \n');
+            self.oLogFile.write('VirtualTestSheriff: $Revision: 112403 $ \n');
 
 
     def eprint(self, sText):
@@ -768,7 +768,7 @@ class VirtualTestSheriff(object): # pylint: disable=too-few-public-methods
         for idTestResult, tReason in dReasonForResultId.items():
             oFailureReason = self.getFailureReason(tReason);
             if oFailureReason is not None:
-                sComment = 'Set by $Revision: 111782 $' # Handy for reverting later.
+                sComment = 'Set by $Revision: 112403 $' # Handy for reverting later.
                 if idTestResult in dCommentForResultId:
                     sComment += ': ' + dCommentForResultId[idTestResult];
 

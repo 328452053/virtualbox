@@ -1,10 +1,10 @@
-/* $Id: UsbWebcam.cpp 110881 2025-09-04 06:41:15Z alexander.eichner@oracle.com $ */
+/* $Id: UsbWebcam.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * USB Webcam Device Emulation.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: VBoxEditElf.cpp 110913 2025-09-05 18:57:48Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxEditElf.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxEditElf - Simple ELF binary file editor.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.
@@ -1065,7 +1065,7 @@ static RTEXITCODE parseArguments(int argc,  char **argv)
             case 'V':
             {
                 /* The following is assuming that svn does it's job here. */
-                static const char s_szRev[] = "$Revision: 110913 $";
+                static const char s_szRev[] = "$Revision: 112403 $";
                 const char *psz = RTStrStripL(strchr(s_szRev, ' '));
                 RTPrintf("r%.*s\n", strchr(psz, ' ') - psz, psz);
                 return RTEXITCODE_SUCCESS;

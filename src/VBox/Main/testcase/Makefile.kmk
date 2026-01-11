@@ -1,10 +1,10 @@
-# $Id: Makefile.kmk 112213 2025-12-24 03:41:13Z jack.doherty@oracle.com $
+# $Id: Makefile.kmk 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # Sub-Makefile for the VBox API testcases.
 #
 
 #
-# Copyright (C) 2004-2025 Oracle and/or its affiliates.
+# Copyright (C) 2004-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: loadgeneratorR0.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: loadgeneratorR0.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Load Generator, Ring-0 Service.
  */
 
 /*
- * Copyright (C) 2008-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2008-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

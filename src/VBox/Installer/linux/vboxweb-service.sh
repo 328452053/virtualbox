@@ -1,11 +1,11 @@
 #!/bin/sh
-# $Id: vboxweb-service.sh 111742 2025-11-14 14:38:51Z vadim.galitsyn@oracle.com $
+# $Id: vboxweb-service.sh 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # VirtualBox web service API daemon init script.
 #
 
 #
-# Copyright (C) 2006-2025 Oracle and/or its affiliates.
+# Copyright (C) 2006-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

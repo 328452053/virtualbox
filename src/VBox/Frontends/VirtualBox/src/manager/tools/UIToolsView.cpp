@@ -1,10 +1,10 @@
-/* $Id: UIToolsView.cpp 111239 2025-10-03 14:20:57Z sergey.dubov@oracle.com $ */
+/* $Id: UIToolsView.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIToolsView class implementation.
  */
 
 /*
- * Copyright (C) 2012-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2012-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: GITSInternal.h 110333 2025-07-21 09:37:13Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: GITSInternal.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * GITS - Generic Interrupt Controller Interrupt Translation Service - Internal.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

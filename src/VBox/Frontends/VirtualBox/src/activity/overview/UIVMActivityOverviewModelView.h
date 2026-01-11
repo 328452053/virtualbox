@@ -1,10 +1,10 @@
-/* $Id: UIVMActivityOverviewModelView.h 111935 2025-11-28 15:36:02Z sergey.dubov@oracle.com $ */
+/* $Id: UIVMActivityOverviewModelView.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMActivityOverviewModelView class declaration.
  */
 
 /*
- * Copyright (C) 2009-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2009-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

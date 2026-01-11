@@ -1,10 +1,10 @@
-/* $Id: UIActionPoolManager.cpp 111826 2025-11-20 15:08:39Z sergey.dubov@oracle.com $ */
+/* $Id: UIActionPoolManager.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIActionPoolManager class implementation.
  */
 
 /*
- * Copyright (C) 2010-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2010-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

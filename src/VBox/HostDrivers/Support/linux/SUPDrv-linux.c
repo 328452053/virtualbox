@@ -1,10 +1,10 @@
-/* $Id: SUPDrv-linux.c 111733 2025-11-14 12:51:40Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: SUPDrv-linux.c 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxDrv - The VirtualBox Support Driver - Linux specifics.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

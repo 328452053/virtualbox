@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# $Id: htmlhelp-qthelp.py 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: htmlhelp-qthelp.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 
 """
 A python script to create a .qhp file out of a given htmlhelp
@@ -10,7 +10,7 @@ see the code and inlined comments.
 
 __copyright__ = \
 """
-Copyright (C) 2006-2025 Oracle and/or its affiliates.
+Copyright (C) 2006-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.

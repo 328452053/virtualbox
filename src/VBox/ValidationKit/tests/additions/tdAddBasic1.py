@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id: tdAddBasic1.py 111326 2025-10-10 13:33:54Z alexander.eichner@oracle.com $
+# $Id: tdAddBasic1.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 
 """
 VirtualBox Validation Kit - Additions Basics #1.
@@ -8,7 +8,7 @@ VirtualBox Validation Kit - Additions Basics #1.
 
 __copyright__ = \
 """
-Copyright (C) 2010-2025 Oracle and/or its affiliates.
+Copyright (C) 2010-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.
@@ -37,7 +37,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111326 $"
+__version__ = "$Revision: 112403 $"
 
 # Standard Python imports.
 import os;

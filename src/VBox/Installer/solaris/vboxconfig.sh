@@ -1,11 +1,11 @@
 #!/bin/sh
-# $Id: vboxconfig.sh 110752 2025-08-18 19:58:46Z brent.paulson@oracle.com $
+# $Id: vboxconfig.sh 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # VirtualBox Configuration Script, Solaris host.
 #
 
 #
-# Copyright (C) 2009-2025 Oracle and/or its affiliates.
+# Copyright (C) 2009-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

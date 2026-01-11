@@ -1,10 +1,10 @@
-/* $Id: init-linux.cpp 112094 2025-12-10 09:39:09Z knut.osmundsen@oracle.com $ */
+/* $Id: init-linux.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Init Ring-3, POSIX Specific Code.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

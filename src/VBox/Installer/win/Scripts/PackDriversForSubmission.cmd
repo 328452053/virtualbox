@@ -1,11 +1,11 @@
 @echo off
-rem $Id: PackDriversForSubmission.cmd 110697 2025-08-12 18:01:10Z klaus.espenlaub@oracle.com $
+rem $Id: PackDriversForSubmission.cmd 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 rem rem @file
 rem Windows NT batch script for preparing for signing submission.
 rem
 
 rem
-rem Copyright (C) 2018-2025 Oracle and/or its affiliates.
+rem Copyright (C) 2018-2026 Oracle and/or its affiliates.
 rem
 rem This file is part of VirtualBox base platform packages, as
 rem available from https://www.virtualbox.org.

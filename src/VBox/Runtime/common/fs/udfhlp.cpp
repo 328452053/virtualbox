@@ -1,10 +1,10 @@
-/* $Id: udfhlp.cpp 111468 2025-10-20 18:33:59Z knut.osmundsen@oracle.com $ */
+/* $Id: udfhlp.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - ISO 9660 and UDF Virtual Filesystem (read only).
  */
 
 /*
- * Copyright (C) 2017-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2017-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

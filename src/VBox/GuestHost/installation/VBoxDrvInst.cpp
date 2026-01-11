@@ -1,10 +1,10 @@
-/* $Id: VBoxDrvInst.cpp 111636 2025-11-11 15:47:46Z andreas.loeffler@oracle.com $ */
+/* $Id: VBoxDrvInst.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Driver installation utility for Windows hosts and guests.
  */
 
 /*
- * Copyright (C) 2024-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2024-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

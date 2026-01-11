@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id: PyCommonVmm.py 110032 2025-06-27 23:28:43Z knut.osmundsen@oracle.com $
+# $Id: PyCommonVmm.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 
 """
 Common python main() support code for exceptions and profiling.
@@ -10,7 +10,7 @@ from __future__ import print_function;
 
 __copyright__ = \
 """
-Copyright (C) 2025 Oracle and/or its affiliates.
+Copyright (C) 2025-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.
@@ -30,7 +30,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 
 SPDX-License-Identifier: GPL-3.0-only
 """
-__version__ = "$Revision: 110032 $"
+__version__ = "$Revision: 112403 $"
 
 # Standard python imports.
 import io;

@@ -1,10 +1,10 @@
-/* $Id: ResourceAssignmentManager.cpp 111106 2025-09-25 11:56:14Z dmitrii.grigorev@oracle.com $ */
+/* $Id: ResourceAssignmentManager.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VirtualBox bus slots assignment manager
  */
 
 /*
- * Copyright (C) 2010-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2010-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

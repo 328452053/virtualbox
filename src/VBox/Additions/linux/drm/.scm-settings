@@ -1,10 +1,10 @@
-# $Id: .scm-settings 112306 2026-01-07 01:12:33Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for linux drm driver.
 #
 
 #
-# Copyright (C) 2010-2025 Oracle and/or its affiliates.
+# Copyright (C) 2010-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

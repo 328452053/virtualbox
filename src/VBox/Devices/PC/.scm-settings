@@ -1,10 +1,10 @@
-# $Id: .scm-settings 112401 2026-01-11 18:56:44Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for PC devices/drivers.
 #
 
 #
-# Copyright (C) 2017-2025 Oracle and/or its affiliates.
+# Copyright (C) 2017-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

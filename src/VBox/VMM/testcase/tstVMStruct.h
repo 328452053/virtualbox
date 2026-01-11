@@ -1,4 +1,4 @@
-/* $Id: tstVMStruct.h 111956 2025-12-01 12:31:49Z alexander.eichner@oracle.com $ */
+/* $Id: tstVMStruct.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * tstVMMStruct - Statements for generating VM and VMCPU offset and size tests.
  *
@@ -7,7 +7,7 @@
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

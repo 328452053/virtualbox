@@ -1,10 +1,10 @@
-/* $Id: combined-os-specific.c 112071 2025-12-09 22:01:33Z knut.osmundsen@oracle.com $ */
+/* $Id: combined-os-specific.c 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * SUPDrv - Combine a bunch of OS specific sources into one compile unit.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

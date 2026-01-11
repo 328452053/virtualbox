@@ -1,10 +1,10 @@
-/* $Id: test.cpp 112172 2025-12-19 06:09:35Z bela.lubkin@oracle.com $ */
+/* $Id: test.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Testcase Framework.
  */
 
 /*
- * Copyright (C) 2009-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2009-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

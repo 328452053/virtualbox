@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# $Id: htmlhelp-postprocess.py 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: htmlhelp-postprocess.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 
 """
 A python script to create post process html file in a gived folder. It
@@ -11,7 +11,7 @@ and if css file is found href link is updated in place.
 
 __copyright__ = \
 """
-Copyright (C) 2006-2025 Oracle and/or its affiliates.
+Copyright (C) 2006-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.

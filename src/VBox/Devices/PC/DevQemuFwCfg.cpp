@@ -1,10 +1,10 @@
-/* $Id: DevQemuFwCfg.cpp 112001 2025-12-03 22:25:49Z knut.osmundsen@oracle.com $ */
+/* $Id: DevQemuFwCfg.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * DevQemuFwCfg - QEMU firmware configuration compatible device.
  */
 
 /*
- * Copyright (C) 2020-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2020-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

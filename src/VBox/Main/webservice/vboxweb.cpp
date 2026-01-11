@@ -1,4 +1,4 @@
-/* $Id: vboxweb.cpp 111722 2025-11-13 21:13:44Z klaus.espenlaub@oracle.com $ */
+/* $Id: vboxweb.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * vboxweb.cpp:
  *      hand-coded parts of the webservice server. This is linked with the
@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2007-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2007-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

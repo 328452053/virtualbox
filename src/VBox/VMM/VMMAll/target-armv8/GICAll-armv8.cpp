@@ -1,10 +1,10 @@
-/* $Id: GICAll-armv8.cpp 111773 2025-11-18 05:19:26Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: GICAll-armv8.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * GIC - Generic Interrupt Controller Architecture (GIC) - All Contexts.
  */
 
 /*
- * Copyright (C) 2023-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2023-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

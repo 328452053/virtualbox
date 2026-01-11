@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-# $Id: txsshell.py 108023 2025-01-23 10:02:59Z knut.osmundsen@oracle.com $
+# $Id: txsshell.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 
 """
 Test eXecution Service Shell.
 """
 __copyright__ = \
 """
-Copyright (C) 2025 Oracle and/or its affiliates.
+Copyright (C) 2025-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.
@@ -35,7 +35,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = '$Revision: 108023 $'
+__version__ = '$Revision: 112403 $'
 
 import code;
 import os;

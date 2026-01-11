@@ -1,10 +1,10 @@
-/* $Id: RTProcQueryExecutablePath-nt.cpp 111220 2025-10-02 18:21:05Z knut.osmundsen@oracle.com $ */
+/* $Id: RTProcQueryExecutablePath-nt.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - RTProcQueryExecutablePath, Native NT.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: svn2git-internal.h 110523 2025-08-04 09:34:22Z alexander.eichner@oracle.com $ */
+/* $Id: svn2git-internal.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Internal svn2git header.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

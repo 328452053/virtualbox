@@ -1,10 +1,10 @@
-/* $Id: VBoxServiceVMInfo-win.cpp 111731 2025-11-14 12:02:32Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceVMInfo-win.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Virtual Machine Information for the Host, Windows specifics.
  */
 
 /*
- * Copyright (C) 2009-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2009-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

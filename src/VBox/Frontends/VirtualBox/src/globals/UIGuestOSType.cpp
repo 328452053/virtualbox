@@ -1,10 +1,10 @@
-/* $Id: UIGuestOSType.cpp 110967 2025-09-12 15:05:56Z sergey.dubov@oracle.com $ */
+/* $Id: UIGuestOSType.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIGuestOSType class implementation.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

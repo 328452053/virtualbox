@@ -1,11 +1,11 @@
-/* $Id: Quad_Core_AMD_Opteron_2384.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: Quad_Core_AMD_Opteron_2384.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPU database entry "Quad-Core AMD Opteron 2384".
  * Generated at 2013-12-09T21:56:56Z by VBoxCpuReport v4.3.51r91133 on win.amd64.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

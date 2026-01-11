@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112385 2026-01-08 17:14:22Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -20,7 +20,7 @@ Requires >= Python 3.4.
 # pylint: disable=line-too-long
 __copyright__ = \
 """
-Copyright (C) 2025 Oracle and/or its affiliates.
+Copyright (C) 2025-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112385 $"
+__revision__ = "$Revision: 112403 $"
 
 import argparse
 import ctypes

@@ -1,11 +1,11 @@
-/* $Id: ZHAOXIN_KaiXian_KX_U5581_1_8GHz.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: ZHAOXIN_KaiXian_KX_U5581_1_8GHz.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPU database entry "ZHAOXIN KaiXian KX-U5581 1.8GHz"
  * Generated at 2019-01-15T08:37:25Z by VBoxCpuReport v5.2.22r126460 on linux.amd64.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

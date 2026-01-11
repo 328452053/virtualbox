@@ -11,7 +11,7 @@ other VBox test drivers.
 
 __copyright__ = \
 """
-Copyright (C) 2010-2025 Oracle and/or its affiliates.
+Copyright (C) 2010-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.
@@ -40,7 +40,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 110684 $"
+__version__ = "$Revision: 112403 $"
 
 
 # Standard Python imports.

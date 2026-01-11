@@ -1,10 +1,10 @@
-/* $Id: HostDnsServiceResolvConf.cpp 112245 2025-12-28 23:59:20Z knut.osmundsen@oracle.com $ */
+/* $Id: HostDnsServiceResolvConf.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Base class for Host DNS & Co services.
  */
 
 /*
- * Copyright (C) 2014-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2014-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

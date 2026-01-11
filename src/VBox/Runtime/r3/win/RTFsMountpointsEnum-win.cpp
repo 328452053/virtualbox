@@ -1,10 +1,10 @@
-/* $Id: RTFsMountpointsEnum-win.cpp 111044 2025-09-18 11:48:02Z alexander.eichner@oracle.com $ */
+/* $Id: RTFsMountpointsEnum-win.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - File System, RTFsMountpointsEnum, Windows.
  */
 
 /*
- * Copyright (C) 2023-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2023-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,8 +1,8 @@
-' $Id: configure.vbs 112143 2025-12-17 10:47:51Z andreas.loeffler@oracle.com $
+' $Id: configure.vbs 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ' Thin VBScript wrapper to call configure.py with passed arguments.
 
 '
-' Copyright (C) 2025 Oracle and/or its affiliates.
+' Copyright (C) 2025-2026 Oracle and/or its affiliates.
 '
 ' This file is part of VirtualBox base platform packages, as
 ' available from https://www.virtualbox.org.

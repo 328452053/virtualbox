@@ -1,10 +1,10 @@
-/* $Id: VBoxCrypto.cpp 111613 2025-11-11 07:37:07Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxCrypto.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VirtualBox Cryptographic support module (for full VM encryption).
  */
 
 /*
- * Copyright (C) 2022-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2022-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

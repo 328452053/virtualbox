@@ -1,4 +1,4 @@
-/* $Id: VBoxCPP.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxCPP.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Build Tool - A mini C Preprocessor.
  *
@@ -13,7 +13,7 @@
  */
 
 /*
- * Copyright (C) 2012-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2012-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.
@@ -5749,7 +5749,7 @@ static RTEXITCODE vbcppParseOptions(PVBCPP pThis, int argc, char **argv, bool *p
             case 'V':
             {
                 /* The following is assuming that svn does it's job here. */
-                static const char s_szRev[] = "$Revision: 110684 $";
+                static const char s_szRev[] = "$Revision: 112403 $";
                 const char *psz = RTStrStripL(strchr(s_szRev, ' '));
                 RTPrintf("r%.*s\n", strchr(psz, ' ') - psz, psz);
                 *pfExit = true;

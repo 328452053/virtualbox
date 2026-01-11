@@ -1,10 +1,10 @@
-/* $Id: tstVMMUnitTests-1.h 111426 2025-10-16 07:36:59Z knut.osmundsen@oracle.com $ */
+/* $Id: tstVMMUnitTests-1.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMM internal unit tests.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

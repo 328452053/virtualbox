@@ -1,10 +1,10 @@
-/* $Id: GICR3-armv8.cpp 111707 2025-11-13 14:58:37Z knut.osmundsen@oracle.com $ */
+/* $Id: GICR3-armv8.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * GIC - Generic Interrupt Controller Architecture (GIC).
  */
 
 /*
- * Copyright (C) 2023-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2023-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

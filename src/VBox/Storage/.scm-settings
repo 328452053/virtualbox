@@ -1,10 +1,10 @@
-# $Id: .scm-settings 112365 2026-01-08 09:16:47Z alexander.eichner@oracle.com $
+# $Id: .scm-settings 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the storage library.
 #
 
 #
-# Copyright (C) 2017-2025 Oracle and/or its affiliates.
+# Copyright (C) 2017-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

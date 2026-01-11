@@ -1,4 +1,4 @@
-/** $Id: DevE1000Phy.cpp 111910 2025-11-27 09:53:47Z aleksey.ilyushin@oracle.com $ */
+/** $Id: DevE1000Phy.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * DevE1000Phy - Intel 82540EM Ethernet Controller Internal PHY Emulation.
  *
@@ -11,7 +11,7 @@
  */
 
 /*
- * Copyright (C) 2007-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2007-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

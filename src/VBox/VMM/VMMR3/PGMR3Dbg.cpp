@@ -1,10 +1,10 @@
-/* $Id: PGMR3Dbg.cpp 111793 2025-11-18 13:26:51Z alexander.eichner@oracle.com $ */
+/* $Id: PGMR3Dbg.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * PGM - Page Manager and Monitor - Debugger & Debugging APIs.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,4 +1,4 @@
-/* $Id: IEMAllInstrA64Impl.h 111138 2025-09-27 02:26:39Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllInstrA64Impl.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * A64 Instruction Implementation Macros.
  *
@@ -7,7 +7,7 @@
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

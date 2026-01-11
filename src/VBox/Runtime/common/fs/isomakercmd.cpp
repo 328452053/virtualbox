@@ -1,10 +1,10 @@
-/* $Id: isomakercmd.cpp 111455 2025-10-20 11:08:46Z knut.osmundsen@oracle.com $ */
+/* $Id: isomakercmd.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - ISO Image Maker Command.
  */
 
 /*
- * Copyright (C) 2017-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2017-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id: add_build.py 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: add_build.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 # pylint: disable=line-too-long
 
 """
@@ -9,7 +9,7 @@ Interface used by the tinderbox server side software to add a fresh build.
 
 __copyright__ = \
 """
-Copyright (C) 2012-2025 Oracle and/or its affiliates.
+Copyright (C) 2012-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.
@@ -38,7 +38,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 110684 $"
+__version__ = "$Revision: 112403 $"
 
 # Standard python imports
 import sys;

@@ -1,10 +1,10 @@
-/* $Id: DisasmCore-armv8.cpp 110973 2025-09-13 11:21:58Z knut.osmundsen@oracle.com $ */
+/* $Id: DisasmCore-armv8.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Disassembler - Core Components.
  */
 
 /*
- * Copyright (C) 2023-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2023-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

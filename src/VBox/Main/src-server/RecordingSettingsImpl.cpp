@@ -1,11 +1,11 @@
-/* $Id: RecordingSettingsImpl.cpp 111843 2025-11-21 15:07:11Z andreas.loeffler@oracle.com $ */
+/* $Id: RecordingSettingsImpl.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  *
  * VirtualBox COM class implementation - Machine capture settings.
  */
 
 /*
- * Copyright (C) 2018-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2018-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

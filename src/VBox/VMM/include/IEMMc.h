@@ -1,10 +1,10 @@
-/* $Id: IEMMc.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMMc.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - IEM_MC_XXX, common.
  */
 
 /*
- * Copyright (C) 2011-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2011-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

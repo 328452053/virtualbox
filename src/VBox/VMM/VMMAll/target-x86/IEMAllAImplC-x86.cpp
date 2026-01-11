@@ -1,10 +1,10 @@
-/* $Id: IEMAllAImplC-x86.cpp 112176 2025-12-19 06:45:24Z bela.lubkin@oracle.com $ */
+/* $Id: IEMAllAImplC-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Instruction Implementation in Assembly, x86 target, portable C variant.
  */
 
 /*
- * Copyright (C) 2011-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2011-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

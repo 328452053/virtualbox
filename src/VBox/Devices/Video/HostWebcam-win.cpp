@@ -1,10 +1,10 @@
-/* $Id: HostWebcam-win.cpp 110884 2025-09-04 08:20:42Z alexander.eichner@oracle.com $ */
+/* $Id: HostWebcam-win.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * DrvHostWebcam - Windows host webcam backend.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

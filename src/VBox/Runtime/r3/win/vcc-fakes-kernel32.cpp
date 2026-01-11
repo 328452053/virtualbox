@@ -1,10 +1,10 @@
-/* $Id: vcc-fakes-kernel32.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: vcc-fakes-kernel32.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Tricks to make the Visual C++ 2010 CRT work on NT4, W2K and XP.
  */
 
 /*
- * Copyright (C) 2012-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2012-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

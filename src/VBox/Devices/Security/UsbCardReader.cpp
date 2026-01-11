@@ -1,10 +1,10 @@
-/* $Id: UsbCardReader.cpp 111610 2025-11-11 06:37:00Z alexander.eichner@oracle.com $ */
+/* $Id: UsbCardReader.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * UsbCardReader - Usb Smart Card Reader implementation.
  */
 
 /*
- * Copyright (C) 2011-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2011-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

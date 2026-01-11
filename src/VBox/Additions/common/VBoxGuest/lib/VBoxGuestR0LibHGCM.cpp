@@ -1,4 +1,4 @@
-/* $Id: VBoxGuestR0LibHGCM.cpp 111527 2025-11-03 15:08:53Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxGuestR0LibHGCM.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxGuestLib - Host-Guest Communication Manager, ring-0 client drivers.
  *
@@ -7,7 +7,7 @@
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation

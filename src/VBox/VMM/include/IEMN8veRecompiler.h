@@ -1,10 +1,10 @@
-/* $Id: IEMN8veRecompiler.h 111470 2025-10-21 08:25:07Z alexander.eichner@oracle.com $ */
+/* $Id: IEMN8veRecompiler.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Native Recompiler Internals.
  */
 
 /*
- * Copyright (C) 2011-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2011-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

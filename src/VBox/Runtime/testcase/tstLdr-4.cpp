@@ -1,10 +1,10 @@
-/* $Id: tstLdr-4.cpp 112130 2025-12-16 13:07:21Z knut.osmundsen@oracle.com $ */
+/* $Id: tstLdr-4.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Testcase for RTLdrOpen using ldrLdrObjR0.r0.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

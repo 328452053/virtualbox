@@ -1,10 +1,10 @@
-/* $Id: ConsoleImpl.cpp 112386 2026-01-08 23:07:58Z jack.doherty@oracle.com $ */
+/* $Id: ConsoleImpl.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Console COM Class implementation
  */
 
 /*
- * Copyright (C) 2005-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2005-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

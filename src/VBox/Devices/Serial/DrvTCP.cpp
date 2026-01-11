@@ -1,4 +1,4 @@
-/* $Id: DrvTCP.cpp 111258 2025-10-06 12:01:00Z alexander.eichner@oracle.com $ */
+/* $Id: DrvTCP.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * TCP socket driver implementing the IStream interface.
  */
@@ -6,7 +6,7 @@
 /*
  * Contributed by Alexey Eromenko (derived from DrvNamedPipe).
  *
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

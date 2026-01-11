@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: tst-txsclient.py 111780 2025-11-18 08:39:38Z knut.osmundsen@oracle.com $
+# $Id: tst-txsclient.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 
 """
 Simple testcase for txsclient.py.
@@ -9,7 +9,7 @@ from __future__ import print_function;
 
 __copyright__ = \
 """
-Copyright (C) 2010-2025 Oracle and/or its affiliates.
+Copyright (C) 2010-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.
@@ -38,7 +38,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111780 $"
+__version__ = "$Revision: 112403 $"
 
 # Standard python imports.
 import os

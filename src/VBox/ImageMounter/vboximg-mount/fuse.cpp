@@ -1,11 +1,11 @@
-/* $Id: fuse.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: fuse.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Module to dynamically load libfuse/libosxfuse and load all symbols
  * which are needed by vboximg-mount.
  */
 
 /*
- * Copyright (C) 2019-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2019-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

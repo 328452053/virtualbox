@@ -1,10 +1,10 @@
-/* $Id: utf-16.cpp 111219 2025-10-02 18:19:29Z knut.osmundsen@oracle.com $ */
+/* $Id: utf-16.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - UTF-16.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

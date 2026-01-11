@@ -1,10 +1,10 @@
-/* $Id: CPUMAllCpuId.cpp 112032 2025-12-05 01:32:22Z knut.osmundsen@oracle.com $ */
+/* $Id: CPUMAllCpuId.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPUM - CPU ID part, common bits.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

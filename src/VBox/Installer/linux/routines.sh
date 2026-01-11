@@ -1,10 +1,10 @@
-# $Id: routines.sh 111517 2025-10-29 15:15:28Z vadim.galitsyn@oracle.com $
+# $Id: routines.sh 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 # Oracle VirtualBox
 # VirtualBox installer shell routines
 #
 
 #
-# Copyright (C) 2007-2025 Oracle and/or its affiliates.
+# Copyright (C) 2007-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

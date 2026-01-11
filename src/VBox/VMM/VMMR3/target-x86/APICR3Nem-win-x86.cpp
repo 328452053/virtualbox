@@ -1,10 +1,10 @@
-/* $Id: APICR3Nem-win-x86.cpp 112388 2026-01-09 05:47:34Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: APICR3Nem-win-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * APIC - Advanced Programmable Interrupt Controller - NEM Hyper-V backend.
  */
 
 /*
- * Copyright (C) 2024-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2024-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

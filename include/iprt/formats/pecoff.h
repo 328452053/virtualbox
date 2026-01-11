@@ -1,10 +1,10 @@
-/* $Id: pecoff.h 111802 2025-11-18 15:53:52Z andreas.loeffler@oracle.com $ */
+/* $Id: pecoff.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Windows NT PE & COFF Structures and Constants.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

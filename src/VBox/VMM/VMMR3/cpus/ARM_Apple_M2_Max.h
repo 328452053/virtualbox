@@ -1,11 +1,11 @@
-/* $Id: ARM_Apple_M2_Max.h 109589 2025-05-16 17:58:52Z knut.osmundsen@oracle.com $ */
+/* $Id: ARM_Apple_M2_Max.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPU database entry "Apple M2 Max".
  * Generated at 2025-04-22T09:46:58Z by VBoxCpuReport v7.1.97r168579 on linux.arm64.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

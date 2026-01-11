@@ -1,10 +1,10 @@
-/* $Id: json.cpp 111004 2025-09-16 11:30:12Z alexander.eichner@oracle.com $ */
+/* $Id: json.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT JSON parser API (JSON).
  */
 
 /*
- * Copyright (C) 2016-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2016-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

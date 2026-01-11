@@ -1,10 +1,10 @@
-/* $Id: path.cpp 111731 2025-11-14 12:02:32Z knut.osmundsen@oracle.com $ */
+/* $Id: path.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VirtualBox Windows Guest Shared Folders - Path related routines.
  */
 
 /*
- * Copyright (C) 2012-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2012-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

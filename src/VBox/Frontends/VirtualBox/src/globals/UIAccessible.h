@@ -1,10 +1,10 @@
-/* $Id: UIAccessible.h 111281 2025-10-07 15:52:12Z sergey.dubov@oracle.com $ */
+/* $Id: UIAccessible.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: UIAccessible namespace declaration.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,11 +1,11 @@
-/* $Id: Intel_Core2_T7600_2_33GHz.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: Intel_Core2_T7600_2_33GHz.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPU database entry "Intel Core2 T7600 2.33GHz".
  * Generated at 2017-10-12T18:17:56Z by VBoxCpuReport v5.2.0_RC1r118339 on linux.x86.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

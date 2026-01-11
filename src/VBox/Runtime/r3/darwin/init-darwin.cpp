@@ -1,10 +1,10 @@
-/* $Id: init-darwin.cpp 112040 2025-12-05 11:29:33Z alexander.eichner@oracle.com $ */
+/* $Id: init-darwin.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Init Ring-3, POSIX Specific Code.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: RTFsCmdLs.cpp 111471 2025-10-21 08:42:25Z knut.osmundsen@oracle.com $ */
+/* $Id: RTFsCmdLs.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - /bin/ls like utility for testing the VFS code.
  */
 
 /*
- * Copyright (C) 2017-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2017-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

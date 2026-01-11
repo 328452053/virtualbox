@@ -1,10 +1,10 @@
-# $Id: VirtualBox.tmpl.spec 111654 2025-11-12 10:37:35Z alexander.eichner@oracle.com $
+# $Id: VirtualBox.tmpl.spec 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # Spec file for creating VirtualBox rpm packages
 #
 
 #
-# Copyright (C) 2006-2025 Oracle and/or its affiliates.
+# Copyright (C) 2006-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

@@ -1,4 +1,4 @@
-/* $Id: IEMAllStub.cpp 111981 2025-12-02 21:46:11Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllStub.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager, dummy IEM stub functions.
  *
@@ -7,7 +7,7 @@
  */
 
 /*
- * Copyright (C) 2023-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2023-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

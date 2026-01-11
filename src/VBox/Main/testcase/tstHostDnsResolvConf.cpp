@@ -1,4 +1,4 @@
-/* $Id: tstHostDnsResolvConf.cpp 112244 2025-12-28 23:54:35Z knut.osmundsen@oracle.com $ */
+/* $Id: tstHostDnsResolvConf.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * HostDnsServiceResolvConf parsing tests.
  *
@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

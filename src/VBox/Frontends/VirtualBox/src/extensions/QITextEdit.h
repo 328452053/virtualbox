@@ -1,10 +1,10 @@
-/* $Id: QITextEdit.h 111182 2025-09-30 09:38:54Z sergey.dubov@oracle.com $ */
+/* $Id: QITextEdit.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: QITextEdit class declaration.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

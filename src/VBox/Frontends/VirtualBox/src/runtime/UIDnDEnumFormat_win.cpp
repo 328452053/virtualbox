@@ -1,11 +1,11 @@
-/* $Id: UIDnDEnumFormat_win.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: UIDnDEnumFormat_win.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI -  UIDnDEnumFormat class implementation. This class implements the
  * IEnumFORMATETC ("Format et cetera") interface.
  */
 
 /*
- * Copyright (C) 2014-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2014-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

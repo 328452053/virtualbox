@@ -1,10 +1,10 @@
-/* $Id: acpi-ast.cpp 110666 2025-08-11 10:34:07Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-ast.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) AST handling.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

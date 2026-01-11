@@ -1,10 +1,10 @@
-/* $Id: isomakerimport.cpp 111473 2025-10-21 13:45:54Z knut.osmundsen@oracle.com $ */
+/* $Id: isomakerimport.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - ISO Image Maker, Import Existing Image.
  */
 
 /*
- * Copyright (C) 2017-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2017-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

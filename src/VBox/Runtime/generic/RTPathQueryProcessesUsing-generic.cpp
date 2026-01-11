@@ -1,10 +1,10 @@
-/* $Id: RTPathQueryProcessesUsing-generic.cpp 111207 2025-10-02 09:08:05Z alexander.eichner@oracle.com $ */
+/* $Id: RTPathQueryProcessesUsing-generic.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - RTPathQueryProcessesUsing, Native NT.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

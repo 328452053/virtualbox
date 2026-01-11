@@ -1,10 +1,10 @@
-/* $Id: VBoxNetSlirpNAT.cpp 111771 2025-11-17 21:56:41Z jack.doherty@oracle.com $ */
+/* $Id: VBoxNetSlirpNAT.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxNetNAT - NAT Service for connecting to IntNet.
  */
 
 /*
- * Copyright (C) 2009-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2009-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

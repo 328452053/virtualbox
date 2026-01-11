@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: build_id_to_file_mapping.py 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: build_id_to_file_mapping.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 
 """
 Scans the given files (globbed) for topic id and stores records the filename
@@ -11,7 +11,7 @@ refentry files to dita to correct links.
 
 __copyright__ = \
 """
-Copyright (C) 2023-2025 Oracle and/or its affiliates.
+Copyright (C) 2023-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.
@@ -31,7 +31,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 
 SPDX-License-Identifier: GPL-3.0-only
 """
-__version__ = "$Revision: 110684 $"
+__version__ = "$Revision: 112403 $"
 
 
 # Standard python imports.

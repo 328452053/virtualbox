@@ -1,10 +1,10 @@
-/* $Id: HostWebcam-darwin.mm 110890 2025-09-04 10:04:32Z alexander.eichner@oracle.com $ */
+/* $Id: HostWebcam-darwin.mm 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * DrvHostWebcam - Mac host webcam backend. Uses AVFoundation framework.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

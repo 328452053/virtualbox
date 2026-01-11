@@ -1,10 +1,10 @@
-/* $Id: UINotificationObjects.cpp 110851 2025-09-01 16:45:12Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects implementations.
  */
 
 /*
- * Copyright (C) 2021-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2021-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

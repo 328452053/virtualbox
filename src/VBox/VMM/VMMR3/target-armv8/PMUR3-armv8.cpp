@@ -1,10 +1,10 @@
-/* $Id: PMUR3-armv8.cpp 111697 2025-11-13 13:40:36Z knut.osmundsen@oracle.com $ */
+/* $Id: PMUR3-armv8.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * PMU - Performance Monitoring Unit.
  */
 
 /*
- * Copyright (C) 2024-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2024-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

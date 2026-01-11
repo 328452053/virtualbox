@@ -1,11 +1,11 @@
-# $Id: soap-header-to-inline-source-file.sed 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: soap-header-to-inline-source-file.sed 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 ## @file
 # WebService - SED script for extracting inline functions from soapH.h
 #              for putting them in a C++ source file.
 #
 
 #
-# Copyright (C) 2020-2025 Oracle and/or its affiliates.
+# Copyright (C) 2020-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
 # available from https://www.virtualbox.org.

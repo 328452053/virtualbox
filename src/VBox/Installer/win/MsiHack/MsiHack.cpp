@@ -1,4 +1,4 @@
-/* $Id: MsiHack.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: MsiHack.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * MsiHack - Exterimental DLL that intercept small ReadFile calls from
  *           MSI, CABINET and WINTEROP, buffering them using memory mapped files.
@@ -7,7 +7,7 @@
  */
 
 /*
- * Copyright (C) 2016-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2016-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

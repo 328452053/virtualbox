@@ -1,10 +1,10 @@
-/* $Id: vbox_irq.c 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: vbox_irq.c 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VirtualBox Additions Linux kernel video driver
  */
 
 /*
- * Copyright (C) 2016-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2016-2026 Oracle and/or its affiliates.
  * This file is based on qxl_irq.c
  * Copyright 2013 Red Hat Inc.
  *

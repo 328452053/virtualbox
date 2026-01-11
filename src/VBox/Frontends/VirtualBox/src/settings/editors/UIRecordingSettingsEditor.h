@@ -1,10 +1,10 @@
-/* $Id: UIRecordingSettingsEditor.h 112115 2025-12-15 14:08:53Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class declaration.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

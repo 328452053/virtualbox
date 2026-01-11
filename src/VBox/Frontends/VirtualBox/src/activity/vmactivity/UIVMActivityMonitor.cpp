@@ -1,10 +1,10 @@
-/* $Id: UIVMActivityMonitor.cpp 111251 2025-10-06 09:49:35Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIVMActivityMonitor.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMActivityMonitor class implementation.
  */
 
 /*
- * Copyright (C) 2016-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2016-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

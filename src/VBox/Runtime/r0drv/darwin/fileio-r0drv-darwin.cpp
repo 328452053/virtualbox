@@ -1,10 +1,10 @@
-/* $Id: fileio-r0drv-darwin.cpp 112074 2025-12-09 22:06:48Z knut.osmundsen@oracle.com $ */
+/* $Id: fileio-r0drv-darwin.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - File I/O, R0 Driver, Darwin.
  */
 
 /*
- * Copyright (C) 2011-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2011-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

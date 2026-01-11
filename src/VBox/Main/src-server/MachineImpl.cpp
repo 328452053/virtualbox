@@ -1,10 +1,10 @@
-/* $Id: MachineImpl.cpp 112162 2025-12-17 23:16:50Z knut.osmundsen@oracle.com $ */
+/* $Id: MachineImpl.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * Implementation of IMachine in VBoxSVC.
  */
 
 /*
- * Copyright (C) 2004-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2004-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

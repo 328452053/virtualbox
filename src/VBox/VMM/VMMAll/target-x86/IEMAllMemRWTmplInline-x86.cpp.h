@@ -1,10 +1,10 @@
-/* $Id: IEMAllMemRWTmplInline-x86.cpp.h 111898 2025-11-26 17:53:03Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllMemRWTmplInline-x86.cpp.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inlined R/W Memory Functions Template, x86 target.
  */
 
 /*
- * Copyright (C) 2011-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2011-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

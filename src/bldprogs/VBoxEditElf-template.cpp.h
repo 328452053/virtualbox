@@ -1,10 +1,10 @@
-/* $Id: VBoxEditElf-template.cpp.h 111729 2025-11-14 11:01:44Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxEditElf-template.cpp.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxEditElf - Simple ELF binary file editor, templated code.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

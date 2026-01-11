@@ -1,10 +1,10 @@
-/* $Id: GCMR3.cpp 111723 2025-11-14 09:19:02Z alexander.eichner@oracle.com $ */
+/* $Id: GCMR3.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * GCM - Guest Compatibility Manager.
  */
 
 /*
- * Copyright (C) 2022-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2022-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

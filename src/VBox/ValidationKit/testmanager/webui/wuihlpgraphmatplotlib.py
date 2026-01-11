@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: wuihlpgraphmatplotlib.py 111790 2025-11-18 12:49:13Z knut.osmundsen@oracle.com $
+# $Id: wuihlpgraphmatplotlib.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 
 """
 Test Manager Web-UI - Graph Helpers - Implemented using matplotlib.
@@ -7,7 +7,7 @@ Test Manager Web-UI - Graph Helpers - Implemented using matplotlib.
 
 __copyright__ = \
 """
-Copyright (C) 2012-2025 Oracle and/or its affiliates.
+Copyright (C) 2012-2026 Oracle and/or its affiliates.
 
 This file is part of VirtualBox base platform packages, as
 available from https://www.virtualbox.org.
@@ -36,7 +36,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111790 $"
+__version__ = "$Revision: 112403 $"
 
 # Standard Python Import and extensions installed on the system.
 import re;

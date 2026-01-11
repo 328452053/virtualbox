@@ -1,5 +1,5 @@
 @echo off
-rem $Id: win_postinstall.cmd 111059 2025-09-19 13:48:08Z alexander.eichner@oracle.com $
+rem $Id: win_postinstall.cmd 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
 rem rem @file
 rem Post installation script template for Windows.
 rem
@@ -8,7 +8,7 @@ rem part of the first logon.
 rem
 
 rem
-rem Copyright (C) 2017-2025 Oracle and/or its affiliates.
+rem Copyright (C) 2017-2026 Oracle and/or its affiliates.
 rem
 rem This file is part of VirtualBox base platform packages, as
 rem available from https://www.virtualbox.org.

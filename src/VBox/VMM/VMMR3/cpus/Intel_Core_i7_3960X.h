@@ -1,11 +1,11 @@
-/* $Id: Intel_Core_i7_3960X.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: Intel_Core_i7_3960X.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPU database entry "Intel Core i7-3960X".
  * Generated at 2013-12-12T15:29:11Z by VBoxCpuReport v4.3.53r91237 on win.amd64.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

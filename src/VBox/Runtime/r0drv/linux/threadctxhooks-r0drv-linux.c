@@ -1,10 +1,10 @@
-/* $Id: threadctxhooks-r0drv-linux.c 110951 2025-09-09 19:13:49Z knut.osmundsen@oracle.com $ */
+/* $Id: threadctxhooks-r0drv-linux.c 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Thread Context Switching Hook, Ring-0 Driver, Linux.
  */
 
 /*
- * Copyright (C) 2013-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2013-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

@@ -1,10 +1,10 @@
-/* $Id: VBoxDxMtDeps.cpp 110294 2025-07-18 10:38:25Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxDxMtDeps.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxDxMt - For dragging in library objects.
  */
 
 /*
- * Copyright (C) 2025 Oracle and/or its affiliates.
+ * Copyright (C) 2025-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

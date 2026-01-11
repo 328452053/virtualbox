@@ -1,10 +1,10 @@
-/* $Id: HMR0SVM-x86.h 111701 2025-11-13 14:05:10Z knut.osmundsen@oracle.com $ */
+/* $Id: HMR0SVM-x86.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * HM SVM (AMD-V) - Internal header file.
  */
 
 /*
- * Copyright (C) 2006-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

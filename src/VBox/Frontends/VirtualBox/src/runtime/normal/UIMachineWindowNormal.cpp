@@ -1,10 +1,10 @@
-/* $Id: UIMachineWindowNormal.cpp 111480 2025-10-23 08:10:25Z sergey.dubov@oracle.com $ */
+/* $Id: UIMachineWindowNormal.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineWindowNormal class implementation.
  */
 
 /*
- * Copyright (C) 2010-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2010-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.

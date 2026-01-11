@@ -1,10 +1,10 @@
-/* $Id: VDKeyStore.cpp 111652 2025-11-12 10:17:46Z alexander.eichner@oracle.com $ */
+/* $Id: VDKeyStore.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VD - Simple keystore handling for encrypted media.
  */
 
 /*
- * Copyright (C) 2015-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2015-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.
