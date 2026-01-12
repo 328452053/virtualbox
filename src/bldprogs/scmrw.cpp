@@ -1,4 +1,4 @@
-/* $Id: scmrw.cpp 112420 2026-01-12 20:29:14Z knut.osmundsen@oracle.com $ */
+/* $Id: scmrw.cpp 112425 2026-01-12 21:36:00Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT Testcase / Tool - Source Code Massager.
  */
@@ -1439,6 +1439,7 @@ rewrite_Copyright_CommentCallback(PCSCMCOMMENTINFO pInfo, const char *pszBody, s
 
     pState->cComments++;
 
+    uint32_t cBlankLinesBefore = pInfo->cBlankLinesBefore;
     uint32_t iLine = pInfo->iLineStart + pInfo->cBlankLinesBefore;
 
     /*
@@ -1455,10 +1456,12 @@ rewrite_Copyright_CommentCallback(PCSCMCOMMENTINFO pInfo, const char *pszBody, s
         const char *pszNextLine = (const char *)memchr(pszBody, '\n', cchBody);
         if (pszNextLine)
         {
+            cBlankLinesBefore = 0;
             do
             {
                 iLine++;
                 pszNextLine++;
+                cBlankLinesBefore++;
             } while (*pszNextLine == '\n');
             cchBody -= (size_t)(pszNextLine - pszBody);
             pszBody  = pszNextLine;
@@ -1476,12 +1479,14 @@ rewrite_Copyright_CommentCallback(PCSCMCOMMENTINFO pInfo, const char *pszBody, s
                 pszNextLine++;
                 cchBody -= (size_t)(pszNextLine - pszBody);
                 pszBody  = pszNextLine;
+                cBlankLinesBefore = 0;
             }
 
             /* Skip blank lines following it. */
             while (*pszBody == '\n')
             {
                 iLine++;
+                cBlankLinesBefore++;
                 cchBody--;
                 pszBody++;
             }
@@ -1539,9 +1544,10 @@ rewrite_Copyright_CommentCallback(PCSCMCOMMENTINFO pInfo, const char *pszBody, s
         && cchBody > sizeof("Copyright") + RT_MIN(sizeof(g_szCopyrightHolder), sizeof(g_szOldCopyrightHolder))
         && RTStrNICmp(pszBody, RT_STR_TUPLE("copyright")) == 0)
     {
-        const char *pszNextLine = (const char *)memchr(pszBody, '\n', cchBody);
+        const char  *pszNextLine = (const char *)memchr(pszBody, '\n', cchBody);
+        size_t const cchLine     = (pszNextLine ? pszNextLine : &pszBody[cchBody]) - pszBody;
 
-        /* Oracle copyright? */
+        /* Drop trailing spaces and any UEFI-style '<BR>'. */
         const char *pszEnd  = pszNextLine ? pszNextLine : &pszBody[cchBody];
         while (RT_C_IS_SPACE(pszEnd[-1]))
             pszEnd--;
@@ -1555,6 +1561,8 @@ rewrite_Copyright_CommentCallback(PCSCMCOMMENTINFO pInfo, const char *pszBody, s
             while (RT_C_IS_SPACE(pszEnd[-1]))
                 pszEnd--;
         }
+
+        /* Oracle copyright? */
         if (   (   (uintptr_t)(pszEnd - pszBody) > sizeof(g_szCopyrightHolder)
                 && (*(unsigned char *)(pszEnd - sizeof(g_szCopyrightHolder) + 1) & 0x80) == 0 /* to avoid annoying assertion */
                 && RTStrNICmp(pszEnd - sizeof(g_szCopyrightHolder) + 1, RT_STR_TUPLE(g_szCopyrightHolder)) == 0)
@@ -1695,17 +1703,17 @@ rewrite_Copyright_CommentCallback(PCSCMCOMMENTINFO pInfo, const char *pszBody, s
                 cchWellFormed = RTStrPrintf(szWellFormed, sizeof(szWellFormed), "Copyright (C) %u-%u %s%s",
                                             pState->uFirstYear, pState->uLastYear, g_szCopyrightHolder,
                                             pState->fUefiWithHtmlBr ? "<BR>" : "");
-            pState->fWellFormedCopyright = cchWellFormed == (uintptr_t)(pszEnd - pszBody)
+            pState->fWellFormedCopyright = cchWellFormed == cchLine 
                                         && memcmp(pszBody, szWellFormed, cchWellFormed) == 0;
             if (!pState->fWellFormedCopyright)
                 ScmVerbose(pState->pState, 1, "* copyright isn't well formed\n");
             pState->fUpToDateCopyright   = pState->uLastYear == g_uYear;
 
             /* If there wasn't exactly one blank line before the comment, trigger a rewrite. */
-            if (pInfo->cBlankLinesBefore != 1)
+            if (cBlankLinesBefore != 1)
             {
                 ScmVerbose(pState->pState, 1, "* copyright comment is preceded by %u blank lines instead of 1\n",
-                           pInfo->cBlankLinesBefore);
+                           cBlankLinesBefore);
                 pState->fWellFormedCopyright = false;
             }
 
@@ -2144,8 +2152,10 @@ static SCMREWRITERRES rewrite_Copyright_Common(PSCMRWSTATE pState, PSCMSTREAM pI
             bool fUpdateCopyright = !pSettings->fExternalCopyright
                                  && (   !Info.fWellFormedCopyright
                                      || (!Info.fUpToDateCopyright && pSettings->fUpdateCopyrightYear));
+            Assert(!Info.fUefiStyleCopyright || Info.iLineLicense == UINT32_MAX);
             bool fUpdateLicense   = !pSettings->fExternalCopyright
                                  && Info.enmLicenceOpt != kScmLicense_LeaveAlone
+                                 && !Info.fUefiStyleCopyright /* we detected no license */
                                  && (   !Info.fWellFormedLicense
                                      || !Info.fIsCorrectLicense);
             if (   fUpdateCopyright
