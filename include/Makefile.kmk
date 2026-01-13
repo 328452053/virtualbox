@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112486 2026-01-13 13:25:54Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 112543 2026-01-13 16:32:24Z michal.necasek@oracle.com $
 ## @file
 # Some hacks to allow syntax and prerequisite include checking of headers.
 # This makefile doesn't and shouldn't build successfully.
@@ -183,7 +183,7 @@ ifn1of ($(KBUILD_TARGET_ARCH), x86 amd64)
  	iprt/asm-amd64-x86.h
 endif
 # AMD64 only headers.
-ifneq ($(KBUILD_TARGET_ARCH), amd64)
+ifneq ($(KBUILD_TARGET_ARCH),amd64)
  VBOX_HDRS_OMIT += \
  	VBox/vmm/cpumctx-v1_6.h
 endif
