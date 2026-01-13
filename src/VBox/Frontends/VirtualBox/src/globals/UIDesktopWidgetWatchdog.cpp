@@ -1,4 +1,4 @@
-/* $Id: UIDesktopWidgetWatchdog.cpp 112455 2026-01-13 10:57:23Z sergey.dubov@oracle.com $ */
+/* $Id: UIDesktopWidgetWatchdog.cpp 112466 2026-01-13 12:33:08Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDesktopWidgetWatchdog class implementation.
  */
@@ -915,15 +915,20 @@ void UIDesktopWidgetWatchdog::sltHandleHostScreenAvailableGeometryCalculated(int
             iHostScreenIndex, availableGeometry.x(), availableGeometry.y(),
             availableGeometry.width(), availableGeometry.height()));
 
-    /* Apply received data: */
-    const bool fSendSignal = m_availableGeometryData.value(iHostScreenIndex).isValid();
-    m_availableGeometryData[iHostScreenIndex] = availableGeometry;
     /* Forget finished worker: */
-    AssertPtrReturnVoid(m_availableGeometryWorkers.value(iHostScreenIndex));
-    m_availableGeometryWorkers.value(iHostScreenIndex)->disconnect();
-    m_availableGeometryWorkers.value(iHostScreenIndex)->deleteLater();
-    m_availableGeometryWorkers[iHostScreenIndex] = 0;
+    QWidget *pWorker = m_availableGeometryWorkers.value(iHostScreenIndex);
+    if (pWorker)
+    {
+        pWorker->disconnect();
+        pWorker->deleteLater();
+        m_availableGeometryWorkers[iHostScreenIndex] = 0;
+    }
 
+    /* We'll need to notify listeners if geometry recalculated (not the 1st time): */
+    const bool fSendSignal = m_availableGeometryData.value(iHostScreenIndex).isValid();
+    /* Save new geometry: */
+    if (iHostScreenIndex >= 0 && iHostScreenIndex < m_availableGeometryData.size())
+        m_availableGeometryData[iHostScreenIndex] = availableGeometry;
     /* Notify listeners: */
     if (fSendSignal)
         emit sigHostScreenWorkAreaRecalculated(iHostScreenIndex);
@@ -1055,6 +1060,9 @@ void UIDesktopWidgetWatchdog::updateHostScreenAvailableGeometry(int iHostScreenI
         iHostScreenIndex = UIDesktopWidgetWatchdog::primaryScreenNumber();
         AssertReturnVoid(iHostScreenIndex >= 0 && iHostScreenIndex < screenCount());
     }
+
+    /* Make sure index fits workers list bounds: */
+    AssertReturnVoid(iHostScreenIndex >= 0 && iHostScreenIndex < m_availableGeometryWorkers.size());
 
     /* Create invisible frame-less window worker: */
     UIInvisibleWindow *pWorker = new UIInvisibleWindow(iHostScreenIndex);
