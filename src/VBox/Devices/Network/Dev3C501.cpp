@@ -1,4 +1,4 @@
-/* $Id: Dev3C501.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: Dev3C501.cpp 112532 2026-01-13 16:08:24Z michal.necasek@oracle.com $ */
 /** @file
  * Dev3C501 - 3Com EtherLink (3C501) Ethernet Adapter Emulation.
  */
@@ -1632,24 +1632,26 @@ static DECLCALLBACK(uint32_t) elnkR3DMAXferHandler(PPDMDEVINS pDevIns, void *opa
     if (dma_type == DTYPE_WRITE)
     {
         /* Write transfer type. Reading from device, writing to memory. */
-        rc = PDMDevHlpDMAWriteMemory(pDevIns, nchan,
-                                     &pThis->abPacketBuf[ELNK_GP(pThis)],
-                                     dma_pos, cbToXfer, &cbXferred);
+        rc = PDMDevHlpDMAWriteMemoryEx(pDevIns, nchan,
+                                       pThis->abPacketBuf, ELNK_GP(pThis), sizeof(pThis->abPacketBuf),
+                                       dma_pos, cbToXfer, &cbXferred);
         AssertMsgRC(rc, ("DMAWriteMemory -> %Rrc\n", rc));
         uLastPos = pThis->uRCVBufPtr;
     }
     else
     {
-        /* Read of Verify transfer type. Reading from memory, writing to device. */
-        rc = PDMDevHlpDMAReadMemory(pDevIns, nchan,
-                                    &pThis->abPacketBuf[ELNK_GP(pThis)],
-                                    dma_pos, cbToXfer, &cbXferred);
+        /* Read or Verify transfer type. Reading from memory, writing to device. */
+        rc = PDMDevHlpDMAReadMemoryEx(pDevIns, nchan,
+                                      pThis->abPacketBuf, ELNK_GP(pThis), sizeof(pThis->abPacketBuf),
+                                      dma_pos, cbToXfer, &cbXferred);
         AssertMsgRC(rc, ("DMAReadMemory -> %Rrc\n", rc));
         uLastPos = 0;   /* Stop when buffer address wraps back to zero. */
     }
+    /* Advance the GP buffer pointer. */
+    pThis->uGPBufPtr = (pThis->uGPBufPtr + cbXferred) & ELNK_GP_MASK;
     Log2Func(("After DMA transfer: GPBufPtr=%u, lastpos=%u, cbXferred=%u\n", pThis->uGPBufPtr, uLastPos, cbXferred));
 
-    /* Advance the GP buffer pointer and see if transfer completed (it almost certainly did). */
+    /* See if transfer completed (it almost certainly did). */
     pThis->uGPBufPtr = (pThis->uGPBufPtr + cbXferred) & ELNK_GP_MASK;
     if (ELNK_GP(pThis) == uLastPos || 1)
     {

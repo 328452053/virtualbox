@@ -9296,6 +9296,65 @@ DECLINLINE(int) PDMDevHlpDMAWriteMemory(PPDMDEVINS pDevIns, unsigned uChannel, c
 }
 
 /**
+ * DMA memory read, with device buffer bounds checking.
+ * Copies from system memory to device-specific buffer.
+ *
+ * @returns VBox status code.
+ * @param   pDevIns             The device instance.
+ * @param   uChannel            Channel number.
+ * @param   pvBufBase           Base of buffer memory to read.
+ * @param   offBuf              Offset into buffer.
+ * @param   cbBuf               Device buffer size.
+ * @param   offDma              DMA position.
+ * @param   cbBlock             DMA block size.
+ * @param   pcbRead             Where to store the number of bytes which was
+ *                              read, optional.
+ * @thread  EMT
+ */
+DECLINLINE(int) PDMDevHlpDMAReadMemoryEx(PPDMDEVINS pDevIns, unsigned uChannel, const void *pvBufBase, uint32_t offBuf, uint32_t cbBuf, uint32_t offDma, uint32_t cbBlock, uint32_t *pcbRead)
+{
+
+    if (RT_UNLIKELY(offBuf + cbBlock > cbBuf))
+    {
+        if (offBuf < cbBuf) /* Partial transfer. */
+            cbBlock = cbBuf - offBuf;
+        else                /* No transfer. */
+            return 0;
+    }
+    void  *pvBuffer = (uint8_t *)pvBufBase + offBuf;
+    return pDevIns->pHlpR3->pfnDMAReadMemory(pDevIns, uChannel, pvBuffer, offDma, cbBlock, pcbRead);
+}
+/**
+ * DMA memory write, with device buffer bounds checking.
+ * Copies from device-specific buffer to system memory.
+ *
+ * @returns VBox status code.
+ * @param   pDevIns             The device instance.
+ * @param   uChannel            Channel number.
+ * @param   pvBufBase           Base of buffer memory to write.
+ * @param   offBuf              Offset into buffer.
+ * @param   cbBuf               Device buffer size.
+ * @param   offDma              DMA position.
+ * @param   cbBlock             DMA block size.
+ * @param   pcbWritten          Where to store the number of bytes which was
+ *                              written, optional.
+ * @thread  EMT
+ */
+DECLINLINE(int) PDMDevHlpDMAWriteMemoryEx(PPDMDEVINS pDevIns, unsigned uChannel, const void *pvBufBase, uint32_t offBuf, uint32_t cbBuf, uint32_t offDma, uint32_t cbBlock, uint32_t *pcbWritten)
+{
+
+    if (RT_UNLIKELY(offBuf + cbBlock > cbBuf))
+    {
+        if (offBuf < cbBuf) /* Partial transfer. */
+            cbBlock = cbBuf - offBuf;
+        else                /* No transfer. */
+            return 0;
+    }
+    const void  *pvBuffer = (const uint8_t *)pvBufBase + offBuf;
+    return pDevIns->pHlpR3->pfnDMAWriteMemory(pDevIns, uChannel, pvBuffer, offDma, cbBlock, pcbWritten);
+}
+
+/**
  * @copydoc PDMDEVHLPR3::pfnDMASetDREQ
  */
 DECLINLINE(int) PDMDevHlpDMASetDREQ(PPDMDEVINS pDevIns, unsigned uChannel, unsigned uLevel)
