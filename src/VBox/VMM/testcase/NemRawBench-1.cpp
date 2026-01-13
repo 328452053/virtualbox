@@ -1,4 +1,4 @@
-/* $Id: NemRawBench-1.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: NemRawBench-1.cpp 112431 2026-01-13 07:57:54Z knut.osmundsen@oracle.com $ */
 /** @file
  * NEM Benchmark.
  */
@@ -1049,38 +1049,38 @@ static int runRealModeTest(unsigned cInstructions, const char *pszInstruction, u
     /*
      * Setup real mode context.
      */
-#define WRITE_REG_RET(a_enmReg, a_uValue) \
+# define WRITE_REG_RET(a_enmReg, a_uValue) \
         do { \
             hv_return_t rcHvX = hv_vcpu_write_register(g_idVCpu, a_enmReg, a_uValue); \
             if (rcHvX == HV_SUCCESS) { /* likely */ } \
             else return error("hv_vcpu_write_register(%#x, %s, %#llx) -> %#x\n", g_idVCpu, #a_enmReg, (uint64_t)(a_uValue), rcHvX); \
         } while (0)
-#define READ_REG_RET(a_enmReg, a_puValue) \
+# define READ_REG_RET(a_enmReg, a_puValue) \
         do { \
             hv_return_t rcHvX = hv_vcpu_read_register(g_idVCpu, a_enmReg, a_puValue); \
             if (rcHvX == HV_SUCCESS) { /* likely */ } \
             else return error("hv_vcpu_read_register(%#x, %s,) -> %#x\n", g_idVCpu, #a_enmReg, rcHvX); \
         } while (0)
-#define WRITE_VMCS_RET(a_enmField, a_uValue) \
+# define WRITE_VMCS_RET(a_enmField, a_uValue) \
         do { \
             hv_return_t rcHvX = hv_vmx_vcpu_write_vmcs(g_idVCpu, a_enmField, a_uValue); \
             if (rcHvX == HV_SUCCESS) { /* likely */ } \
             else return error("hv_vmx_vcpu_write_vmcs(%#x, %s, %#llx) -> %#x\n", g_idVCpu, #a_enmField, (uint64_t)(a_uValue), rcHvX); \
         } while (0)
-#define READ_VMCS_RET(a_enmField, a_puValue) \
+# define READ_VMCS_RET(a_enmField, a_puValue) \
         do { \
             hv_return_t rcHvX = hv_vmx_vcpu_read_vmcs(g_idVCpu, a_enmField, a_puValue); \
             if (rcHvX == HV_SUCCESS) { /* likely */ } \
             else return error("hv_vmx_vcpu_read_vmcs(%#x, %s,) -> %#x\n", g_idVCpu, #a_enmField, rcHvX); \
         } while (0)
-#define READ_CAP_RET(a_enmCap, a_puValue) \
+# define READ_CAP_RET(a_enmCap, a_puValue) \
         do { \
             hv_return_t rcHvX = hv_vmx_read_capability(a_enmCap, a_puValue); \
             if (rcHvX == HV_SUCCESS) { /* likely */ } \
             else return error("hv_vmx_read_capability(%s) -> %#x\n", #a_enmCap); \
         } while (0)
-#define CAP_2_CTRL(a_uCap, a_fWanted) ( ((a_fWanted) | (uint32_t)(a_uCap)) & (uint32_t)((a_uCap) >> 32) )
-#if 1
+# define CAP_2_CTRL(a_uCap, a_fWanted) ( ((a_fWanted) | (uint32_t)(a_uCap)) & (uint32_t)((a_uCap) >> 32) )
+# if 1
     uint64_t uCap;
     READ_CAP_RET(HV_VMX_CAP_PINBASED, &uCap);
     WRITE_VMCS_RET(VMCS_CTRL_PIN_BASED, CAP_2_CTRL(uCap, PIN_BASED_INTR | PIN_BASED_NMI | PIN_BASED_VIRTUAL_NMI));
@@ -1103,7 +1103,7 @@ static int runRealModeTest(unsigned cInstructions, const char *pszInstruction, u
     WRITE_VMCS_RET(VMCS_CTRL_CPU_BASED2, CAP_2_CTRL(uCap, 0));
     READ_CAP_RET(HV_VMX_CAP_ENTRY, &uCap);
     WRITE_VMCS_RET(VMCS_CTRL_VMENTRY_CONTROLS, CAP_2_CTRL(uCap, 0));
-#endif
+# endif
     WRITE_VMCS_RET(VMCS_CTRL_EXC_BITMAP, UINT32_MAX);
     WRITE_VMCS_RET(VMCS_CTRL_CR0_MASK,   0x60000000);
     WRITE_VMCS_RET(VMCS_CTRL_CR0_SHADOW, 0x00000000);
@@ -1159,7 +1159,9 @@ static int runRealModeTest(unsigned cInstructions, const char *pszInstruction, u
     WRITE_VMCS_RET(VMCS_GUEST_TR_BASE,   0x00000000);
     WRITE_VMCS_RET(VMCS_GUEST_TR_LIMIT,      0x0000);
     WRITE_VMCS_RET(VMCS_GUEST_TR_AR,        0x00083);
+# if MAC_OS_X_VERSION_MIN_REQUIRED+0 < 110000 /* deprecated in 11.0 */
     hv_vcpu_flush(g_idVCpu);
+# endif
     hv_vcpu_invalidate_tlb(g_idVCpu);
 
     /*
