@@ -1,4 +1,4 @@
-/* $Id: vbsf.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: vbsf.cpp 112546 2026-01-13 16:56:05Z michal.necasek@oracle.com $ */
 /** @file
  * VirtualBox Windows Guest Shared Folders - File System Driver initialization and generic routines
  */
@@ -1245,7 +1245,7 @@ NTSTATUS vbsfNtCreateConnection(IN PRX_CONTEXT RxContext, OUT PBOOLEAN PostToFsp
     cbConnectName = LowIoContext->ParamsFor.IoCtl.InputBufferLength;
     pwcConnectName = (PWCHAR)LowIoContext->ParamsFor.IoCtl.pInputBuffer;
 
-    if (cbConnectName == 0 || !pwcConnectName)
+    if (cbConnectName == 0 || cbConnectName > UINT16_MAX || !pwcConnectName)
     {
         Log(("VBOXSF: vbsfNtCreateConnection: Connection name / length is invalid!\n"));
         return STATUS_INVALID_PARAMETER;
@@ -1301,29 +1301,33 @@ NTSTATUS vbsfNtCreateConnection(IN PRX_CONTEXT RxContext, OUT PBOOLEAN PostToFsp
                         {
                             Log(("VBOXSF: vbsfNtCreateConnection: LocalConnectionName at index %d is NOT empty!\n",
                                  idx));
-                        }
-
-                        pDeviceExtension->wszLocalConnectionName[idx] = (PUNICODE_STRING)vbsfNtAllocNonPagedMem(sizeof(UNICODE_STRING) + cbConnectName);
-
-                        if (!pDeviceExtension->wszLocalConnectionName[idx])
-                        {
-                            Log(("VBOXSF: vbsfNtCreateConnection: LocalConnectionName at index %d NOT allocated!\n",
-                                 idx));
-                            Status = STATUS_INSUFFICIENT_RESOURCES;
+                            Status = STATUS_BAD_NETWORK_NAME;
                         }
                         else
                         {
-                            PUNICODE_STRING pRemoteName = pDeviceExtension->wszLocalConnectionName[idx];
 
-                            pRemoteName->Buffer = (PWSTR)(pRemoteName + 1);
-                            pRemoteName->Length = (USHORT)(cbConnectName - i - sizeof(WCHAR));
-                            pRemoteName->MaximumLength = pRemoteName->Length;
-                            RtlCopyMemory(&pRemoteName->Buffer[0], pwc+2, pRemoteName->Length);
+                            pDeviceExtension->wszLocalConnectionName[idx] = (PUNICODE_STRING)vbsfNtAllocNonPagedMem(sizeof(UNICODE_STRING) + cbConnectName);
 
-                            Log(("VBOXSF: vbsfNtCreateConnection: RemoteName %.*ls, Len = %d\n",
-                                 pRemoteName->Length / sizeof(WCHAR), pRemoteName->Buffer, pRemoteName->Length));
+                            if (!pDeviceExtension->wszLocalConnectionName[idx])
+                            {
+                                Log(("VBOXSF: vbsfNtCreateConnection: LocalConnectionName at index %d NOT allocated!\n",
+                                     idx));
+                                Status = STATUS_INSUFFICIENT_RESOURCES;
+                            }
+                            else
+                            {
+                                PUNICODE_STRING pRemoteName = pDeviceExtension->wszLocalConnectionName[idx];
 
-                            pDeviceExtension->cLocalConnections[idx] = TRUE;
+                                pRemoteName->Buffer = (PWSTR)(pRemoteName + 1);
+                                pRemoteName->Length = (USHORT)(cbConnectName - i - sizeof(WCHAR));
+                                pRemoteName->MaximumLength = pRemoteName->Length;
+                                RtlCopyMemory(&pRemoteName->Buffer[0], pwc+2, pRemoteName->Length);
+
+                                Log(("VBOXSF: vbsfNtCreateConnection: RemoteName %.*ls, Len = %d\n",
+                                     pRemoteName->Length / sizeof(WCHAR), pRemoteName->Buffer, pRemoteName->Length));
+
+                                pDeviceExtension->cLocalConnections[idx] = TRUE;
+                            }
                         }
 
                         ExReleaseFastMutex(&pDeviceExtension->mtxLocalCon);
@@ -1378,13 +1382,19 @@ NTSTATUS vbsfNtDeleteConnection(IN PRX_CONTEXT RxContext, OUT PBOOLEAN PostToFsp
         return STATUS_PENDING;
     }
 
-    LowIoContext = &RxContext->LowIoContext;
-    pwcConnectName = (PWCHAR)LowIoContext->ParamsFor.IoCtl.pInputBuffer;
-    cbConnectName = LowIoContext->ParamsFor.IoCtl.InputBufferLength;
-
     pDeviceExtension = VBoxMRxGetDeviceExtension(RxContext);
     if (!pDeviceExtension)
         return STATUS_INVALID_PARAMETER;
+
+    LowIoContext = &RxContext->LowIoContext;
+    cbConnectName = LowIoContext->ParamsFor.IoCtl.InputBufferLength;
+    pwcConnectName = (PWCHAR)LowIoContext->ParamsFor.IoCtl.pInputBuffer;
+
+    if (cbConnectName == 0 || cbConnectName > UINT16_MAX || !pwcConnectName)
+    {
+        Log(("VBOXSF: vbsfNtDeleteConnection: Connection name / length is invalid!\n"));
+        return STATUS_INVALID_PARAMETER;
+    }
 
     __try
     {
