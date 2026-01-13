@@ -1,4 +1,4 @@
-/* $Id: vbox_main.c 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: vbox_main.c 112507 2026-01-13 15:06:08Z vadim.galitsyn@oracle.com $ */
 /** @file
  * VirtualBox Additions Linux kernel video driver
  */
@@ -558,7 +558,10 @@ void vbox_driver_lastclose(struct drm_device *dev)
 {
 	struct vbox_private *vbox = dev->dev_private;
 
-#if RTLNX_VER_MIN(3,16,0) || RTLNX_RHEL_MAJ_PREREQ(7,1)
+#if RTLNX_VER_MIN(6,19,0)
+	if (vbox->fbdev)
+		drm_fb_helper_restore_fbdev_mode_unlocked(&vbox->fbdev->helper, false);
+#elif RTLNX_VER_MIN(3,16,0) || RTLNX_RHEL_MAJ_PREREQ(7,1)
 	if (vbox->fbdev)
 		drm_fb_helper_restore_fbdev_mode_unlocked(&vbox->fbdev->helper);
 #else
@@ -659,7 +662,11 @@ void vbox_gem_free_object(struct drm_gem_object *obj)
 	}
 #endif
 
+#if RTLNX_VER_MIN(6,19,0)
+	ttm_bo_fini(&vbox_bo->bo);
+#else
 	ttm_bo_put(&vbox_bo->bo);
+#endif
 }
 
 static inline u64 vbox_bo_mmap_offset(struct vbox_bo *bo)
