@@ -50,8 +50,7 @@ def checkPair(p, v, dllpre, dllsuff, bitness_magic):
         lib64 = os.path.join(p, "lib", "64", dllpre+"python"+v+dllsuff)
         if not os.path.isfile(lib64):
             lib64 = None
-    elif bitness_magic == 2 \
-    or   bitness_magic == 3:
+    elif bitness_magic in (2,3):
         lib64 = os.path.join(p, "lib/x86_64-linux-gnu" if bitness_magic == 2 else "lib/aarch64-linux-gnu",
                              dllpre+"python"+v+dllsuff)
         if not os.path.isfile(lib64):
@@ -85,7 +84,6 @@ def main(argv):
 
     dllpre = "lib"
     dllsuff = ".so"
-    bitness_magic = 0
 
     if len(argv) > 1:
         target = argv[1]
@@ -115,13 +113,12 @@ def main(argv):
                     '/Developer/SDKs/MacOSX10.7.sdk/usr']
         dllsuff = '.dylib'
 
+    bitness_magic = 0
     if target == 'solaris' and arch == 'amd64':
         bitness_magic = 1
-
-    if target == 'linux' and arch == 'amd64':
+    elif target == 'linux' and arch == 'amd64':
         bitness_magic = 2
-
-    if target == 'linux' and arch == 'arm64':
+    elif target == 'linux' and arch == 'arm64':
         bitness_magic = 3
 
     for v in versions:
