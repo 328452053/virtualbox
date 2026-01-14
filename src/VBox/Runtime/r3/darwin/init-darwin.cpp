@@ -1,4 +1,4 @@
-/* $Id: init-darwin.cpp 112571 2026-01-14 16:00:22Z alexander.eichner@oracle.com $ */
+/* $Id: init-darwin.cpp 112587 2026-01-14 23:51:41Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - Init Ring-3, POSIX Specific Code.
  */
@@ -63,8 +63,216 @@
 
 
 /*********************************************************************************************************************************
-*   Structures and Typedefs                                                                                                      *
+*   Defined Constants And Macros                                                                                                 *
 *********************************************************************************************************************************/
+/* Define any missing VM_MEMORY_XXX constants to make sure this compiles with older SDKs. */
+#ifndef VM_MEMORY_MALLOC_LARGE_REUSABLE
+# define VM_MEMORY_MALLOC_LARGE_REUSABLE                8
+#endif
+#ifndef VM_MEMORY_MALLOC_LARGE_REUSED
+# define VM_MEMORY_MALLOC_LARGE_REUSED                  9
+#endif
+#ifndef VM_MEMORY_MALLOC_NANO
+# define VM_MEMORY_MALLOC_NANO                          11
+#endif
+#ifndef VM_MEMORY_MALLOC_MEDIUM
+# define VM_MEMORY_MALLOC_MEDIUM                        12
+#endif
+#ifndef VM_MEMORY_MALLOC_PROB_GUARD
+# define VM_MEMORY_MALLOC_PROB_GUARD                    13
+#endif
+#ifndef VM_MEMORY_OBJC_DISPATCHERS
+# define VM_MEMORY_OBJC_DISPATCHERS                     34
+#endif
+#ifndef VM_MEMORY_UNSHARED_PMAP
+# define VM_MEMORY_UNSHARED_PMAP                        35
+#endif
+#ifndef VM_MEMORY_COREDATA
+# define VM_MEMORY_COREDATA                             45
+#endif
+#ifndef VM_MEMORY_COREDATA_OBJECTIDS
+# define VM_MEMORY_COREDATA_OBJECTIDS                   46
+#endif
+#ifndef VM_MEMORY_LAYERKIT
+# define VM_MEMORY_LAYERKIT                             51
+#endif
+#ifndef VM_MEMORY_CGIMAGE
+# define VM_MEMORY_CGIMAGE                              52
+#endif
+#ifndef VM_MEMORY_TCMALLOC
+# define VM_MEMORY_TCMALLOC                             53
+#endif
+#ifndef VM_MEMORY_COREGRAPHICS_DATA
+# define VM_MEMORY_COREGRAPHICS_DATA                    54
+#endif
+#ifndef VM_MEMORY_COREGRAPHICS_SHARED
+# define VM_MEMORY_COREGRAPHICS_SHARED                  55
+#endif
+#ifndef VM_MEMORY_COREGRAPHICS_FRAMEBUFFERS
+# define VM_MEMORY_COREGRAPHICS_FRAMEBUFFERS            56
+#endif
+#ifndef VM_MEMORY_COREGRAPHICS_BACKINGSTORES
+# define VM_MEMORY_COREGRAPHICS_BACKINGSTORES           57
+#endif
+#ifndef VM_MEMORY_COREGRAPHICS_XALLOC
+# define VM_MEMORY_COREGRAPHICS_XALLOC                  58
+#endif
+#ifndef VM_MEMORY_SQLITE
+# define VM_MEMORY_SQLITE                               62
+#endif
+#ifndef VM_MEMORY_JAVASCRIPT_CORE
+# define VM_MEMORY_JAVASCRIPT_CORE                      63
+#endif
+#ifndef VM_MEMORY_JAVASCRIPT_JIT_EXECUTABLE_ALLOCATOR
+# define VM_MEMORY_JAVASCRIPT_JIT_EXECUTABLE_ALLOCATOR  64
+#endif
+#ifndef VM_MEMORY_JAVASCRIPT_JIT_REGISTER_FILE
+# define VM_MEMORY_JAVASCRIPT_JIT_REGISTER_FILE         65
+#endif
+#ifndef VM_MEMORY_GLSL
+# define VM_MEMORY_GLSL                                 66
+#endif
+#ifndef VM_MEMORY_OPENCL
+# define VM_MEMORY_OPENCL                               67
+#endif
+#ifndef VM_MEMORY_COREIMAGE
+# define VM_MEMORY_COREIMAGE                            68
+#endif
+#ifndef VM_MEMORY_WEBCORE_PURGEABLE_BUFFERS
+# define VM_MEMORY_WEBCORE_PURGEABLE_BUFFERS            69
+#endif
+#ifndef VM_MEMORY_IMAGEIO
+# define VM_MEMORY_IMAGEIO                              70
+#endif
+#ifndef VM_MEMORY_COREPROFILE
+# define VM_MEMORY_COREPROFILE                          71
+#endif
+#ifndef VM_MEMORY_ASSETSD
+# define VM_MEMORY_ASSETSD                              72
+#endif
+#ifndef VM_MEMORY_OS_ALLOC_ONCE
+# define VM_MEMORY_OS_ALLOC_ONCE                        73
+#endif
+#ifndef VM_MEMORY_LIBDISPATCH
+# define VM_MEMORY_LIBDISPATCH                          74
+#endif
+#ifndef VM_MEMORY_ACCELERATE
+# define VM_MEMORY_ACCELERATE                           75
+#endif
+#ifndef VM_MEMORY_COREUI
+# define VM_MEMORY_COREUI                               76
+#endif
+#ifndef VM_MEMORY_COREUIFILE
+# define VM_MEMORY_COREUIFILE                           77
+#endif
+#ifndef VM_MEMORY_GENEALOGY
+# define VM_MEMORY_GENEALOGY                            78
+#endif
+#ifndef VM_MEMORY_RAWCAMERA
+# define VM_MEMORY_RAWCAMERA                            79
+#endif
+#ifndef VM_MEMORY_CORPSEINFO
+# define VM_MEMORY_CORPSEINFO                           80
+#endif
+#ifndef VM_MEMORY_ASL
+# define VM_MEMORY_ASL                                  81
+#endif
+#ifndef VM_MEMORY_SWIFT_RUNTIME
+# define VM_MEMORY_SWIFT_RUNTIME                        82
+#endif
+#ifndef VM_MEMORY_SWIFT_METADATA
+# define VM_MEMORY_SWIFT_METADATA                       83
+#endif
+#ifndef VM_MEMORY_DHMM
+# define VM_MEMORY_DHMM                                 84
+#endif
+#ifndef VM_MEMORY_SCENEKIT
+# define VM_MEMORY_SCENEKIT                             86
+#endif
+#ifndef VM_MEMORY_SKYWALK
+# define VM_MEMORY_SKYWALK                              87
+#endif
+#ifndef VM_MEMORY_IOSURFACE
+# define VM_MEMORY_IOSURFACE                            88
+#endif
+#ifndef VM_MEMORY_LIBNETWORK
+# define VM_MEMORY_LIBNETWORK                           89
+#endif
+#ifndef VM_MEMORY_AUDIO
+# define VM_MEMORY_AUDIO                                90
+#endif
+#ifndef VM_MEMORY_VIDEOBITSTREAM
+# define VM_MEMORY_VIDEOBITSTREAM                       91
+#endif
+#ifndef VM_MEMORY_CM_XPC
+# define VM_MEMORY_CM_XPC                               92
+#endif
+#ifndef VM_MEMORY_CM_RPC
+# define VM_MEMORY_CM_RPC                               93
+#endif
+#ifndef VM_MEMORY_CM_MEMORYPOOL
+# define VM_MEMORY_CM_MEMORYPOOL                        94
+#endif
+#ifndef VM_MEMORY_CM_READCACHE
+# define VM_MEMORY_CM_READCACHE                         95
+#endif
+#ifndef VM_MEMORY_CM_CRABS
+# define VM_MEMORY_CM_CRABS                             96
+#endif
+#ifndef VM_MEMORY_QUICKLOOK_THUMBNAILS
+# define VM_MEMORY_QUICKLOOK_THUMBNAILS                 97
+#endif
+#ifndef VM_MEMORY_ACCOUNTS
+# define VM_MEMORY_ACCOUNTS                             98
+#endif
+#ifndef VM_MEMORY_SANITIZER
+# define VM_MEMORY_SANITIZER                            99
+#endif
+#ifndef VM_MEMORY_IOACCELERATOR
+# define VM_MEMORY_IOACCELERATOR                        100
+#endif
+#ifndef VM_MEMORY_CM_REGWARP
+# define VM_MEMORY_CM_REGWARP                           101
+#endif
+#ifndef VM_MEMORY_EAR_DECODER
+# define VM_MEMORY_EAR_DECODER                          102
+#endif
+#ifndef VM_MEMORY_COREUI_CACHED_IMAGE_DATA
+# define VM_MEMORY_COREUI_CACHED_IMAGE_DATA             103
+#endif
+#ifndef VM_MEMORY_COLORSYNC
+# define VM_MEMORY_COLORSYNC                            104
+#endif
+#ifndef VM_MEMORY_BTINFO
+# define VM_MEMORY_BTINFO                               105
+#endif
+#ifndef VM_MEMORY_CM_HLS
+# define VM_MEMORY_CM_HLS                               106
+#endif
+#ifndef VM_MEMORY_ROSETTA
+# define VM_MEMORY_ROSETTA                              230
+#endif
+#ifndef VM_MEMORY_ROSETTA_THREAD_CONTEXT
+# define VM_MEMORY_ROSETTA_THREAD_CONTEXT               231
+#endif
+#ifndef VM_MEMORY_ROSETTA_INDIRECT_BRANCH_MAP
+# define VM_MEMORY_ROSETTA_INDIRECT_BRANCH_MAP          232
+#endif
+#ifndef VM_MEMORY_ROSETTA_RETURN_STACK
+# define VM_MEMORY_ROSETTA_RETURN_STACK                 233
+#endif
+#ifndef VM_MEMORY_ROSETTA_EXECUTABLE_HEAP
+# define VM_MEMORY_ROSETTA_EXECUTABLE_HEAP              234
+#endif
+#ifndef VM_MEMORY_ROSETTA_USER_LDT
+# define VM_MEMORY_ROSETTA_USER_LDT                     235
+#endif
+#ifndef VM_MEMORY_ROSETTA_ARENA
+# define VM_MEMORY_ROSETTA_ARENA                        236
+#endif
+#ifndef VM_MEMORY_ROSETTA_10
+# define VM_MEMORY_ROSETTA_10                           239
+#endif
 
 
 /*********************************************************************************************************************************
@@ -82,7 +290,7 @@ static struct sigaction g_SigActionAbort; /**< The default action for SIGABRT. *
 /**
  * Returns a description of the given VM user tag if known.
  */
-static const char *rtR3DarwinVmUserTagStringify(unsigned int uTag)
+static const char *rtR3DarwinVmUserTagStringify(unsigned int uTag, char pszTmp, size_t cbTmp)
 {
     switch (uTag)
     {
@@ -180,7 +388,8 @@ static const char *rtR3DarwinVmUserTagStringify(unsigned int uTag)
         default: break;
     }
 
-    return "<UNKNOWN>";
+    RTStrPrintf(pszTmp, cbTmp,  "tag=%#x", uTag);
+    return pszTmp;
 }
 
 
@@ -340,6 +549,7 @@ static void rtR3DarwinSigSegvBusHandler(int iSignum, siginfo_t *pSigInfo, void *
             krc = vm_region_recurse_64(hTask, &VmAddrCur, &cbCur, &uDepth, (vm_region_recurse_info_t)&VmInfo, &uCnt);
             if (krc == KERN_INVALID_ADDRESS)
                 break;
+            /** @todo r=bird: May use uninitialized VmInfo here if krc is a failure...   */
 
             const char *pszShareMode;
             switch (VmInfo.share_mode)
@@ -360,17 +570,18 @@ static void rtR3DarwinSigSegvBusHandler(int iSignum, siginfo_t *pSigInfo, void *
                 && uXcptAddr < (VmAddrCur + cbCur))
                 chXcpt = '*';
 
-            char aszProt[4] = "---";
+            char szProt[4] = "---";
             if (VmInfo.protection & VM_PROT_READ)
-                aszProt[0] = 'r';
+                szProt[0] = 'r';
             if (VmInfo.protection & VM_PROT_WRITE)
-                aszProt[1] = 'w';
+                szProt[1] = 'w';
             if (VmInfo.protection & VM_PROT_EXECUTE)
-                aszProt[2] = 'x';
+                szProt[2] = 'x';
 
+            char szTmp[32]
             RTLogLoggerWeak(pLogger, NULL, "%*s %p..%p%c  %s [%s] %s %s\n",
                             uDepth * 4, " ", (uintptr_t)VmAddrCur, (uintptr_t)VmAddrCur + cbCur - 1, chXcpt,
-                            pszShareMode, aszProt, rtR3DarwinVmUserTagStringify(VmInfo.user_tag), "");
+                            pszShareMode, szProt, rtR3DarwinVmUserTagStringify(VmInfo.user_tag, szTmp, sizeof(szTmp)), "");
 
             if (VmInfo.is_submap)
                 uDepth++;
