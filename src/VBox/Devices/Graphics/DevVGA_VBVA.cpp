@@ -1,4 +1,4 @@
-/* $Id: DevVGA_VBVA.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: DevVGA_VBVA.cpp 112579 2026-01-14 19:58:07Z vitali.pelenjow@oracle.com $ */
 /** @file
  * VirtualBox Video Acceleration (VBVA).
  */
@@ -36,6 +36,7 @@
 #include <VBox/vmm/ssm.h>
 #include <VBox/VMMDev.h>
 #include <VBox/AssertGuest.h>
+#include <VBox/version.h>
 #include <VBoxVideo.h>
 #include <iprt/alloc.h>
 #include <iprt/assert.h>
@@ -1169,7 +1170,8 @@ int vboxVBVALoadStateExec(PPDMDEVINS pDevIns, PSSMHANDLE pSSM, uint32_t uVersion
             if (uVersion > VGA_SAVEDSTATE_VERSION_WDDM)
             {
                 /* Skip loading VHWA (2D Video Hardware Acceleration) state from older saved states. */
-                if (uVersion < VGA_SAVEDSTATE_VERSION_VHWA_REMOVED)
+                if (   uVersion < VGA_SAVEDSTATE_VERSION_VHWA_REMOVED
+                    || pHlp->pfnSSMHandleVersion(pSSM) < VBOX_FULL_VERSION_MAKE(7,2,0))
                 {
                     bool fLoadCommands;
                     if (uVersion < VGA_SAVEDSTATE_VERSION_FIXED_PENDVHWA)

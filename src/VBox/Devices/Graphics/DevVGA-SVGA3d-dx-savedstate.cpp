@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA3d-dx-savedstate.cpp 112574 2026-01-14 17:50:05Z vitali.pelenjow@oracle.com $ */
+/* $Id: DevVGA-SVGA3d-dx-savedstate.cpp 112579 2026-01-14 19:58:07Z vitali.pelenjow@oracle.com $ */
 /** @file
  * DevSVGA3d - VMWare SVGA device, 3D parts - DX backend saved state.
  */
@@ -33,6 +33,7 @@
 #include <VBox/AssertGuest.h>
 #include <iprt/errcore.h>
 #include <VBox/log.h>
+#include <VBox/version.h>
 #include <VBox/vmm/pdmdev.h>
 
 #include <iprt/assert.h>
@@ -208,7 +209,10 @@ static int vmsvga3dDXLoadContext(PCPDMDEVHLPR3 pHlp, PVGASTATECC pThisCC, PSSMHA
             *cot[i].ppaEntries = RTMemAllocZ(cbCOT);
             AssertReturn(*cot[i].ppaEntries, VERR_NO_MEMORY);
 
-            if (uVersion >= VGA_SAVEDSTATE_VERSION_VMSVGA_COTABLES)
+            bool const fCOTable = pHlp->pfnSSMHandleVersion(pSSM) >= VBOX_FULL_VERSION_MAKE(7,2,0)
+                                ? uVersion >= VGA_SAVEDSTATE_VERSION_VMSVGA_COTABLES
+                                : uVersion >= 30 /* VGA_SAVEDSTATE_VERSION_VMSVGA_COTABLES on 7.1 branch */;
+            if (fCOTable)
             {
                 /* Read the content of COTable to the host buffer. */
                 rc = pHlp->pfnSSMGetMem(pSSM, *cot[i].ppaEntries, cbEntries);
@@ -227,7 +231,10 @@ static int vmsvga3dDXLoadContext(PCPDMDEVHLPR3 pHlp, PVGASTATECC pThisCC, PSSMHA
             *cot[i].ppaEntries = NULL;
 #else
         *cot[i].ppaEntries = vmsvgaR3MobBackingStorePtr(pDXContext->aCOTMobs[idxCOTable], 0);
-        if (uVersion >= VGA_SAVEDSTATE_VERSION_VMSVGA_COTABLES)
+        bool const fCOTable = pHlp->pfnSSMHandleVersion(pSSM) >= VBOX_FULL_VERSION_MAKE(7,2,0)
+                            ? uVersion >= VGA_SAVEDSTATE_VERSION_VMSVGA_COTABLES
+                            : uVersion >= 30 /* VGA_SAVEDSTATE_VERSION_VMSVGA_COTABLES on 7.1 branch */;
+        if (fCOTable)
         {
             if (cEntries > 0)
                 pHlp->pfnSSMSkip(pSSM, cEntries * cot[i].cbEntry);
