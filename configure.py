@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112555 2026-01-14 13:16:36Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112561 2026-01-14 13:56:01Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112555 $"
+__revision__ = "$Revision: 112561 $"
 
 import argparse
 import ctypes
@@ -584,7 +584,7 @@ def getPosixError(uCode):
         else:
             return f"Exit status {uCode}";
     elif uCode < 0: # Signal
-        uSig = uCode;
+        uSig = abs(uCode);
     sName = getSignalName(uSig);
     sDesc = getSignalDesc(uSig);
     if sDesc:
