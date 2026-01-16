@@ -1,4 +1,4 @@
-/* $Id: acpi-ast.cpp 112624 2026-01-16 12:17:13Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-ast.cpp 112625 2026-01-16 13:04:27Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) AST handling.
  */
@@ -1137,6 +1137,38 @@ DECLHIDDEN(int) rtAcpiAstDumpToAsl(PCRTACPIASTNODE pAstNd, RTVFSIOSTREAM hVfsIos
                 rc = rtAcpiAstDumpAstListToAsl(&pAstNd->LstScopeNodes, hVfsIosOut, uLvl + 1);
             if (RT_SUCCESS(rc))
                 rc = rtAcpiAstNodeFormat(uLvl, hVfsIosOut, "}\n");
+            break;
+        }
+        case kAcpiAstNodeOp_Buffer:
+        {
+            AssertBreakStmt(   pAstNd->cArgs == 1
+                            && pAstNd->aArgs[0].enmType == kAcpiAstArgType_U64,
+                            rc = VERR_INTERNAL_ERROR);
+
+            rc = rtAcpiAstNodeFormat(uLvl, hVfsIosOut, "Buffer (%#RX64) {", pAstNd->aArgs[0].u.u64);
+            if (RT_SUCCESS(rc))
+            {
+                PRTACPIASTNODE pIt;
+                RTListForEach(&pAstNd->LstScopeNodes, pIt, RTACPIASTNODE, NdAst)
+                {
+                    AssertBreakStmt(pIt->enmOp == kAcpiAstNodeOp_Number,
+                                    rc = VERR_INTERNAL_ERROR);
+
+                    rc = rtAcpiAstNodeFormat(0, hVfsIosOut, "%#RX64", pIt->u64);
+                    if (RT_FAILURE(rc))
+                        break;
+
+                    if (!RTListNodeIsLast(&pAstNd->LstScopeNodes, &pIt->NdAst))
+                    {
+                        rc = rtAcpiAstNodeFormat(0, hVfsIosOut, ", ");
+                        if (RT_FAILURE(rc))
+                            break;
+                    }
+                }
+
+                if (RT_SUCCESS(rc))
+                    rc = rtAcpiAstNodeFormat(uLvl, hVfsIosOut, "}");
+            }
             break;
         }
         default:

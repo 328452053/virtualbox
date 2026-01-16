@@ -1,4 +1,4 @@
-/* $Id: 03-grammar.asl 112624 2026-01-16 12:17:13Z alexander.eichner@oracle.com $ */
+/* $Id: 03-grammar.asl 112625 2026-01-16 13:04:27Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox ACPI - Testcase.
  */
@@ -59,6 +59,21 @@ DefinitionBlock ("", "SSDT", 1, "VBOX  ", "VBOXTPMT", 2)
                 Store(Local0, Local7)
                 Increment(Local7)
                 Decrement(Local6)
+
+                While (LEqual(Local0, Arg3))
+                {
+                    If (LGreater(Local2, 0x3))
+                    {
+                        Continue
+                    }
+
+                    If (LLess(Local4, 0x100))
+                    {
+                        Break
+                    }
+
+                    Return (Name(C0DE, Buffer (100) { 0x1, 0x2, 0xaa }))
+                }
             }
         }
     }
