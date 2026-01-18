@@ -1,4 +1,4 @@
-/* $Id: acpi-decompiler.cpp 112629 2026-01-18 09:13:03Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-decompiler.cpp 112630 2026-01-18 09:25:10Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -1114,7 +1114,8 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeField(PRTACPITBLAMLDECODE pThis, PCRT
 
             if (!paFields[cFields].pszName)
             {
-                rc = RTErrInfoSetF(pErrInfo, VERR_NO_STR_MEMORY, "Out of memory trying to enter \"%.4s\" into the string cache for Field \"%s\"", achNameSeg);
+                rc = RTErrInfoSetF(pErrInfo, VERR_NO_STR_MEMORY, "Out of memory trying to enter \"%.4s\" into the string cache for Field \"%s\"",
+                                    achNameSeg, szName);
                 break;
             }
 
