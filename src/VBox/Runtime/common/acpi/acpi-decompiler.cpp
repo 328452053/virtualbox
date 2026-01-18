@@ -1,4 +1,4 @@
-/* $Id: acpi-decompiler.cpp 112628 2026-01-18 09:10:34Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-decompiler.cpp 112629 2026-01-18 09:13:03Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -1066,7 +1066,7 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeField(PRTACPITBLAMLDECODE pThis, PCRT
         if (cFields == cFieldsMax)
         {
             uint32_t const cFieldsMaxNew = cFieldsMax + 8;
-            PRTACPIFIELDENTRY paFieldsNew = (PRTACPIFIELDENTRY)RTMemRealloc(paFieldsNew, cFieldsMaxNew * sizeof(*paFields));
+            PRTACPIFIELDENTRY paFieldsNew = (PRTACPIFIELDENTRY)RTMemRealloc(paFields, cFieldsMaxNew * sizeof(*paFields));
             if (!paFieldsNew)
             {
                 rc = RTErrInfoSetF(pErrInfo, VERR_NO_MEMORY, "Out of memory trying to grow fields array of node for Field \"%s\"", szName);
