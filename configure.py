@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# $Id: configure.py 112635 2026-01-19 11:07:31Z andreas.loeffler@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -6,7 +7,6 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112573 2026-01-14 17:22:53Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112573 $"
+__revision__ = "$Revision: 112635 $"
 
 import argparse
 import ctypes
@@ -186,6 +186,11 @@ g_enmHostTarget = {
     "haiku":    BuildTarget.HAIKU,
     "":         BuildTarget.UNKNOWN
 }.get(g_sHostTarget, BuildTarget.UNKNOWN);
+
+# The build target. Defaults to host target.
+g_enmBuildTarget = g_sHostTarget;
+# The build architecture. Defaults to host architecture.
+g_enmBuildArch = g_enmHostArch;
 
 class BuildType:
     """
@@ -483,7 +488,7 @@ def checkWhich(sCmdName, sToolDesc = None, sCustomPath = None, asVersionSwitches
     printVerbose(1, f"'{sCmdName}' not found in PATH.");
     return None, None;
 
-def getLinkerArgs(enmBuildTarget, asLibPaths, asLibFiles):
+def getLinkerArgs(asLibPaths, asLibFiles, enmBuildTarget):
     """
     Returns the linker arguments for the library as a list.
 
@@ -591,7 +596,8 @@ def getPosixError(uCode):
         return f"Killed by signal {sName} ({sDesc})";
     return f"Killed by signal {sName}";
 
-def compileAndExecute(sName, enmBuildTarget, enmBuildArch, asIncPaths, asLibPaths, asIncFiles, asLibFiles, sCode, \
+def compileAndExecute(sName, asIncPaths, asLibPaths, asIncFiles, asLibFiles, sCode, \
+                      enmBuildTarget = g_enmBuildTarget, enmBuildArch = g_enmBuildArch,
                       oEnv = None, asCompilerArgs = None, asLinkerArgs = None, asDefines = None, fLog = True, fErrorsAsWarnings = False):
     """
     Compiles and executes a test program.
@@ -668,7 +674,7 @@ def compileAndExecute(sName, enmBuildTarget, enmBuildArch, asIncPaths, asLibPath
             for sDef in asCompilerArgs:
                 asCmd.extend( [ sDef ] );
 
-    asCmd.extend(getLinkerArgs(enmBuildTarget, asLibPaths, asLibFiles));
+    asCmd.extend(getLinkerArgs(asLibPaths, asLibFiles, enmBuildTarget));
     if asLinkerArgs:
         asCmd.extend(asLinkerArgs);
 
@@ -872,13 +878,22 @@ class CheckBase:
     """
     Base class for checks.
     """
-    def __init__(self, sName, aeTargets = None, aeArchs = None, aeTargetsExcluded = None):
+    def __init__(self, sName, enmBuildTarget = g_enmBuildTarget, enmBuildArch = g_enmBuildArch, aeTargets = None, aeArchs = None, aeTargetsExcluded = None):
         """
         Constructor.
         """
         self.sName = sName;
+        # Build target (i.e. BuildTarget.LINUX) to use.
+        # Defaults to global build target if not explicitly specified.
+        self.enmBuildTarget = enmBuildTarget;
+        # Build architecture (i.e. BuildArch.amd64) to use.
+        # Defaults to global build architecture if not explicitly specified.
+        self.enmBuildArch = enmBuildArch;
+        # Defines the list of targets which require this component.
         self.aeTargets = [ BuildTarget.ANY ] if aeTargets is None else aeTargets;
+        # Defines the list of architectures which require this component.
         self.aeArchs = [ BuildArch.ANY ] if aeArchs is None else aeArchs;
+        # Defines the list of excluded targets NOT requiring this component.
         self.aeTargetsExcluded = aeTargetsExcluded if aeTargetsExcluded else [];
 
     def print(self, sMessage):
@@ -1057,10 +1072,10 @@ class CheckBase:
         """
         Returns whether the library or tool is handled by the current build target or not.
         """
-        fInTarget = (   g_oEnv['KBUILD_TARGET'] in self.aeTargets \
-                     or BuildTarget.ANY in self.aeTargets) \
-                    and g_oEnv['KBUILD_TARGET'] not in self.aeTargetsExcluded;
-        fInTarget = fInTarget and (   g_oEnv['KBUILD_TARGET_ARCH'] in self.aeArchs \
+        fInTarget = (   self.enmBuildTarget in self.aeTargets \
+                     or BuildTarget.ANY  in self.aeTargets) \
+                    and self.enmBuildTarget not in self.aeTargetsExcluded;
+        fInTarget = fInTarget and (   self.enmBuildArch in self.aeArchs \
                                    or BuildArch.ANY in self.aeArchs);
         return fInTarget;
 
@@ -1143,7 +1158,7 @@ class LibraryCheck(CheckBase):
                 return '\n'.join(sIncludes) + '#include <iostream>\nint main() {{ std::cout << "<found>" << std::endl; return 0; }}\n';
         return '\n'.join(sIncludes) + '#include <stdio.h>\nint main(void) {{ printf("<found>"); return 0; }}\n';
 
-    def compileAndExecute(self, enmBuildTarget, enmBuildArch, fErrorsAsWarnings):
+    def compileAndExecute(self, fErrorsAsWarnings):
         """
         Attempts to compile and execute test code using the discovered paths and headers.
 
@@ -1158,9 +1173,10 @@ class LibraryCheck(CheckBase):
         self.asIncPaths = list(set(self.asIncPaths));
         self.asLibPaths = list(set(self.asLibPaths));
 
-        fRc, sStdOut, sStdErr = compileAndExecute(self.sName, enmBuildTarget, enmBuildArch, \
+        fRc, sStdOut, sStdErr = compileAndExecute(self.sName, \
                                                   self.asIncPaths, self.asLibPaths, self.asHdrFiles, self.asLibFiles, \
-                                                  sCode, asCompilerArgs = self.asCompilerArgs, asLinkerArgs = self.asLinkerArgs, asDefines = self.asDefines,
+                                                  sCode, enmBuildTarget = self.enmBuildTarget, enmBuildArch = self.enmBuildArch,
+                                                  asCompilerArgs = self.asCompilerArgs, asLinkerArgs = self.asLinkerArgs, asDefines = self.asDefines,
                                                   fErrorsAsWarnings = fErrorsAsWarnings);
         if fRc and sStdOut:
             self.sVer = sStdOut;
@@ -1227,7 +1243,7 @@ class LibraryCheck(CheckBase):
             sToolsDir  = g_oEnv['PATH_DEVTOOLS'];
             if not sToolsDir:
                 sToolsDir = g_sScriptPath, 'tools';
-            sPath = os.path.join(sToolsDir, f"{ g_oEnv['KBUILD_TARGET'] }.{ g_oEnv['KBUILD_TARGET_ARCH'] }", self.sName);
+            sPath = os.path.join(sToolsDir, f"{ self.enmBuildTarget }.{ self.enmBuildArch }", self.sName);
             if pathExists(sPath):
                 _, sPath = self.getHighestVersionDir(sPath);
                 if pathExists(sPath):
@@ -1271,7 +1287,7 @@ class LibraryCheck(CheckBase):
         #
         # Windows
         #
-        if g_oEnv['KBUILD_TARGET'] == BuildTarget.WINDOWS:
+        if self.enmBuildTarget == BuildTarget.WINDOWS:
             #
             # Try VCPKG first.
             #
@@ -1296,14 +1312,14 @@ class LibraryCheck(CheckBase):
         #
         # macOS (Darwin)
         #
-        elif g_oEnv['KBUILD_TARGET'] == BuildTarget.DARWIN:
+        elif self.enmBuildTarget == BuildTarget.DARWIN:
             asPaths.extend([ '/opt/homebrew/include',
                              os.path.join(g_oEnv['VBOX_PATH_MACOSX_SDK'], 'usr', 'include', 'c++', 'v1') ]);
 
         #
         # Linux
         #
-        elif g_oEnv['KBUILD_TARGET'] == BuildTarget.LINUX:
+        elif self.enmBuildTarget == BuildTarget.LINUX:
             # Sorted by most likely-ness.
             asPaths.extend([ "/usr/include", "/usr/local/include",
                              "/usr/include/" + self.sName, "/usr/local/include/" + self.sName,
@@ -1338,7 +1354,7 @@ class LibraryCheck(CheckBase):
         #
         # Windows
         #
-        if  g_oEnv['KBUILD_TARGET'] == BuildTarget.WINDOWS:
+        if self.enmBuildTarget == BuildTarget.WINDOWS:
             #
             # Try VCPKG first.
             #
@@ -1362,8 +1378,8 @@ class LibraryCheck(CheckBase):
         # Linux / MacOS / Solaris
         #
         else:  # Linux / MacOS / Solaris
-            if  g_oEnv['KBUILD_TARGET'] == BuildTarget.LINUX \
-            or  g_oEnv['KBUILD_TARGET'] == BuildTarget.SOLARIS:
+            if self.enmBuildTarget == BuildTarget.LINUX \
+            or self.enmBuildTarget == BuildTarget.SOLARIS:
                 # Sorted by most likely-ness.
                 asPaths.extend([ "/lib", "/lib64",
                                  "/usr/lib", "/usr/local/lib",
@@ -1443,7 +1459,7 @@ class LibraryCheck(CheckBase):
 
         # On some OSes the compiler / linker should know where to find its stuff,
         # so just return the unmodified lists.
-        if g_oEnv['KBUILD_TARGET'] in [ BuildTarget.LINUX, BuildTarget.SOLARIS ]:
+        if self.enmBuildTarget in [ BuildTarget.LINUX, BuildTarget.SOLARIS ]:
             self.printVerbose(1, 'Library paths should be automatically determined by compiler / linker, skipping');
             return True, self.asLibPaths, self.asLibFiles;
 
@@ -1550,7 +1566,7 @@ class LibraryCheck(CheckBase):
                     #   - there are defines to disable the feature.
                     fMayFail = self.fUseInTree or len(self.dictDefinesToSetIfFailed) > 0;
                     # Only try to compile libraries which are not in-tree, as we only have sources in-tree, not binaries.
-                    fRc, _, _ = self.compileAndExecute(g_oEnv['KBUILD_TARGET'], g_oEnv['KBUILD_TARGET_ARCH'], fErrorsAsWarnings = fMayFail);
+                    fRc, _, _ = self.compileAndExecute(fErrorsAsWarnings = fMayFail);
                     if not fRc:
                         self.fHave = None if fMayFail else False;
                     else:
@@ -1666,7 +1682,7 @@ class LibraryCheck(CheckBase):
             # Qt 6.x requires a recent compiler (>= C++17).
             # For MSVC this means at least 14.1 (VS 2017).
             #
-            if g_oEnv['KBUILD_TARGET'] == BuildTarget.WINDOWS:
+            if self.enmBuildTarget == BuildTarget.WINDOWS:
                 sCompilerVer = g_oEnv['config_cpp_compiler_ver'];
                 if self.compareStringVersions(sCompilerVer, "14.1") < 1:
                     self.printError(f'MSVC compiler version too old ({sCompilerVer}), requires at least 15.7 (2017 Update 7)');
@@ -1674,19 +1690,19 @@ class LibraryCheck(CheckBase):
             #
             # Linux + Solaris
             #
-            elif g_enmHostTarget == BuildTarget.LINUX:
+            elif self.enmBuildTarget== BuildTarget.LINUX:
                 self.asLibFiles = [ 'libQt6Core' ];
 
             #
             # Solaris
             #
-            elif g_enmHostTarget == BuildTarget.SOLARIS:
+            elif self.enmBuildTarget == BuildTarget.SOLARIS:
                 self.asLibFiles = [ 'libQt6Core' ];
 
             #
             # macOS
             #
-            elif g_enmHostTarget == BuildTarget.DARWIN:
+            elif self.enmBuildTarget == BuildTarget.DARWIN:
                 # On macOS we have to ask brew for the Qt installation path.
 
                 # Search for the library file.
@@ -1730,7 +1746,7 @@ class LibraryCheck(CheckBase):
             sPathLib     = os.path.join(sPathBase, 'lib');
             sPathLibExec = os.path.join(sPathBase, 'libexec');
 
-            if g_oEnv['KBUILD_TARGET'] != BuildTarget.WINDOWS:
+            if self.enmBuildTarget != BuildTarget.WINDOWS:
                 # Tell g++ that we need C++17 -- otherwise Qt6 won't compile.
                 # Required for older compilers (i.e. G++ 9.4).
                 self.asCompilerArgs.extend([ '-std=c++17' ]);
@@ -1825,7 +1841,7 @@ class ToolCheck(CheckBase):
             sPath  = os.path.join(g_sScriptPath, g_oEnv['PATH_DEVTOOLS'] if g_oEnv['PATH_DEVTOOLS'] else 'tools');
             asToolsSubDir = [
                  "common",
-                f"{g_oEnv['KBUILD_TARGET']}.{g_oEnv['KBUILD_TARGET_ARCH']}"
+                f"{self.enmBuildTarget}.{self.enmBuildArch}"
             ];
             asPath = [];
             for sSubDir in asToolsSubDir:
@@ -1944,7 +1960,7 @@ class ToolCheck(CheckBase):
         # Detect binaries.
         sPathBin = None;
         if sPath:
-            asPathBin = [ os.path.join(sPath, 'bin', g_oEnv['KBUILD_TARGET'] + '.' + g_oEnv['KBUILD_TARGET_ARCH']) ];
+            asPathBin = [ os.path.join(sPath, 'bin', self.enmBuildTarget + '.' + self.enmBuildArch) ];
             asFile    = [ 'soapcpp2', 'wsdl2h' ];
             for sCurPath in asPathBin:
                 if pathExists(sCurPath):
@@ -2033,7 +2049,7 @@ class ToolCheck(CheckBase):
         if not sJavaHome:
             sJavaHome = os.environ.get('JAVA_HOME');
         if not sJavaHome:
-            if g_enmHostTarget == BuildTarget.DARWIN:
+            if self.enmBuildTarget == BuildTarget.DARWIN:
                 _, sJavaHome = getPackagePath('openjdk');
                 if sJavaHome:
                     sJavaHome = sJavaHome + '@17';
@@ -2261,7 +2277,7 @@ class ToolCheck(CheckBase):
                         sCurArchBinPath = os.path.join(sVCPPBasePath, 'bin', sDirHost, sDirArch);
                         if pathExists(sCurArchBinPath):
                             g_oEnv.set(f'PATH_TOOL_{sScheme}{sCurArch.upper()}', f'$(PATH_TOOL_{sScheme})');
-                            if g_oEnv['KBUILD_TARGET_ARCH'] == sCurArch:
+                            if self.enmBuildArch == sCurArch:
                                 # Make sure that we have cl.exe in our path so that we can use it for tests compilation lateron.
                                 g_oEnv.prependPath('PATH', sCurArchBinPath);
                                 # Same goes for the libs.
@@ -2280,7 +2296,7 @@ class ToolCheck(CheckBase):
 
             # Set up standard include/lib paths.
             g_oEnv.prependPath('INCLUDE', os.path.join(sVCPPBasePath, 'include', ));
-            g_oEnv.prependPath('LIB', os.path.join(sVCPPBasePath, 'lib', g_mapWinVSArch2Dir.get(g_oEnv['KBUILD_TARGET_ARCH'])[0]));
+            g_oEnv.prependPath('LIB', os.path.join(sVCPPBasePath, 'lib', g_mapWinVSArch2Dir.get(self.enmBuildArch)[0]));
 
             if sVCPPArchBinPath:
                 assert sVCPPVer;
@@ -2334,7 +2350,7 @@ class ToolCheck(CheckBase):
             self.printVerbose(1, f"Found Windows 10 SDK at '{sSDKPath}'");
             sSDKVer, sIncPath= self.getHighestVersionDir(os.path.join(sSDKPath, 'Include'));
             if pathExists(sIncPath):
-                sArchDir = g_mapWinSDK10Arch2Dir.get(g_oEnv['KBUILD_TARGET_ARCH'], ('x64', 'Hostx64'))[0];
+                sArchDir = g_mapWinSDK10Arch2Dir.get(self.enmBuildArch, ('x64', 'Hostx64'))[0];
                 asFile = [ f'Include/{sSDKVer}/um/Windows.h',
                         f'Include/{sSDKVer}/ucrt/malloc.h',
                         f'Include/{sSDKVer}/ucrt/stdio.h',
@@ -2460,7 +2476,7 @@ class ToolCheck(CheckBase):
             sPath = os.path.join(g_sScriptPath, 'kBuild/kBuild');
             if not pathExists(sPath):
                 sPath = os.path.join(g_sScriptPath, 'kBuild');
-            sPathTgt = os.path.join(sPath, 'bin', g_oEnv['KBUILD_TARGET'] + "." + g_oEnv['KBUILD_TARGET_ARCH']);
+            sPathTgt = os.path.join(sPath, 'bin', self.enmBuildTarget + "." + self.enmBuildArch);
             if pathExists(sPathTgt):
                 if  checkWhich('kmk', 'kBuild kmk', sPathTgt) \
                 and checkWhich('kmk_ash', 'kBuild kmk_ash', sPathTgt) \
@@ -2504,7 +2520,7 @@ class ToolCheck(CheckBase):
             self.sCmdPath, self.sVer = checkWhich('clang');
 
         if  self.sCmdPath \
-        and g_enmHostTarget == BuildTarget.DARWIN:
+        and self.enmBuildTarget == BuildTarget.DARWIN:
             g_oEnv.set('config_c_compiler',   self.sCmdPath);
             self.sCmdPath, self.sVer = checkWhich('clang++');
             g_oEnv.set('config_cpp_compiler', self.sCmdPath);
@@ -2544,10 +2560,10 @@ class ToolCheck(CheckBase):
             g_oEnv.append('CC32',  ' -m32');
             g_oEnv.append('CXX32', ' -m32');
         elif g_enmHostArch == BuildArch.X86 \
-        and  g_oEnv['KBUILD_TARGET_ARCH'] == BuildArch.AMD64: ## @todo Still needed?
+        and  self.enmBuildArch == BuildArch.AMD64: ## @todo Still needed?
             g_oEnv.append('CC32',  ' -m64');
             g_oEnv.append('CXX32', ' -m64');
-        elif g_oEnv['KBUILD_TARGET_ARCH'] == BuildArch.AMD64:
+        elif self.enmBuildArch == BuildArch.AMD64:
             g_oEnv.unset('CC32');
             g_oEnv.unset('CXX32');
 
@@ -2586,8 +2602,8 @@ class ToolCheck(CheckBase):
         g_oEnv.set('TOOL_Bs3Gcc64Elf64_CXX', sCXX64 if sCXX64 else sCXX);
 
         # Solaris sports a 32-bit gcc/g++.
-        if  g_oEnv['KBUILD_TARGET']      == BuildTarget.SOLARIS \
-        and g_oEnv['KBUILD_TARGET_ARCH'] == BuildArch.AMD64:
+        if  self.enmBuildTarget == BuildTarget.SOLARIS \
+        and self.enmBuildArch   == BuildArch.AMD64:
             g_oEnv.set('CC' , 'gcc -m64' if sCC == 'gcc' else None);
             g_oEnv.set('CXX', 'gxx -m64' if sCC == 'gxx' else None);
 
@@ -2608,7 +2624,7 @@ class ToolCheck(CheckBase):
             sPathBase = os.path.join(g_sScriptPath, 'tools');
 
         if pathExists(sPathBase):
-            sPathBin = os.path.join(sPathBase, g_oEnv['KBUILD_TARGET'] + "." + g_oEnv['KBUILD_TARGET_ARCH']);
+            sPathBin = os.path.join(sPathBase, self.enmBuildTarget + "." + self.enmBuildArch);
             if pathExists(sPathBin):
                 self.sCmdPath = sPathBin;
 
@@ -2622,28 +2638,28 @@ class ToolCheck(CheckBase):
         Checks for Open Watcom tools.
         """
 
-        if  g_oEnv['KBUILD_TARGET']      == BuildTarget.DARWIN \
-        and g_oEnv['KBUILD_TARGET_ARCH'] == BuildArch.ARM64:
+        if  self.enmBuildTarget == BuildTarget.DARWIN \
+        and self.enmBuildArch   == BuildArch.ARM64:
             self.printVerbose(1, 'Open Watcom not used here (yet), skipping');
             return True;
 
         # These are the sub directories OpenWatcom ships its binaries in.
         mapBuildTarget2Bin = {
             BuildTarget.DARWIN:  "binosx",  ## @todo Still correct for Apple Silicon?
-            BuildTarget.LINUX:   "binl" if g_oEnv['KBUILD_TARGET_ARCH'] is BuildArch.AMD64 else "binl", # ASSUMES 64-bit.
+            BuildTarget.LINUX:   "binl" if self.enmBuildArch is BuildArch.AMD64 else "binl", # ASSUMES 64-bit.
             BuildTarget.SOLARIS: "binsol",  ## @todo Test on Solaris.
             BuildTarget.WINDOWS: "binnt",
             BuildTarget.BSD:     "binnbsd"  ## @todo Test this on FreeBSD.
         };
 
-        sBinSubdir = mapBuildTarget2Bin.get(g_oEnv['KBUILD_TARGET'], None);
+        sBinSubdir = mapBuildTarget2Bin.get(self.enmBuildTarget, None);
         if not sBinSubdir:
-            self.printError(f"Open Watcom not supported on host target { g_oEnv['KBUILD_TARGET'] }.");
+            self.printError(f"Open Watcom not supported on host target { self.enmBuildTarget }.");
             return False;
 
         sPath = self.sRootPath;
         if not sPath:
-            if g_oEnv['KBUILD_TARGET'] == BuildTarget.LINUX:
+            if self.enmBuildTarget == BuildTarget.LINUX:
                 # Modern distros might have Snap installed for which there is an Open Watcom package.
                 # Check for this.
                 sPath = os.path.join('/', 'snap', 'open-watcom', 'current');
@@ -2680,11 +2696,11 @@ class ToolCheck(CheckBase):
             return True;
 
         # On darwin (macOS), just enable Python support.
-        if g_enmHostTarget == BuildTarget.DARWIN:
+        if self.enmBuildTarget == BuildTarget.DARWIN:
             return True;
 
-        if g_enmPythonArch != g_oEnv['KBUILD_TARGET_ARCH']:
-            self.printWarn(f"Mismatch between detected platform/architecture '{g_enmPythonArch}' and kBuild Python target/architecture '{g_oEnv['KBUILD_TARGET_ARCH']}'");
+        if g_enmPythonArch != self.enmBuildArch:
+            self.printWarn(f"Mismatch between detected platform/architecture '{g_enmPythonArch}' and kBuild Python target/architecture '{self.enmBuildArch}'");
             self.printWarn( 'Make sure that the correct Python version is installed for the target architecture.');
             # Continue anyway.
 
@@ -2716,7 +2732,8 @@ int main()
         # Make sure that the Python .dll / .so files are in PATH.
         g_oEnv.prependPath('PATH', sysconfig.get_paths()[ 'data' ]);
 
-        if compileAndExecute('Python C API', g_oEnv['KBUILD_TARGET'], g_oEnv['KBUILD_TARGET_ARCH'], [ asPathInc ], asLibDir, [ ], asLib, sCode):
+        if compileAndExecute('Python C API', [ asPathInc ], asLibDir, [ ], asLib, sCode, \
+                             enmBuildTarget = self.enmBuildTarget, enmBuildArch = self.enmBuildArch):
             g_oEnv.set('VBOX_PATH_PYTHON_INC', asPathInc);
             g_oEnv.set('VBOX_LIB_PYTHON', asLibDir[0] if len(asLibDir) > 0 else None);
             return True;
@@ -3395,7 +3412,7 @@ def write_env(sFilePath, enmBuildTarget, enmBuildArch, oEnv, aoLibs, aoTools):
     sScriptArgs = ' '.join(sys.argv[1:]);
 
     w = EnvFileWriter(sFilePath, enmBuildTarget, oEnv, 32);
-    if g_enmHostTarget != BuildTarget.WINDOWS:
+    if enmBuildTarget != BuildTarget.WINDOWS:
         w.write_raw(f"""
 #!/bin/bash
 # -*- Environment -*-
@@ -3538,6 +3555,8 @@ def main():
     global g_fDebug;
     global g_fContOnErr;
     global g_sFileLog;
+    global g_enmBuildTarget;
+    global g_enmBuildArch;
 
     #
     # Special case:
@@ -3599,8 +3618,8 @@ def main():
     oParser.add_argument('--debug', help='Runs in debug mode. Only use for development', action='store_true', default=True, dest='config_debug');
     oParser.add_argument('--nofatal', '--continue-on-error', help='Continues execution on fatal errors', action='store_true', dest='config_nofatal');
     oParser.add_argument('--build-profile', help='Build with a profiling support', action='store_true', default=None, dest='KBUILD_TYPE=profile');
-    oParser.add_argument('--build-target', help='Specifies the build target', default=None, dest='config_build_target');
-    oParser.add_argument('--build-arch', help='Specifies the build architecture', default=None, dest='config_build_arch');
+    oParser.add_argument('--build-target', help='Specifies the build target', default = g_enmBuildTarget, dest='config_build_target');
+    oParser.add_argument('--build-arch', help='Specifies the build architecture', default = g_enmBuildArch, dest='config_build_arch');
     oParser.add_argument('--build-debug', help='Build with debugging symbols and assertions', action='store_true', default=None, dest='KBUILD_TYPE=debug');
     oParser.add_argument('--build-headless', help='Build headless (without any GUI frontend)', action='store_true', dest='config_build_headless');
     oParser.add_argument('--internal-first', help='Check internal tools (tools/win.*) first (default)', action='store_true', dest='config_internal_first');
@@ -3698,8 +3717,8 @@ def main():
     g_oEnv.set('KBUILD_HOST', g_enmHostTarget);
     g_oEnv.set('KBUILD_HOST_ARCH', g_enmHostArch);
     g_oEnv.set('KBUILD_TYPE', BuildType.RELEASE);
-    g_oEnv.set('KBUILD_TARGET', oArgs.config_build_target if oArgs.config_build_target else g_enmHostTarget);
-    g_oEnv.set('KBUILD_TARGET_ARCH', oArgs.config_build_arch if oArgs.config_build_arch else g_enmHostArch);
+    g_oEnv.set('KBUILD_TARGET', oArgs.config_build_target);
+    g_oEnv.set('KBUILD_TARGET_ARCH', oArgs.config_build_arch);
     g_oEnv.set('KBUILD_TARGET_CPU', 'blend'); ## @todo Check this.
     g_oEnv.set('KBUILD_PATH', oArgs.config_tools_path_kbuild);
     g_oEnv.set('VBOX_WITH_HARDENING', '1');
@@ -3728,8 +3747,23 @@ def main():
 
     oArgs.config_libs_path_python_c_api = oArgs.config_python_path;
 
+    #
+    # Check build target / architecture
+    #
+    if oArgs.config_build_target and oArgs.config_build_target not in g_aeBuildTargets:
+        printError(f"Unsupported build target '{oArgs.config_build_target}'");
+    if oArgs.config_build_arch and oArgs.config_build_arch not in g_aeBuildArchs:
+        printError(f"Unsupported build architecture '{oArgs.config_build_arch}\'");
+    g_enmBuildTarget = oArgs.config_build_target;
+    g_enmBuildArch   = oArgs.config_build_arch;
+
+    print(f'Host OS / arch     : { g_sHostTarget}.{g_sHostArch}');
+    print(f'Building for target: { g_enmBuildTarget }.{ g_enmBuildArch }');
+    print(f'Build type         : { g_oEnv["KBUILD_TYPE"] }');
+    print();
+
     # Handle env[.sh|.bat] output file.
-    sEnvFile = 'env.bat' if g_enmHostTarget == BuildTarget.WINDOWS else 'env.sh';
+    sEnvFile = 'env.bat' if g_enmBuildTarget == BuildTarget.WINDOWS else 'env.sh';
     if not oArgs.config_file_env:
         oArgs.config_file_env = os.path.join(oArgs.config_out_dir, sEnvFile);
     else:
@@ -3751,19 +3785,6 @@ def main():
     # Apply updates from command line arguments.
     # This can override the defaults set above.
     g_oEnv.updateFromArgs(oArgs);
-
-    #
-    # Check build target / architecture
-    #
-    if oArgs.config_build_target and oArgs.config_build_target not in g_aeBuildTargets:
-        printError(f"Unsupported build target '{oArgs.config_build_target}'");
-    if oArgs.config_build_arch and oArgs.config_build_arch not in g_aeBuildArchs:
-        printError(f"Unsupported build architecture '{oArgs.config_build_arch}\'");
-
-    print(f'Host OS / arch     : { g_sHostTarget}.{g_sHostArch}');
-    print(f'Building for target: { g_oEnv["KBUILD_TARGET"] }.{ g_oEnv["KBUILD_TARGET_ARCH"] }');
-    print(f'Build type         : { g_oEnv["KBUILD_TYPE"] }');
-    print();
 
     # Filter libs and tools based on --only-XXX flags.
     # Replace '-' with '_' so that we can use variables directly w/o getattr lateron.
@@ -3904,10 +3925,10 @@ def main():
         BuildTarget.WINDOWS: [ ], # Done via own callbacks in the ToolCheck class down below.
         BuildTarget.SOLARIS: [ 'pkg-config', 'gcc', 'gmake' ]
     };
-    aOsToolsToCheck = aOsTools.get( g_oEnv[ 'KBUILD_TARGET' ], None);
+    aOsToolsToCheck = aOsTools.get(g_enmBuildTarget, None);
     printVerbose(1, f'Checking for essential OS tools: {aOsToolsToCheck}');
     if aOsToolsToCheck is None:
-        printWarn(f"Unsupported build target \'{ g_oEnv['KBUILD_TARGET'] }\' for OS tool checks, probably leading to build errors");
+        printWarn(f"Unsupported build target \'{ g_enmBuildTarget }\' for OS tool checks, probably leading to build errors");
     else:
         oOsToolsTable = SimpleTable([ 'Tool', 'Status', 'Version', 'Path' ]);
         for sBinary in aOsToolsToCheck:
@@ -3990,12 +4011,12 @@ def main():
 
     if g_cErrors == 0 \
     or g_fContOnErr:
-        if write_autoconfig_kmk(oArgs.config_file_autoconfig, g_enmHostTarget, g_oEnv, g_aoLibs, g_aoTools):
-            if write_env(oArgs.config_file_env, g_enmHostTarget, g_enmHostArch, g_oEnv, g_aoLibs, g_aoTools):
+        if write_autoconfig_kmk(oArgs.config_file_autoconfig, g_enmBuildTarget, g_oEnv, g_aoLibs, g_aoTools):
+            if write_env(oArgs.config_file_env, g_enmBuildTarget, g_enmBuildArch, g_oEnv, g_aoLibs, g_aoTools):
                 print();
                 print(f'Successfully generated \"{oArgs.config_file_autoconfig}\" and \"{oArgs.config_file_env}\".');
                 print();
-                if g_enmHostTarget == BuildTarget.WINDOWS:
+                if g_enmBuildTarget == BuildTarget.WINDOWS:
                     print();
                     print('Execute env.bat once before you starting to build VirtualBox:');
                     print();
@@ -4011,10 +4032,10 @@ def main():
                 print( '  kmk');
                 print();
 
-        if g_enmHostTarget == BuildTarget.LINUX:
+        if g_enmBuildTarget == BuildTarget.LINUX:
             print('To compile the kernel modules, do:');
             print();
-            print(f"  cd {g_sOutPath}/{ g_oEnv['KBUILD_TARGET'] }.{ g_oEnv['KBUILD_TARGET_ARCH'] }/{ g_oEnv['KBUILD_TYPE'] }/bin/src");
+            print(f"  cd {g_sOutPath}/{ g_enmBuildTarget }.{ g_enmBuildArch }/{ g_oEnv['KBUILD_TYPE'] }/bin/src");
             print('  make');
             print();
 
