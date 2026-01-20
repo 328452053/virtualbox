@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# $Id: configure.py 112640 2026-01-19 13:23:49Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112653 2026-01-20 16:37:07Z andreas.loeffler@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112640 $"
+__revision__ = "$Revision: 112653 $"
 
 import argparse
 import ctypes
@@ -3212,7 +3212,7 @@ Hint: Combine any supported --disable-<lib|tool> and --with-<lib>-path=PATH opti
 """);
 
 # The sorting order is important here -- don't change without proper testing!
-# Also note: The library name can be arbitrary and should match the library name.
+# Also note: The library names can be arbitrary and should match the library name.
 g_aoLibs = [
     LibraryCheck("linux-kernel-headers", [ "linux/version.h" ], [ ],  aeTargets = [ BuildTarget.LINUX ],
                  sCode = '#include <linux/version.h>\nint printf(const char *f,...);\nint main(void) { printf("%d.%d.%d", LINUX_VERSION_CODE / 65536, (LINUX_VERSION_CODE % 65536) / 256,LINUX_VERSION_CODE % 256);\n#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,32)\nreturn 0;\n#else\nprintf("Expected version 2.6.32 or higher"); return 1;\n#endif\n }\n'),
@@ -3318,12 +3318,13 @@ g_aoLibs = [
 
 # Note: The order is important here for subsequent checks.
 #       Don't change without proper testing!
+# The naming of a tool must match our dev tools folders in order to be found there.
 g_aoTools = [
     ToolCheck("clang", asCmd = [ "clang" ], fnCallback = ToolCheck.checkCallback_clang, aeTargets = [ BuildTarget.DARWIN ] ),
     ToolCheck("gcc", asCmd = [ "gcc" ], fnCallback = ToolCheck.checkCallback_gcc, aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ] ),
     ToolCheck("kbuild", asCmd = [ "kbuild" ], fnCallback = ToolCheck.checkCallback_kBuild ),
     ToolCheck("win-visualcpp", asCmd = [ ], fnCallback = ToolCheck.checkCallback_WinVisualCPP, aeTargets = [ BuildTarget.WINDOWS ] ),
-    ToolCheck("glslang-tools", asCmd = [ "glslangValidator" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
+    ToolCheck("glslang", asCmd = [ "glslangValidator" ], aeTargets = [ BuildTarget.LINUX ],
               dictDefinesToSetIfFailed = { 'VBOX_WITH_DXVK' : '' }),
     ToolCheck("macossdk", asCmd = [ ], fnCallback = ToolCheck.checkCallback_MacOSSDK, aeTargets = [ BuildTarget.DARWIN ] ),
     ToolCheck("devtools", asCmd = [ ], fnCallback = ToolCheck.checkCallback_devtools ),
