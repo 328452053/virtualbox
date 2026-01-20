@@ -1,4 +1,4 @@
-/* $Id: UIDetailsView.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDetailsView.cpp 112647 2026-01-20 14:47:57Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsView class implementation.
  */
@@ -32,7 +32,6 @@
 
 /* GUI includes: */
 #include "UICommon.h"
-#include "UIDetails.h"
 #include "UIDetailsItem.h"
 #include "UIDetailsModel.h"
 #include "UIDetailsView.h"
@@ -70,14 +69,14 @@ public:
         AssertPtrReturn(view(), 0);
 
         /* What amount of children root has? */
-        const int cChildCount = view()->details()->model()->root()->items().size();
+        const int cChildCount = view()->model()->root()->items().size();
 
         /* Return amount of children root has (if there are many of children): */
         if (cChildCount > 1)
             return cChildCount;
 
         /* Return the number of children lone root child has (otherwise): */
-        return view()->details()->model()->root()->items().first()->items().size();
+        return view()->model()->root()->items().first()->items().size();
     }
 
     /** Returns the child with the passed @a iIndex. */
@@ -89,14 +88,14 @@ public:
         AssertReturn(iIndex >= 0 && iIndex < childCount(), 0);
 
         /* What amount of children root has? */
-        const int cChildCount = view()->details()->model()->root()->items().size();
+        const int cChildCount = view()->model()->root()->items().size();
 
         /* Return the root child with the passed iIndex (if there are many of children): */
         if (cChildCount > 1)
-            return QAccessible::queryAccessibleInterface(view()->details()->model()->root()->items().at(iIndex));
+            return QAccessible::queryAccessibleInterface(view()->model()->root()->items().at(iIndex));
 
         /* Return the lone root child's child with the passed iIndex (otherwise): */
-        return QAccessible::queryAccessibleInterface(view()->details()->model()->root()->items().first()->items().at(iIndex));
+        return QAccessible::queryAccessibleInterface(view()->model()->root()->items().first()->items().at(iIndex));
     }
 
     /** Returns the index of passed @a pChild. */
@@ -134,12 +133,21 @@ private:
 };
 
 
-UIDetailsView::UIDetailsView(UIDetails *pParent)
+UIDetailsView::UIDetailsView(QWidget *pParent)
     : QIGraphicsView(pParent)
-    , m_pDetails(pParent)
     , m_iMinimumWidthHint(0)
 {
     prepare();
+}
+
+void UIDetailsView::setModel(UIDetailsModel *pDetailsModel)
+{
+    m_pDetailsModel = pDetailsModel;
+}
+
+UIDetailsModel *UIDetailsView::model() const
+{
+    return m_pDetailsModel;
 }
 
 void UIDetailsView::sltMinimumWidthHintChanged(int iHint)
