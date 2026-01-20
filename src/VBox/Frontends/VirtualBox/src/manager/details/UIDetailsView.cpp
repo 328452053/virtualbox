@@ -1,4 +1,4 @@
-/* $Id: UIDetailsView.cpp 112650 2026-01-20 15:02:17Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsView.cpp 112651 2026-01-20 15:09:31Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsView class implementation.
  */
@@ -42,7 +42,7 @@
 
 
 /** QAccessibleWidget extension used as an accessibility interface for Details-view. */
-class UIAccessibilityInterfaceForUIDetailsView : public QAccessibleWidget
+class UIAccessibilityInterfaceForUIDetailsView : public QAccessibleWidget, public QAccessibleSelectionInterface
 {
 public:
 
@@ -59,8 +59,31 @@ public:
 
     /** Constructs an accessibility interface passing @a pWidget to the base-class. */
     UIAccessibilityInterfaceForUIDetailsView(QWidget *pWidget)
+#ifdef VBOX_WS_MAC
+        // WORKAROUND: macOS doesn't respect QAccessible::Tree/TreeItem roles.
         : QAccessibleWidget(pWidget, QAccessible::List)
+#else
+        : QAccessibleWidget(pWidget, QAccessible::Tree)
+#endif
     {}
+
+    /** Returns a specialized accessibility interface type. */
+    virtual void *interface_cast(QAccessible::InterfaceType enmType) RT_OVERRIDE
+    {
+        switch (enmType)
+        {
+#ifdef VBOX_WS_MAC
+            /// @todo Fix selection interface for macOS first of all!
+#else
+            case QAccessible::SelectionInterface:
+                return static_cast<QAccessibleSelectionInterface*>(this);
+#endif
+            default:
+                break;
+        }
+
+        return 0;
+    }
 
     /** Returns the number of children. */
     virtual int childCount() const RT_OVERRIDE
@@ -153,6 +176,54 @@ public:
 
         /* Null string by default: */
         return QString();
+    }
+
+    /** Returns the total number of selected accessible items. */
+    virtual int selectedItemCount() const RT_OVERRIDE
+    {
+        /* For now we are interested in just first one selected item: */
+        return 1;
+    }
+
+    /** Returns the list of selected accessible items. */
+    virtual QList<QAccessibleInterface*> selectedItems() const RT_OVERRIDE
+    {
+        /* Sanity check: */
+        AssertPtrReturn(view(), QList<QAccessibleInterface*>());
+        AssertPtrReturn(view()->model(), QList<QAccessibleInterface*>());
+        AssertPtrReturn(view()->model()->root(), QList<QAccessibleInterface*>());
+        AssertPtrReturn(view()->model()->root()->items().first(), QList<QAccessibleInterface*>());
+
+        /* For now we are interested in just first one selected item: */
+        return QList<QAccessibleInterface*>() << QAccessible::queryAccessibleInterface(view()->model()->root()->items().first());
+    }
+
+    /** Adds childItem to the selection. */
+    virtual bool select(QAccessibleInterface *) RT_OVERRIDE
+    {
+        /// @todo implement
+        return false;
+    }
+
+    /** Removes childItem from the selection. */
+    virtual bool unselect(QAccessibleInterface *) RT_OVERRIDE
+    {
+        /// @todo implement
+        return false;
+    }
+
+    /** Selects all accessible child items. */
+    virtual bool selectAll() RT_OVERRIDE
+    {
+        /// @todo implement
+        return false;
+    }
+
+    /** Unselects all accessible child items. */
+    virtual bool clear() RT_OVERRIDE
+    {
+        /// @todo implement
+        return false;
     }
 
 private:
