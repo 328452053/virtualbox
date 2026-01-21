@@ -1,4 +1,4 @@
-/* $Id: UIDetailsItem.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDetailsItem.cpp 112658 2026-01-21 12:25:06Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsItem class definition.
  */
@@ -63,6 +63,13 @@ public:
         : QAccessibleObject(pObject)
     {}
 
+    /** Returns the role. */
+    virtual QAccessible::Role role() const RT_OVERRIDE
+    {
+        /* Return the role: */
+        return QAccessible::List;
+    }
+
     /** Returns the parent. */
     virtual QAccessibleInterface *parent() const RT_OVERRIDE
     {
@@ -97,6 +104,18 @@ public:
 
         /* Null by default: */
         return 0;
+    }
+
+    /** Returns the rect. */
+    virtual QRect rect() const RT_OVERRIDE
+    {
+        /* Now goes the mapping: */
+        const QSize   itemSize         = item()->size().toSize();
+        const QPointF itemPosInScene   = item()->mapToScene(QPointF(0, 0));
+        const QPoint  itemPosInView    = item()->model()->details()->view()->mapFromScene(itemPosInScene);
+        const QPoint  itemPosInScreen  = item()->model()->details()->view()->mapToGlobal(itemPosInView);
+        const QRect   itemRectInScreen = QRect(itemPosInScreen, itemSize);
+        return itemRectInScreen;
     }
 
     /** Returns the number of children. */
@@ -149,16 +168,11 @@ public:
         return -1;
     }
 
-    /** Returns the rect. */
-    virtual QRect rect() const RT_OVERRIDE
+    /** Returns the state. */
+    virtual QAccessible::State state() const RT_OVERRIDE
     {
-        /* Now goes the mapping: */
-        const QSize   itemSize         = item()->size().toSize();
-        const QPointF itemPosInScene   = item()->mapToScene(QPointF(0, 0));
-        const QPoint  itemPosInView    = item()->model()->details()->view()->mapFromScene(itemPosInScene);
-        const QPoint  itemPosInScreen  = item()->model()->details()->view()->mapToGlobal(itemPosInView);
-        const QRect   itemRectInScreen = QRect(itemPosInScreen, itemSize);
-        return itemRectInScreen;
+        /* Return the state: */
+        return QAccessible::State();
     }
 
     /** Returns a text for the passed @a enmTextRole. */
@@ -173,20 +187,6 @@ public:
 
         /* Null-string by default: */
         return QString();
-    }
-
-    /** Returns the role. */
-    virtual QAccessible::Role role() const RT_OVERRIDE
-    {
-        /* Return the role: */
-        return QAccessible::List;
-    }
-
-    /** Returns the state. */
-    virtual QAccessible::State state() const RT_OVERRIDE
-    {
-        /* Return the state: */
-        return QAccessible::State();
     }
 
 private:
