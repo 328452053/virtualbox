@@ -1,4 +1,4 @@
-/* $Id: acpi-compiler.cpp 112654 2026-01-21 09:33:31Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-compiler.cpp 112663 2026-01-21 15:02:23Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -242,8 +242,6 @@ typedef FNRTACPITBLASLPARSE *PFNRTACPITBLASLPARSE;
  */
 typedef struct RTACPIASLKEYWORD
 {
-    /** Name of the opcode. */
-    const char               *pszOpc;
     /** The parsing callback to call, optional.
      * If not NULL this will have priority over the default parsing. */
     PFNRTACPITBLASLPARSE     pfnParse;
@@ -2248,7 +2246,7 @@ static DECLCALLBACK(int) rtAcpiTblAslParseReturn(PRTACPIASLCU pThis, PCRTACPIASL
 
 #define RTACPI_ASL_KEYWORD_DEFINE_INVALID \
     { \
-        NULL, NULL, 0, 0, RTACPI_AST_NODE_F_DEFAULT, \
+        NULL, 0, 0, RTACPI_AST_NODE_F_DEFAULT, \
         {   kAcpiAstArgType_Invalid, \
             kAcpiAstArgType_Invalid, \
             kAcpiAstArgType_Invalid, \
@@ -2261,9 +2259,9 @@ static DECLCALLBACK(int) rtAcpiTblAslParseReturn(PRTACPIASLCU pThis, PCRTACPIASL
         } \
     }
 
-#define RTACPI_ASL_KEYWORD_DEFINE_HANDLER(a_szKeyword, a_pfnHandler, a_cArgReq, a_cArgOpt, a_fFlags) \
+#define RTACPI_ASL_KEYWORD_DEFINE_HANDLER(a_pfnHandler, a_cArgReq, a_cArgOpt, a_fFlags) \
     { \
-        a_szKeyword, a_pfnHandler, a_cArgReq, a_cArgOpt, a_fFlags, \
+        a_pfnHandler, a_cArgReq, a_cArgOpt, a_fFlags, \
         {   kAcpiAstArgType_Invalid, \
             kAcpiAstArgType_Invalid, \
             kAcpiAstArgType_Invalid, \
@@ -2276,9 +2274,9 @@ static DECLCALLBACK(int) rtAcpiTblAslParseReturn(PRTACPIASLCU pThis, PCRTACPIASL
         } \
     }
 
-#define RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(a_szKeyword, a_fFlags) \
+#define RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(a_fFlags) \
     { \
-        a_szKeyword, NULL, 0, 0, a_fFlags, \
+        NULL, 0, 0, a_fFlags, \
         {   kAcpiAstArgType_Invalid, \
             kAcpiAstArgType_Invalid, \
             kAcpiAstArgType_Invalid, \
@@ -2291,9 +2289,9 @@ static DECLCALLBACK(int) rtAcpiTblAslParseReturn(PRTACPIASLCU pThis, PCRTACPIASL
         } \
     }
 
-#define RTACPI_ASL_KEYWORD_DEFINE_0REQ_1OPT(a_szKeyword, a_fFlags, a_enmArgTypeOpt0) \
+#define RTACPI_ASL_KEYWORD_DEFINE_0REQ_1OPT(a_fFlags, a_enmArgTypeOpt0) \
     { \
-        a_szKeyword, NULL, 0, 0, a_fFlags, \
+        NULL, 0, 0, a_fFlags, \
         {   kAcpiAstArgType_Invalid, \
             kAcpiAstArgType_Invalid, \
             kAcpiAstArgType_Invalid, \
@@ -2306,9 +2304,9 @@ static DECLCALLBACK(int) rtAcpiTblAslParseReturn(PRTACPIASLCU pThis, PCRTACPIASL
         } \
     }
 
-#define RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(a_szKeyword, a_fFlags, a_enmArgType0) \
+#define RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(a_fFlags, a_enmArgType0) \
     { \
-        a_szKeyword, NULL, 1, 0, a_fFlags, \
+        NULL, 1, 0, a_fFlags, \
         {   a_enmArgType0, \
             kAcpiAstArgType_Invalid, \
             kAcpiAstArgType_Invalid, \
@@ -2321,9 +2319,9 @@ static DECLCALLBACK(int) rtAcpiTblAslParseReturn(PRTACPIASLCU pThis, PCRTACPIASL
         } \
     }
 
-#define RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(a_szKeyword, a_fFlags, a_enmArgType0, a_enmArgType1) \
+#define RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(a_fFlags, a_enmArgType0, a_enmArgType1) \
     { \
-        a_szKeyword, NULL, 2, 0, a_fFlags, \
+        NULL, 2, 0, a_fFlags, \
         {   a_enmArgType0, \
             a_enmArgType1, \
             kAcpiAstArgType_Invalid, \
@@ -2336,9 +2334,9 @@ static DECLCALLBACK(int) rtAcpiTblAslParseReturn(PRTACPIASLCU pThis, PCRTACPIASL
         } \
     }
 
-#define RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT(a_szKeyword, a_fFlags, a_enmArgType0, a_enmArgType1, a_enmArgType2) \
+#define RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT(a_fFlags, a_enmArgType0, a_enmArgType1, a_enmArgType2) \
     { \
-        a_szKeyword, NULL, 3, 0, a_fFlags, \
+        NULL, 3, 0, a_fFlags, \
         {   a_enmArgType0, \
             a_enmArgType1, \
             a_enmArgType2, \
@@ -2351,9 +2349,9 @@ static DECLCALLBACK(int) rtAcpiTblAslParseReturn(PRTACPIASLCU pThis, PCRTACPIASL
         } \
     }
 
-#define RTACPI_ASL_KEYWORD_DEFINE_4REQ_0OPT(a_szKeyword, a_fFlags, a_enmArgType0, a_enmArgType1, a_enmArgType2, a_enmArgType3) \
+#define RTACPI_ASL_KEYWORD_DEFINE_4REQ_0OPT(a_fFlags, a_enmArgType0, a_enmArgType1, a_enmArgType2, a_enmArgType3) \
     { \
-        a_szKeyword, NULL, 4, 0, a_fFlags, \
+        NULL, 4, 0, a_fFlags, \
         {   a_enmArgType0, \
             a_enmArgType1, \
             a_enmArgType2, \
@@ -2366,9 +2364,9 @@ static DECLCALLBACK(int) rtAcpiTblAslParseReturn(PRTACPIASLCU pThis, PCRTACPIASL
         } \
     }
 
-#define RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(a_szKeyword, a_fFlags, a_enmArgType0, a_enmArgType1, a_enmArgTypeOpt0) \
+#define RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(a_fFlags, a_enmArgType0, a_enmArgType1, a_enmArgTypeOpt0) \
     { \
-        a_szKeyword, NULL, 2, 1, a_fFlags, \
+        NULL, 2, 1, a_fFlags, \
         {   a_enmArgType0, \
             a_enmArgType1, \
             kAcpiAstArgType_Invalid, \
@@ -2381,9 +2379,9 @@ static DECLCALLBACK(int) rtAcpiTblAslParseReturn(PRTACPIASLCU pThis, PCRTACPIASL
         } \
     }
 
-#define RTACPI_ASL_KEYWORD_DEFINE_1REQ_1OPT(a_szKeyword, a_fFlags, a_enmArgType0, a_enmArgTypeOpt0) \
+#define RTACPI_ASL_KEYWORD_DEFINE_1REQ_1OPT(a_fFlags, a_enmArgType0, a_enmArgTypeOpt0) \
     { \
-        a_szKeyword, NULL, 1, 1, a_fFlags, \
+        NULL, 1, 1, a_fFlags, \
         {   a_enmArgType0, \
             kAcpiAstArgType_Invalid, \
             kAcpiAstArgType_Invalid, \
@@ -2405,9 +2403,9 @@ static const RTACPIASLKEYWORD g_aAslOps[] =
     /* kAcpiAstNodeOp_Identifier              */  RTACPI_ASL_KEYWORD_DEFINE_INVALID,
     /* kAcpiAstNodeOp_StringLiteral           */  RTACPI_ASL_KEYWORD_DEFINE_INVALID,
     /* kAcpiAstNodeOp_Number                  */  RTACPI_ASL_KEYWORD_DEFINE_INVALID,
-    /* kAcpiAstNodeOp_Scope                   */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("Scope",                  RTACPI_AST_NODE_F_NEW_SCOPE | RTACPI_AST_NODE_F_NS_SWITCH,  kAcpiAstArgType_NameString),
+    /* kAcpiAstNodeOp_Scope                   */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_NEW_SCOPE | RTACPI_AST_NODE_F_NS_SWITCH,  kAcpiAstArgType_NameString),
     /* kAcpiAstNodeOp_Processor               */  {
-                                                      "Processor", NULL, 2, 2, RTACPI_AST_NODE_F_NEW_SCOPE | RTACPI_AST_NODE_F_NS_ENTRY,
+                                                      NULL, 2, 2, RTACPI_AST_NODE_F_NEW_SCOPE | RTACPI_AST_NODE_F_NS_ENTRY,
                                                       {
                                                           kAcpiAstArgType_NameString,
                                                           kAcpiAstArgType_U8,
@@ -2422,78 +2420,78 @@ static const RTACPIASLKEYWORD g_aAslOps[] =
                                                       }
                                                   },
     /* kAcpiAstNodeOp_External                */  RTACPI_ASL_KEYWORD_DEFINE_INVALID, /* Special handling. */
-    /* kAcpiAstNodeOp_Method                  */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  "Method",                 rtAcpiTblAslParseMethod,   1, 3, RTACPI_AST_NODE_F_NEW_SCOPE | RTACPI_AST_NODE_F_NS_ENTRY),
-    /* kAcpiAstNodeOp_Device                  */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("Device",                 RTACPI_AST_NODE_F_NEW_SCOPE | RTACPI_AST_NODE_F_NS_ENTRY,   kAcpiAstArgType_NameString),
-    /* kAcpiAstNodeOp_If                      */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("If",                     RTACPI_AST_NODE_F_NEW_SCOPE,                                kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Else                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Else",                   RTACPI_AST_NODE_F_NEW_SCOPE),
-    /* kAcpiAstNodeOp_LAnd                    */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("LAnd",                   RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_LOr                     */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("LOr",                    RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_LEqual                  */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("LEqual",                 RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_LGreater                */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("LGreater",               RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_LGreaterEqual           */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("LGreaterEqual",          RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_LLess                   */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("LLess",                  RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_LLessEqual              */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("LLessEqual",             RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_LNot                    */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("LNot",                   RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_LNotEqual               */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("LNotEqual",              RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Zero                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Zero",                   RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_One                     */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("One",                    RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Ones                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Ones",                   RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Return                  */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  "Return",                 rtAcpiTblAslParseReturn,  0, 1, RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Unicode                 */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("Unicode",                RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode), /* Actually only String allowed here */
-    /* kAcpiAstNodeOp_OperationRegion         */  RTACPI_ASL_KEYWORD_DEFINE_4REQ_0OPT("OperationRegion",        RTACPI_AST_NODE_F_DEFAULT | RTACPI_AST_NODE_F_NS_ENTRY,     kAcpiAstArgType_NameString, kAcpiAstArgType_RegionSpace, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Field                   */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  "Field",                  rtAcpiTblAslParseFieldOrIndexField, 4, 0, RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Name                    */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("Name",                   RTACPI_AST_NODE_F_NS_ENTRY,                                 kAcpiAstArgType_NameString, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_ResourceTemplate        */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  "ResourceTemplate",       rtAcpiTblAslParseResourceTemplate,  0, 0, RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Arg0                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Arg0",                   RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Arg1                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Arg1",                   RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Arg2                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Arg2",                   RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Arg3                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Arg3",                   RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Arg4                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Arg4",                   RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Arg5                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Arg5",                   RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Arg6                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Arg6",                   RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Local0                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Local0",                 RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Local1                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Local1",                 RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Local2                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Local2",                 RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Local3                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Local3",                 RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Local4                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Local4",                 RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Local5                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Local5",                 RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Local6                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Local6",                 RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Local7                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Local7",                 RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Package                 */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  "Package",                rtAcpiTblAslParsePackageOrBuffer, 0, 1, RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Buffer                  */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  "Buffer",                 rtAcpiTblAslParsePackageOrBuffer, 0, 1, RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_ToUUid                  */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("ToUUID",                 RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_DerefOf                 */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("DerefOf",                RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Index                   */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT("Index",                  RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Store                   */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("Store",                  RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Break                   */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Break",                  RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Continue                */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT("Continue",               RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_Add                     */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT("Add",                    RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Subtract                */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT("Subtract",               RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Multiply                */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT("Multiply",               RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_And                     */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT("And",                    RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Nand                    */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT("Nand",                   RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Or                      */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT("Or",                     RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Xor                     */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT("Xor",                    RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_ShiftLeft               */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT("ShiftLeft",              RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_ShiftRight              */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT("ShiftRight",             RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Not                     */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_1OPT("Not",                    RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Notify                  */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT("Notify",                 RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_SizeOf                  */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("SizeOf",                 RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_While                   */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("While",                  RTACPI_AST_NODE_F_NEW_SCOPE,  kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Increment               */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("Increment",              RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_Decrement               */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("Decrement",              RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_CondRefOf               */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_1OPT("CondRefOf",              RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_IndexField              */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  "IndexField",             rtAcpiTblAslParseFieldOrIndexField, 5, 0, RTACPI_AST_NODE_F_DEFAULT),
-    /* kAcpiAstNodeOp_EisaId                  */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT("EisaId",                 RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_StringLiteral),
-    /* kAcpiAstNodeOp_CreateField             */  RTACPI_ASL_KEYWORD_DEFINE_4REQ_0OPT("CreateField",            RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
-    /* kAcpiAstNodeOp_CreateBitField          */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT("CreateBitField",         RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
-    /* kAcpiAstNodeOp_CreateByteField         */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT("CreateByteField",        RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
-    /* kAcpiAstNodeOp_CreateWordField         */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT("CreateWordField",        RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
-    /* kAcpiAstNodeOp_CreateDWordField        */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT("CreateDWordField",       RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
-    /* kAcpiAstNodeOp_CreateQWordField        */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT("CreateQWordField",       RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
-    /* kAcpiAstNodeOp_ConcatenateResTemplate  */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT("ConcatenateResTemplate", RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_FindSetLeftBit          */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_1OPT("FindSetLeftBit",         RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
-    /* kAcpiAstNodeOp_FindSetRightBit         */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_1OPT("FindSetRightBit",        RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Method                  */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  rtAcpiTblAslParseMethod,   1, 3, RTACPI_AST_NODE_F_NEW_SCOPE | RTACPI_AST_NODE_F_NS_ENTRY),
+    /* kAcpiAstNodeOp_Device                  */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_NEW_SCOPE | RTACPI_AST_NODE_F_NS_ENTRY,   kAcpiAstArgType_NameString),
+    /* kAcpiAstNodeOp_If                      */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_NEW_SCOPE,                                kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Else                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_NEW_SCOPE),
+    /* kAcpiAstNodeOp_LAnd                    */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_LOr                     */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_LEqual                  */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_LGreater                */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_LGreaterEqual           */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_LLess                   */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_LLessEqual              */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_LNot                    */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_LNotEqual               */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Zero                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_One                     */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Ones                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Return                  */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  rtAcpiTblAslParseReturn,  0, 1, RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Unicode                 */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,                                  kAcpiAstArgType_AstNode), /* Actually only String allowed here */
+    /* kAcpiAstNodeOp_OperationRegion         */  RTACPI_ASL_KEYWORD_DEFINE_4REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT | RTACPI_AST_NODE_F_NS_ENTRY,     kAcpiAstArgType_NameString, kAcpiAstArgType_RegionSpace, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Field                   */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  rtAcpiTblAslParseFieldOrIndexField, 4, 0, RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Name                    */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_NS_ENTRY,                                 kAcpiAstArgType_NameString, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_ResourceTemplate        */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  rtAcpiTblAslParseResourceTemplate,  0, 0, RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Arg0                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Arg1                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Arg2                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Arg3                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Arg4                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Arg5                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Arg6                    */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Local0                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Local1                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Local2                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Local3                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Local4                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Local5                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Local6                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Local7                  */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Package                 */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  rtAcpiTblAslParsePackageOrBuffer, 0, 1, RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Buffer                  */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  rtAcpiTblAslParsePackageOrBuffer, 0, 1, RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_ToUUid                  */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_DerefOf                 */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Index                   */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Store                   */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Break                   */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Continue                */  RTACPI_ASL_KEYWORD_DEFINE_0REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_Add                     */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Subtract                */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Multiply                */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_And                     */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Nand                    */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Or                      */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Xor                     */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_ShiftLeft               */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_ShiftRight              */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Not                     */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Notify                  */  RTACPI_ASL_KEYWORD_DEFINE_2REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_SizeOf                  */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_While                   */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_NEW_SCOPE,  kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Increment               */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_Decrement               */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_CondRefOf               */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_IndexField              */  RTACPI_ASL_KEYWORD_DEFINE_HANDLER(  rtAcpiTblAslParseFieldOrIndexField, 5, 0, RTACPI_AST_NODE_F_DEFAULT),
+    /* kAcpiAstNodeOp_EisaId                  */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_StringLiteral),
+    /* kAcpiAstNodeOp_CreateField             */  RTACPI_ASL_KEYWORD_DEFINE_4REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
+    /* kAcpiAstNodeOp_CreateBitField          */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
+    /* kAcpiAstNodeOp_CreateByteField         */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
+    /* kAcpiAstNodeOp_CreateWordField         */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
+    /* kAcpiAstNodeOp_CreateDWordField        */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
+    /* kAcpiAstNodeOp_CreateQWordField        */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_NameString),
+    /* kAcpiAstNodeOp_ConcatenateResTemplate  */  RTACPI_ASL_KEYWORD_DEFINE_3REQ_0OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_FindSetLeftBit          */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
+    /* kAcpiAstNodeOp_FindSetRightBit         */  RTACPI_ASL_KEYWORD_DEFINE_1REQ_1OPT(RTACPI_AST_NODE_F_DEFAULT,    kAcpiAstArgType_AstNode, kAcpiAstArgType_AstNode),
 };
 
 
@@ -2620,7 +2618,8 @@ static int rtAcpiTblAslParseOp(PRTACPIASLCU pThis, RTACPIASTNODEOP enmOp, PRTACP
     PCRTACPIASLKEYWORD pAslKeyword = &g_aAslOps[enmOp];
     PRTACPIASTNODE pAstNd = rtAcpiAstNodeAlloc(pThis->pNs, enmOp, pAslKeyword->fFlags, pAslKeyword->cArgsReq + pAslKeyword->cArgsOpt);
     if (!pAstNd)
-        return RTErrInfoSetF(pThis->pErrInfo, VERR_NO_MEMORY, "Failed to allocate ACPI AST node when processing keyword '%s'", pAslKeyword->pszOpc);
+        return RTErrInfoSetF(pThis->pErrInfo, VERR_NO_MEMORY, "Failed to allocate ACPI AST node when processing keyword '%s'",
+                             rtAcpiTblAstNodeOp2Str(enmOp));
 
     *ppAstNd = pAstNd;
 
@@ -2638,7 +2637,7 @@ static int rtAcpiTblAslParseOp(PRTACPIASLCU pThis, RTACPIASTNODEOP enmOp, PRTACP
         /* Process any required arguments. */
         for (uint8_t i = 0; i < pAslKeyword->cArgsReq; i++)
         {
-            rc = rtAcpiTblAslParseArgument(pThis, pAslKeyword->pszOpc, i, pAslKeyword->aenmTypes[i], &pAstNd->aArgs[i]);
+            rc = rtAcpiTblAslParseArgument(pThis, rtAcpiTblAstNodeOp2Str(enmOp), i, pAslKeyword->aenmTypes[i], &pAstNd->aArgs[i]);
             if (RT_FAILURE(rc))
                 return rc;
 
@@ -2676,7 +2675,7 @@ static int rtAcpiTblAslParseOp(PRTACPIASLCU pThis, RTACPIASTNODEOP enmOp, PRTACP
                 }
 
                 /* So there is an argument we need to parse. */
-                rc = rtAcpiTblAslParseArgument(pThis, pAslKeyword->pszOpc, iArg, pAslKeyword->aArgsOpt[iArg].enmType, &pAstNd->aArgs[pAslKeyword->cArgsReq + iArg]);
+                rc = rtAcpiTblAslParseArgument(pThis, rtAcpiTblAstNodeOp2Str(enmOp), iArg, pAslKeyword->aArgsOpt[iArg].enmType, &pAstNd->aArgs[pAslKeyword->cArgsReq + iArg]);
                 if (RT_FAILURE(rc))
                     return rc;
 

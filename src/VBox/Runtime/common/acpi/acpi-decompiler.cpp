@@ -1,4 +1,4 @@
-/* $Id: acpi-decompiler.cpp 112662 2026-01-21 13:54:53Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-decompiler.cpp 112663 2026-01-21 15:02:23Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -175,8 +175,6 @@ typedef enum ACPIAMLOPCTYPE
 
 typedef struct RTACPIAMLOPC
 {
-    /** Name of the opcode. */
-    const char               *pszOpc;
     /** The node type. */
     RTACPIASTNODEOP          enmOp;
     /** Flags for the opcode. */
@@ -1347,45 +1345,45 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeSimple(PRTACPITBLAMLDECODE pThis, PCR
 static const RTACPIAMLOPC g_aAmlOpcodeDecode[] =
 {
 #define RTACPI_AML_OPC_INVALID \
-    { NULL,     kAcpiAstNodeOp_Invalid, RTACPI_AML_OPC_F_NONE,  0, { kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, NULL }
-#define RTACPI_AML_OPC_SIMPLE_0(a_pszOpc, a_enmOp, a_fFlags) \
-    { a_pszOpc, a_enmOp, a_fFlags, 0, { kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, rtAcpiTblAmlDecodeSimple }
-#define RTACPI_AML_OPC_SIMPLE_1(a_pszOpc, a_enmOp, a_fFlags, a_enmType0) \
-    { a_pszOpc, a_enmOp, a_fFlags, 1, { a_enmType0,              kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, rtAcpiTblAmlDecodeSimple }
-#define RTACPI_AML_OPC_SIMPLE_2(a_pszOpc, a_enmOp, a_fFlags, a_enmType0, a_enmType1) \
-    { a_pszOpc, a_enmOp, a_fFlags, 2, { a_enmType0,              a_enmType1,              kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, rtAcpiTblAmlDecodeSimple }
-#define RTACPI_AML_OPC_SIMPLE_3(a_pszOpc, a_enmOp, a_fFlags, a_enmType0, a_enmType1, a_enmType2) \
-    { a_pszOpc, a_enmOp, a_fFlags, 3, { a_enmType0,              a_enmType1,              a_enmType2,              kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, rtAcpiTblAmlDecodeSimple }
-#define RTACPI_AML_OPC_SIMPLE_4(a_pszOpc, a_enmOp, a_fFlags, a_enmType0, a_enmType1, a_enmType2, a_enmType3) \
-    { a_pszOpc, a_enmOp, a_fFlags, 4, { a_enmType0,              a_enmType1,              a_enmType2,              a_enmType3,              kAcpiAmlOpcType_Invalid }, rtAcpiTblAmlDecodeSimple }
-#define RTACPI_AML_OPC_SIMPLE_5(a_pszOpc, a_enmOp, a_fFlags, a_enmType0, a_enmType1, a_enmType2, a_enmType3, a_enmType4) \
-    { a_pszOpc, a_enmOp, a_fFlags, 5, { a_enmType0,              a_enmType1,              a_enmType2,              a_enmType3,              a_enmType4              }, rtAcpiTblAmlDecodeSimple }
-#define RTACPI_AML_OPC_HANDLER(a_pszOpc, a_enmOp, a_pfnHandler) \
-    { a_pszOpc, a_enmOp, RTACPI_AML_OPC_F_NONE, 0, { kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, a_pfnHandler }
+    { kAcpiAstNodeOp_Invalid, RTACPI_AML_OPC_F_NONE,  0, { kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, NULL }
+#define RTACPI_AML_OPC_SIMPLE_0(a_enmOp, a_fFlags) \
+    { a_enmOp, a_fFlags, 0, { kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, rtAcpiTblAmlDecodeSimple }
+#define RTACPI_AML_OPC_SIMPLE_1(a_enmOp, a_fFlags, a_enmType0) \
+    { a_enmOp, a_fFlags, 1, { a_enmType0,              kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, rtAcpiTblAmlDecodeSimple }
+#define RTACPI_AML_OPC_SIMPLE_2(a_enmOp, a_fFlags, a_enmType0, a_enmType1) \
+    { a_enmOp, a_fFlags, 2, { a_enmType0,              a_enmType1,              kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, rtAcpiTblAmlDecodeSimple }
+#define RTACPI_AML_OPC_SIMPLE_3(a_enmOp, a_fFlags, a_enmType0, a_enmType1, a_enmType2) \
+    { a_enmOp, a_fFlags, 3, { a_enmType0,              a_enmType1,              a_enmType2,              kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, rtAcpiTblAmlDecodeSimple }
+#define RTACPI_AML_OPC_SIMPLE_4(a_enmOp, a_fFlags, a_enmType0, a_enmType1, a_enmType2, a_enmType3) \
+    { a_enmOp, a_fFlags, 4, { a_enmType0,              a_enmType1,              a_enmType2,              a_enmType3,              kAcpiAmlOpcType_Invalid }, rtAcpiTblAmlDecodeSimple }
+#define RTACPI_AML_OPC_SIMPLE_5(a_enmOp, a_fFlags, a_enmType0, a_enmType1, a_enmType2, a_enmType3, a_enmType4) \
+    { a_enmOp, a_fFlags, 5, { a_enmType0,              a_enmType1,              a_enmType2,              a_enmType3,              a_enmType4              }, rtAcpiTblAmlDecodeSimple }
+#define RTACPI_AML_OPC_HANDLER(a_enmOp, a_pfnHandler) \
+    { a_enmOp, RTACPI_AML_OPC_F_NONE, 0, { kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid, kAcpiAmlOpcType_Invalid }, a_pfnHandler }
 
-    /* 0x00 */ RTACPI_AML_OPC_SIMPLE_0("Zero",          kAcpiAstNodeOp_Zero,    RTACPI_AML_OPC_F_NONE),
-    /* 0x01 */ RTACPI_AML_OPC_SIMPLE_0("One",           kAcpiAstNodeOp_One,     RTACPI_AML_OPC_F_NONE),
+    /* 0x00 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Zero,                    RTACPI_AML_OPC_F_NONE),
+    /* 0x01 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_One,                     RTACPI_AML_OPC_F_NONE),
     /* 0x02 */ RTACPI_AML_OPC_INVALID,
     /* 0x03 */ RTACPI_AML_OPC_INVALID,
     /* 0x04 */ RTACPI_AML_OPC_INVALID,
     /* 0x05 */ RTACPI_AML_OPC_INVALID,
     /* 0x06 */ RTACPI_AML_OPC_INVALID,
     /* 0x07 */ RTACPI_AML_OPC_INVALID,
-    /* 0x08 */ RTACPI_AML_OPC_SIMPLE_2("Name",          kAcpiAstNodeOp_Name,    RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_NameString, kAcpiAmlOpcType_TermArg),
+    /* 0x08 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_Name,                    RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_NameString, kAcpiAmlOpcType_TermArg),
     /* 0x09 */ RTACPI_AML_OPC_INVALID,
-    /* 0x0a */ RTACPI_AML_OPC_HANDLER( "ByteInteger",   kAcpiAstNodeOp_Number,          rtAcpiTblAmlDecodeInteger),
-    /* 0x0b */ RTACPI_AML_OPC_HANDLER( "WordInteger",   kAcpiAstNodeOp_Number,          rtAcpiTblAmlDecodeInteger),
-    /* 0x0c */ RTACPI_AML_OPC_HANDLER( "DWordInteger",  kAcpiAstNodeOp_Number,          rtAcpiTblAmlDecodeInteger),
-    /* 0x0d */ RTACPI_AML_OPC_HANDLER( "StringPrefix",  kAcpiAstNodeOp_StringLiteral,   rtAcpiTblAmlDecodeString),
-    /* 0x0e */ RTACPI_AML_OPC_HANDLER( "QWordInteger",  kAcpiAstNodeOp_Number,          rtAcpiTblAmlDecodeInteger),
+    /* 0x0a */ RTACPI_AML_OPC_HANDLER( kAcpiAstNodeOp_Number,                  rtAcpiTblAmlDecodeInteger),
+    /* 0x0b */ RTACPI_AML_OPC_HANDLER( kAcpiAstNodeOp_Number,                  rtAcpiTblAmlDecodeInteger),
+    /* 0x0c */ RTACPI_AML_OPC_HANDLER( kAcpiAstNodeOp_Number,                  rtAcpiTblAmlDecodeInteger),
+    /* 0x0d */ RTACPI_AML_OPC_HANDLER( kAcpiAstNodeOp_StringLiteral,           rtAcpiTblAmlDecodeString),
+    /* 0x0e */ RTACPI_AML_OPC_HANDLER( kAcpiAstNodeOp_Number,                  rtAcpiTblAmlDecodeInteger),
     /* 0x0f */ RTACPI_AML_OPC_INVALID,
 
-    /* 0x10 */ RTACPI_AML_OPC_SIMPLE_1("Scope",         kAcpiAstNodeOp_Scope,    RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE,  kAcpiAmlOpcType_NameString),
-    /* 0x11 */ RTACPI_AML_OPC_HANDLER( "Buffer",        kAcpiAstNodeOp_Buffer,      rtAcpiTblAmlDecodeBuffer),
-    /* 0x12 */ RTACPI_AML_OPC_SIMPLE_1("Package",       kAcpiAstNodeOp_Package,  RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE,  kAcpiAmlOpcType_Byte),
+    /* 0x10 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_Scope,                   RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE,  kAcpiAmlOpcType_NameString),
+    /* 0x11 */ RTACPI_AML_OPC_HANDLER( kAcpiAstNodeOp_Buffer,                  rtAcpiTblAmlDecodeBuffer),
+    /* 0x12 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_Package,                 RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE,  kAcpiAmlOpcType_Byte),
     /* 0x13 */ RTACPI_AML_OPC_INVALID,
-    /* 0x14 */ RTACPI_AML_OPC_HANDLER( "Method",        kAcpiAstNodeOp_Method,      rtAcpiTblAmlDecodeMethod),
-    /* 0x15 */ RTACPI_AML_OPC_SIMPLE_3("External",      kAcpiAstNodeOp_External, RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_NameString, kAcpiAmlOpcType_Byte, kAcpiAmlOpcType_Byte),
+    /* 0x14 */ RTACPI_AML_OPC_HANDLER( kAcpiAstNodeOp_Method,                  rtAcpiTblAmlDecodeMethod),
+    /* 0x15 */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_External,                RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_NameString, kAcpiAmlOpcType_Byte, kAcpiAmlOpcType_Byte),
     /* 0x16 */ RTACPI_AML_OPC_INVALID,
     /* 0x17 */ RTACPI_AML_OPC_INVALID,
     /* 0x18 */ RTACPI_AML_OPC_INVALID,
@@ -1432,96 +1430,96 @@ static const RTACPIAMLOPC g_aAmlOpcodeDecode[] =
     /* 0x3f */ RTACPI_AML_OPC_INVALID,
 
     /* 0x40 */ RTACPI_AML_OPC_INVALID,
-    /* 0x41 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x42 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x43 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x44 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x45 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x46 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x47 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x48 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x49 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x4a */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x4b */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x4c */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x4d */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x4e */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x4f */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
+    /* 0x41 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x42 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x43 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x44 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x45 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x46 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x47 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x48 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x49 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x4a */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x4b */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x4c */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x4d */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x4e */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x4f */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
 
-    /* 0x50 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x51 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x52 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x53 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x54 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x55 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x56 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x57 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x58 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x59 */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x5a */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
+    /* 0x50 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x51 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x52 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x53 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x54 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x55 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x56 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x57 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x58 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x59 */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x5a */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
     /* 0x5b */ RTACPI_AML_OPC_INVALID,
-    /* 0x5c */ RTACPI_AML_OPC_HANDLER("RootChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
+    /* 0x5c */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
     /* 0x5d */ RTACPI_AML_OPC_INVALID,
-    /* 0x5e */ RTACPI_AML_OPC_HANDLER("ParentPrefixChar",   kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
-    /* 0x5f */ RTACPI_AML_OPC_HANDLER("NameChar",           kAcpiAstNodeOp_Identifier,  rtAcpiTblAmlDecodeNameObject),
+    /* 0x5e */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
+    /* 0x5f */ RTACPI_AML_OPC_HANDLER(kAcpiAstNodeOp_Identifier,               rtAcpiTblAmlDecodeNameObject),
 
-    /* 0x60 */ RTACPI_AML_OPC_SIMPLE_0("Local0",            kAcpiAstNodeOp_Local0,      RTACPI_AML_OPC_F_NONE),
-    /* 0x61 */ RTACPI_AML_OPC_SIMPLE_0("Local1",            kAcpiAstNodeOp_Local1,      RTACPI_AML_OPC_F_NONE),
-    /* 0x62 */ RTACPI_AML_OPC_SIMPLE_0("Local2",            kAcpiAstNodeOp_Local2,      RTACPI_AML_OPC_F_NONE),
-    /* 0x63 */ RTACPI_AML_OPC_SIMPLE_0("Local3",            kAcpiAstNodeOp_Local3,      RTACPI_AML_OPC_F_NONE),
-    /* 0x64 */ RTACPI_AML_OPC_SIMPLE_0("Local4",            kAcpiAstNodeOp_Local4,      RTACPI_AML_OPC_F_NONE),
-    /* 0x65 */ RTACPI_AML_OPC_SIMPLE_0("Local5",            kAcpiAstNodeOp_Local5,      RTACPI_AML_OPC_F_NONE),
-    /* 0x66 */ RTACPI_AML_OPC_SIMPLE_0("Local6",            kAcpiAstNodeOp_Local6,      RTACPI_AML_OPC_F_NONE),
-    /* 0x67 */ RTACPI_AML_OPC_SIMPLE_0("Local7",            kAcpiAstNodeOp_Local7,      RTACPI_AML_OPC_F_NONE),
-    /* 0x68 */ RTACPI_AML_OPC_SIMPLE_0("Arg0",              kAcpiAstNodeOp_Arg0,        RTACPI_AML_OPC_F_NONE),
-    /* 0x69 */ RTACPI_AML_OPC_SIMPLE_0("Arg1",              kAcpiAstNodeOp_Arg1,        RTACPI_AML_OPC_F_NONE),
-    /* 0x6a */ RTACPI_AML_OPC_SIMPLE_0("Arg2",              kAcpiAstNodeOp_Arg2,        RTACPI_AML_OPC_F_NONE),
-    /* 0x6b */ RTACPI_AML_OPC_SIMPLE_0("Arg3",              kAcpiAstNodeOp_Arg3,        RTACPI_AML_OPC_F_NONE),
-    /* 0x6c */ RTACPI_AML_OPC_SIMPLE_0("Arg4",              kAcpiAstNodeOp_Arg4,        RTACPI_AML_OPC_F_NONE),
-    /* 0x6d */ RTACPI_AML_OPC_SIMPLE_0("Arg5",              kAcpiAstNodeOp_Arg5,        RTACPI_AML_OPC_F_NONE),
-    /* 0x6e */ RTACPI_AML_OPC_SIMPLE_0("Arg6",              kAcpiAstNodeOp_Arg6,        RTACPI_AML_OPC_F_NONE),
+    /* 0x60 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Local0,                   RTACPI_AML_OPC_F_NONE),
+    /* 0x61 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Local1,                   RTACPI_AML_OPC_F_NONE),
+    /* 0x62 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Local2,                   RTACPI_AML_OPC_F_NONE),
+    /* 0x63 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Local3,                   RTACPI_AML_OPC_F_NONE),
+    /* 0x64 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Local4,                   RTACPI_AML_OPC_F_NONE),
+    /* 0x65 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Local5,                   RTACPI_AML_OPC_F_NONE),
+    /* 0x66 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Local6,                   RTACPI_AML_OPC_F_NONE),
+    /* 0x67 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Local7,                   RTACPI_AML_OPC_F_NONE),
+    /* 0x68 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Arg0,                     RTACPI_AML_OPC_F_NONE),
+    /* 0x69 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Arg1,                     RTACPI_AML_OPC_F_NONE),
+    /* 0x6a */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Arg2,                     RTACPI_AML_OPC_F_NONE),
+    /* 0x6b */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Arg3,                     RTACPI_AML_OPC_F_NONE),
+    /* 0x6c */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Arg4,                     RTACPI_AML_OPC_F_NONE),
+    /* 0x6d */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Arg5,                     RTACPI_AML_OPC_F_NONE),
+    /* 0x6e */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Arg6,                     RTACPI_AML_OPC_F_NONE),
     /* 0x6f */ RTACPI_AML_OPC_INVALID,
 
-    /* 0x70 */ RTACPI_AML_OPC_SIMPLE_2("Store",             kAcpiAstNodeOp_Store,       RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_SuperName),
+    /* 0x70 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_Store,                    RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_SuperName),
     /* 0x71 */ RTACPI_AML_OPC_INVALID,
-    /* 0x72 */ RTACPI_AML_OPC_SIMPLE_3("Add",               kAcpiAstNodeOp_Add,         RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x72 */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_Add,                      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
     /* 0x73 */ RTACPI_AML_OPC_INVALID,
-    /* 0x74 */ RTACPI_AML_OPC_SIMPLE_3("Subtract",          kAcpiAstNodeOp_Subtract,    RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
-    /* 0x75 */ RTACPI_AML_OPC_SIMPLE_1("Increment",         kAcpiAstNodeOp_Increment,   RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_SuperName),
-    /* 0x76 */ RTACPI_AML_OPC_SIMPLE_1("Decrement",         kAcpiAstNodeOp_Decrement,   RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_SuperName),
-    /* 0x77 */ RTACPI_AML_OPC_SIMPLE_3("Multiply",          kAcpiAstNodeOp_Multiply,    RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x74 */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_Subtract,                 RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x75 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_Increment,                RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_SuperName),
+    /* 0x76 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_Decrement,                RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_SuperName),
+    /* 0x77 */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_Multiply,                 RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
     /* 0x78 */ RTACPI_AML_OPC_INVALID,
-    /* 0x79 */ RTACPI_AML_OPC_SIMPLE_3("ShiftLeft",         kAcpiAstNodeOp_ShiftLeft,   RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
-    /* 0x7a */ RTACPI_AML_OPC_SIMPLE_3("ShiftRight",        kAcpiAstNodeOp_ShiftRight,  RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
-    /* 0x7b */ RTACPI_AML_OPC_SIMPLE_3("And",               kAcpiAstNodeOp_And,         RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
-    /* 0x7c */ RTACPI_AML_OPC_SIMPLE_3("Nand",              kAcpiAstNodeOp_Nand,        RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
-    /* 0x7d */ RTACPI_AML_OPC_SIMPLE_3("Or",                kAcpiAstNodeOp_Or,          RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x79 */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_ShiftLeft,                RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x7a */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_ShiftRight,               RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x7b */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_And,                      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x7c */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_Nand,                     RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x7d */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_Or,                       RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
     /* 0x7e */ RTACPI_AML_OPC_INVALID,
-    /* 0x7f */ RTACPI_AML_OPC_SIMPLE_3("Xor",               kAcpiAstNodeOp_Xor,         RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x7f */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_Xor,                      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
 
-    /* 0x80 */ RTACPI_AML_OPC_SIMPLE_2("Not",               kAcpiAstNodeOp_Not,         RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
-    /* 0x81 */ RTACPI_AML_OPC_SIMPLE_2("FindSetLeftBit",    kAcpiAstNodeOp_FindSetLeftBit,  RTACPI_AML_OPC_F_NONE,  kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
-    /* 0x82 */ RTACPI_AML_OPC_SIMPLE_2("FindSetRightBit",   kAcpiAstNodeOp_FindSetRightBit, RTACPI_AML_OPC_F_NONE,  kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
-    /* 0x83 */ RTACPI_AML_OPC_SIMPLE_1("DerefOf",           kAcpiAstNodeOp_DerefOf,     RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg),
-    /* 0x84 */ RTACPI_AML_OPC_SIMPLE_3("ConcatenateResTemplate", kAcpiAstNodeOp_ConcatenateResTemplate, RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x80 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_Not,                      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x81 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_FindSetLeftBit,           RTACPI_AML_OPC_F_NONE,  kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x82 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_FindSetRightBit,          RTACPI_AML_OPC_F_NONE,  kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
+    /* 0x83 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_DerefOf,                  RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg),
+    /* 0x84 */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_ConcatenateResTemplate,   RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_Target),
     /* 0x85 */ RTACPI_AML_OPC_INVALID,
-    /* 0x86 */ RTACPI_AML_OPC_SIMPLE_2("Notify",            kAcpiAstNodeOp_Notify,      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_SuperName, kAcpiAmlOpcType_TermArg),
-    /* 0x87 */ RTACPI_AML_OPC_SIMPLE_1("SizeOf",            kAcpiAstNodeOp_SizeOf,      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_SuperName),
-    /* 0x88 */ RTACPI_AML_OPC_SIMPLE_3("Index",             kAcpiAstNodeOp_Index,       RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_SuperName),
+    /* 0x86 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_Notify,                   RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_SuperName, kAcpiAmlOpcType_TermArg),
+    /* 0x87 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_SizeOf,                   RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_SuperName),
+    /* 0x88 */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_Index,                    RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_SuperName),
     /* 0x89 */ RTACPI_AML_OPC_INVALID,
-    /* 0x8a */ RTACPI_AML_OPC_SIMPLE_3("CreateDWordField",  kAcpiAstNodeOp_CreateDWordField, RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
-    /* 0x8b */ RTACPI_AML_OPC_SIMPLE_3("CreateWordField",   kAcpiAstNodeOp_CreateWordField,  RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
-    /* 0x8c */ RTACPI_AML_OPC_SIMPLE_3("CreateByteField",   kAcpiAstNodeOp_CreateByteField,  RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
-    /* 0x8d */ RTACPI_AML_OPC_SIMPLE_3("CreateBitField",    kAcpiAstNodeOp_CreateBitField,   RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
+    /* 0x8a */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_CreateDWordField,         RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
+    /* 0x8b */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_CreateWordField,          RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
+    /* 0x8c */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_CreateByteField,          RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
+    /* 0x8d */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_CreateBitField,           RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
     /* 0x8e */ RTACPI_AML_OPC_INVALID,
-    /* 0x8f */ RTACPI_AML_OPC_SIMPLE_3("CreateQWordField",  kAcpiAstNodeOp_CreateQWordField, RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
+    /* 0x8f */ RTACPI_AML_OPC_SIMPLE_3(kAcpiAstNodeOp_CreateQWordField,         RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
 
-    /* 0x90 */ RTACPI_AML_OPC_INVALID,
-    /* 0x91 */ RTACPI_AML_OPC_SIMPLE_2("LOr",               kAcpiAstNodeOp_LOr,         RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
-    /* 0x92 */ RTACPI_AML_OPC_SIMPLE_1("LNot",              kAcpiAstNodeOp_LNot,        RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg),
-    /* 0x93 */ RTACPI_AML_OPC_SIMPLE_2("LEqual",            kAcpiAstNodeOp_LEqual,      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
-    /* 0x94 */ RTACPI_AML_OPC_SIMPLE_2("LGreater",          kAcpiAstNodeOp_LGreater,    RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
-    /* 0x95 */ RTACPI_AML_OPC_SIMPLE_2("LLess",             kAcpiAstNodeOp_LLess,       RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
+    /* 0x90 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_LAnd,                     RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
+    /* 0x91 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_LOr,                      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
+    /* 0x92 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_LNot,                     RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg),
+    /* 0x93 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_LEqual,                   RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
+    /* 0x94 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_LGreater,                 RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
+    /* 0x95 */ RTACPI_AML_OPC_SIMPLE_2(kAcpiAstNodeOp_LLess,                    RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
     /* 0x96 */ RTACPI_AML_OPC_INVALID,
     /* 0x97 */ RTACPI_AML_OPC_INVALID,
     /* 0x98 */ RTACPI_AML_OPC_INVALID,
@@ -1531,14 +1529,14 @@ static const RTACPIAMLOPC g_aAmlOpcodeDecode[] =
     /* 0x9c */ RTACPI_AML_OPC_INVALID,
     /* 0x9d */ RTACPI_AML_OPC_INVALID,
     /* 0x9e */ RTACPI_AML_OPC_INVALID,
-    /* 0x9f */ RTACPI_AML_OPC_SIMPLE_0("Continue",          kAcpiAstNodeOp_Continue,    RTACPI_AML_OPC_F_NONE),
+    /* 0x9f */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Continue,                 RTACPI_AML_OPC_F_NONE),
 
-    /* 0xa0 */ RTACPI_AML_OPC_SIMPLE_1("If",                kAcpiAstNodeOp_If,          RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE,     kAcpiAmlOpcType_TermArg),
-    /* 0xa1 */ RTACPI_AML_OPC_SIMPLE_0("Else",              kAcpiAstNodeOp_Else,        RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE),
-    /* 0xa2 */ RTACPI_AML_OPC_SIMPLE_1("While",             kAcpiAstNodeOp_While,       RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE,     kAcpiAmlOpcType_TermArg),
+    /* 0xa0 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_If,                       RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE,     kAcpiAmlOpcType_TermArg),
+    /* 0xa1 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Else,                     RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE),
+    /* 0xa2 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_While,                    RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE,     kAcpiAmlOpcType_TermArg),
     /* 0xa3 */ RTACPI_AML_OPC_INVALID,
-    /* 0xa4 */ RTACPI_AML_OPC_SIMPLE_1("Return",            kAcpiAstNodeOp_Return,      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg),
-    /* 0xa5 */ RTACPI_AML_OPC_SIMPLE_0("Break",             kAcpiAstNodeOp_Break,       RTACPI_AML_OPC_F_NONE),
+    /* 0xa4 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_Return,                   RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg),
+    /* 0xa5 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Break,                    RTACPI_AML_OPC_F_NONE),
     /* 0xa6 */ RTACPI_AML_OPC_INVALID,
     /* 0xa7 */ RTACPI_AML_OPC_INVALID,
     /* 0xa8 */ RTACPI_AML_OPC_INVALID,
@@ -1662,7 +1660,7 @@ static const RTACPIAMLOPC g_aAmlExtOpcodeDecode[] =
     /* 0x10 */ RTACPI_AML_OPC_INVALID,
     /* 0x11 */ RTACPI_AML_OPC_INVALID,
     /* 0x12 */ RTACPI_AML_OPC_INVALID,
-    /* 0x13 */ RTACPI_AML_OPC_SIMPLE_4("CreateField",  kAcpiAstNodeOp_CreateField, RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
+    /* 0x13 */ RTACPI_AML_OPC_SIMPLE_4(kAcpiAstNodeOp_CreateField, RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
     /* 0x14 */ RTACPI_AML_OPC_INVALID,
     /* 0x15 */ RTACPI_AML_OPC_INVALID,
     /* 0x16 */ RTACPI_AML_OPC_INVALID,
@@ -1694,7 +1692,7 @@ static const RTACPIAMLOPC g_aAmlExtOpcodeDecode[] =
     /* 0x2f */ RTACPI_AML_OPC_INVALID,
 
     /* 0x30 */ RTACPI_AML_OPC_INVALID,
-    /* 0x31 */ RTACPI_AML_OPC_SIMPLE_0("Debug", kAcpiAstNodeOp_Invalid, RTACPI_AML_OPC_F_NONE),
+    /* 0x31 */ RTACPI_AML_OPC_SIMPLE_0(kAcpiAstNodeOp_Invalid, RTACPI_AML_OPC_F_NONE),
     /* 0x32 */ RTACPI_AML_OPC_INVALID,
     /* 0x33 */ RTACPI_AML_OPC_INVALID,
     /* 0x34 */ RTACPI_AML_OPC_INVALID,
@@ -1778,13 +1776,13 @@ static const RTACPIAMLOPC g_aAmlExtOpcodeDecode[] =
     /* 0x7e */ RTACPI_AML_OPC_INVALID,
     /* 0x7f */ RTACPI_AML_OPC_INVALID,
 
-    /* 0x80 */ RTACPI_AML_OPC_SIMPLE_4("OperationRegion",   kAcpiAstNodeOp_OperationRegion, RTACPI_AML_OPC_F_NONE, kAcpiAmlOpcType_NameString, kAcpiAmlOpcType_RegionSpace, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
-    /* 0x81 */ RTACPI_AML_OPC_HANDLER( "Field",             kAcpiAstNodeOp_Field,           rtAcpiTblAmlDecodeField),
-    /* 0x82 */ RTACPI_AML_OPC_SIMPLE_1("Device",            kAcpiAstNodeOp_Device,          RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE, kAcpiAmlOpcType_NameString),
-    /* 0x83 */ RTACPI_AML_OPC_SIMPLE_4("Processor",         kAcpiAstNodeOp_Processor,       RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE, kAcpiAmlOpcType_NameString, kAcpiAmlOpcType_Byte, kAcpiAmlOpcType_DWord,   kAcpiAmlOpcType_Byte),
+    /* 0x80 */ RTACPI_AML_OPC_SIMPLE_4(kAcpiAstNodeOp_OperationRegion, RTACPI_AML_OPC_F_NONE, kAcpiAmlOpcType_NameString, kAcpiAmlOpcType_RegionSpace, kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_TermArg),
+    /* 0x81 */ RTACPI_AML_OPC_HANDLER( kAcpiAstNodeOp_Field,           rtAcpiTblAmlDecodeField),
+    /* 0x82 */ RTACPI_AML_OPC_SIMPLE_1(kAcpiAstNodeOp_Device,          RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE, kAcpiAmlOpcType_NameString),
+    /* 0x83 */ RTACPI_AML_OPC_SIMPLE_4(kAcpiAstNodeOp_Processor,       RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE, kAcpiAmlOpcType_NameString, kAcpiAmlOpcType_Byte, kAcpiAmlOpcType_DWord,   kAcpiAmlOpcType_Byte),
     /* 0x84 */ RTACPI_AML_OPC_INVALID,
     /* 0x85 */ RTACPI_AML_OPC_INVALID,
-    /* 0x86 */ RTACPI_AML_OPC_HANDLER( "IndexField",        kAcpiAstNodeOp_IndexField,      rtAcpiTblAmlDecodeField),
+    /* 0x86 */ RTACPI_AML_OPC_HANDLER( kAcpiAstNodeOp_IndexField,      rtAcpiTblAmlDecodeField),
     /* 0x87 */ RTACPI_AML_OPC_INVALID,
     /* 0x88 */ RTACPI_AML_OPC_INVALID,
     /* 0x89 */ RTACPI_AML_OPC_INVALID,
@@ -1934,9 +1932,9 @@ static int rtAcpiTblAmlDecodeTerminal(PRTACPITBLAMLDECODE pThis, PRTACPIASTNODE 
         else
             pAmlOpc = &g_aAmlOpcodeDecode[bOpc];
 
-        if (pAmlOpc->pszOpc)
+        if (pAmlOpc->enmOp != kAcpiAstNodeOp_Invalid)
         {
-            LogFlowFunc(("Decoding %s\n", pAmlOpc->pszOpc));
+            LogFlowFunc(("Decoding %s\n", rtAcpiTblAstNodeOp2Str(pAmlOpc->enmOp)));
             return pAmlOpc->pfnDecode(pThis, pAmlOpc, bOpc, ppAstNd, pErrInfo);
         }
 

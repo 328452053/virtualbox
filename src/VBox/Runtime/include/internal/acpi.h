@@ -1,4 +1,4 @@
-/* $Id: acpi.h 112623 2026-01-16 09:56:20Z alexander.eichner@oracle.com $ */
+/* $Id: acpi.h 112663 2026-01-21 15:02:23Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Internal RTAcpi header.
  */
@@ -556,6 +556,14 @@ DECLHIDDEN(int) rtAcpiTblConvertFromAmlToAsl(RTVFSIOSTREAM hVfsIosOut, RTVFSIOST
  */
 DECLHIDDEN(int) rtAcpiTblConvertFromAslToAml(RTVFSIOSTREAM hVfsIosOut, RTVFSIOSTREAM hVfsIosIn, PRTERRINFO pErrInfo);
 
+
+/**
+ * Returns the ASL term for the given AST node operation type.
+ *
+ * @returns Pointer to a readonly string containing the ASL term
+ * @param   enmOp               The AST node operation to turn into a string.
+ */
+DECLHIDDEN(const char *) rtAcpiTblAstNodeOp2Str(RTACPIASTNODEOP enmOp);
 
 RT_C_DECLS_END
 

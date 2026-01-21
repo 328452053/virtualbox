@@ -1,4 +1,4 @@
-/* $Id: 03-grammar.asl 112662 2026-01-21 13:54:53Z alexander.eichner@oracle.com $ */
+/* $Id: 03-grammar.asl 112663 2026-01-21 15:02:23Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox ACPI - Testcase.
  */
@@ -106,7 +106,9 @@ DefinitionBlock ("", "SSDT", 1, "VBOX  ", "VBOXTPMT", 2)
                 CreateByteField (CRS_, TPMR, MIN4)
                 CreateBitField  (CRS_, TPMR, MIN5)
 
-                While (LEqual(Local0, Arg3))
+                While (LAnd(LOr(LEqual(Local0, Arg3),
+                                LEqual(Local1, Arg4)),
+                            LEqual(Local3, Arg6)))
                 {
                     If (LGreater(Local2, 0x3))
                     {

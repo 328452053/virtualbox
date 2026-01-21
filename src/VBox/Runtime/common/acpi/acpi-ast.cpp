@@ -1,4 +1,4 @@
-/* $Id: acpi-ast.cpp 112644 2026-01-19 15:09:34Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-ast.cpp 112663 2026-01-21 15:02:23Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) AST handling.
  */
@@ -1079,6 +1079,12 @@ static const char *g_apszRegionSpace[] =
     /* kAcpiOperationRegionSpace_GenericSerialBus */ "GenericSerialBus",
     /* kAcpiOperationRegionSpace_Pcc              */ "PCC"
 };
+
+
+DECLHIDDEN(const char *) rtAcpiTblAstNodeOp2Str(RTACPIASTNODEOP enmOp)
+{
+    return g_apszAslOps[enmOp];
+}
 
 
 /**
