@@ -1,4 +1,4 @@
-/* $Id: UIDetailsElement.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDetailsElement.h 112666 2026-01-22 14:39:54Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsElement class declaration.
  */
@@ -167,6 +167,8 @@ protected:
         /** Returns RTTI item type. */
         virtual int type() const RT_OVERRIDE { return Type; }
 
+        /** Returns the name of the item. */
+        virtual QString name() const RT_OVERRIDE;
         /** Returns the description of the item. */
         virtual QString description() const RT_OVERRIDE;
 

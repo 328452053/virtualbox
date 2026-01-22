@@ -1,4 +1,4 @@
-/* $Id: UIDetailsItem.cpp 112660 2026-01-21 12:59:36Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsItem.cpp 112666 2026-01-22 14:39:54Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsItem class definition.
  */
@@ -211,9 +211,13 @@ public:
         /* Sanity check: */
         AssertPtrReturn(item(), QString());
 
-        /* Return the description: */
-        if (enmTextRole == QAccessible::Description)
-            return item()->description();
+        /* Text for known roles: */
+        switch (enmTextRole)
+        {
+            case QAccessible::Name:        return item()->name();
+            case QAccessible::Description: return item()->description();
+            default: break;
+        }
 
         /* Null-string by default: */
         return QString();
