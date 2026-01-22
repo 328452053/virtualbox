@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id: tdGuestOsUnattendedInst1.py 112657 2026-01-21 11:36:48Z valery.portnyagin@oracle.com $
+# $Id: tdGuestOsUnattendedInst1.py 112664 2026-01-22 11:53:03Z valery.portnyagin@oracle.com $
 
 """
 VirtualBox Validation Kit - Guest OS unattended installation tests.
@@ -37,7 +37,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 112657 $"
+__version__ = "$Revision: 112664 $"
 
 
 # Standard Python imports.
@@ -557,6 +557,7 @@ class tdGuestOsInstTest1(vbox.TestDriver):
             UnattendedVm(oSet, 'tst-w10-1809-64', 'Windows10_64',    '6.0/uaisos/en_windows_10_business_edition_version_1809_updated_sept_2018_x64_dvd_f0b7dc68.iso',   UnattendedVm.kfWinGaTimesync), # >=10GiB
             UnattendedVm(oSet, 'tst-w10-1903-32', 'Windows10',       '6.0/uaisos/en_windows_10_business_editions_version_1903_x86_dvd_ca4f0f49.iso',                    UnattendedVm.kfWinGaTimesync), # >=7GiB
             UnattendedVm(oSet, 'tst-w10-1903-64', 'Windows10_64',    '6.0/uaisos/en_windows_10_business_editions_version_1903_x64_dvd_37200948.iso',                    UnattendedVm.kfWinGaTimesync), # >=10GiB
+            UnattendedVm(oSet, 'tst-w11-1905-64', 'Windows11_64',    '7.1/uaisos/Win11_25H2_English_x64.iso',                                                           UnattendedVm.kfWinGaTimesync), # >=10GiB
             #
             # Ubuntu
             #
