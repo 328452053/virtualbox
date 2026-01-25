@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112677 2026-01-25 16:13:56Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -380,7 +380,7 @@ static int nemHCLnxImportState(PVMCPUCC pVCpu, uint64_t fWhat, PCPUMCTX pCtx, st
             }
         }
         if (fWhat & CPUMCTX_EXTRN_APIC_TPR)
-            APICSetTpr(pVCpu, (uint8_t)pRun->s.regs.sregs.cr8 << 4);
+            PDMApicSetTpr(pVCpu, (uint8_t)pRun->s.regs.sregs.cr8 << 4);
         if (fWhat & CPUMCTX_EXTRN_EFER)
         {
             if (pCtx->msrEFER != pRun->s.regs.sregs.efer)
@@ -1027,10 +1027,17 @@ DECLHIDDEN(bool) nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEn
 
 DECLHIDDEN(void) nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, uint32_t fFlags)
 {
-    int rc = RTThreadPoke(pVCpu->hThread);
-    LogFlow(("nemR3NativeNotifyFF: #%u -> %Rrc\n", pVCpu->idCpu, rc));
-    AssertRC(rc);
     RT_NOREF(pVM, fFlags);
+
+
+    if (RTThreadSelf() != pVCpu->hThread)
+    {
+        int rc = RTThreadPoke(pVCpu->hThread);
+        AssertRC(rc);
+        LogFlow(("nemR3NativeNotifyFF: #%u -> %Rrc\n", pVCpu->idCpu, rc));
+    }
+    else
+        LogFlow(("nemR3NativeNotifyFF: #%u -> ommitted\n", pVCpu->idCpu));
 }
 
 
