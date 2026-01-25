@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112680 2026-01-25 16:41:39Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112684 2026-01-25 17:32:58Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -85,6 +85,50 @@ static int nemR3LnxInitSetupVm(PVM pVM, PRTERRINFO pErrInfo)
     int rcLnx = ioctl(pVM->nem.s.fdVm, KVM_ENABLE_CAP, &CapEn);
     if (rcLnx == -1)
         return RTErrInfoSetF(pErrInfo, VERR_NEM_VM_CREATE_FAILED, "Failed to enable KVM_CAP_X86_USER_SPACE_MSR failed: %u", errno);
+
+    /*
+     * If the APIC is enabled and KVM_CAP_SPLIT_IRQCHIP is supported we'll use KVM's APIC emulation
+     * for best performance. This must be done before any vCPU is created.
+     */
+    PCFGMNODE pCfgmApic = CFGMR3GetChild(CFGMR3GetRoot(pVM), "/Devices/apic");
+    if (   pCfgmApic
+        && pVM->nem.s.fKvmApic
+        && 1) /** @todo */
+    {
+        /* If setting this fails log an error but continue. */
+        RT_ZERO(CapEn);
+        CapEn.cap     = KVM_CAP_SPLIT_IRQCHIP;
+        CapEn.args[0] = 24; /** @todo */
+        rcLnx = ioctl(pVM->nem.s.fdVm, KVM_ENABLE_CAP, &CapEn);
+        if (rcLnx == -1)
+        {
+            LogRel(("NEM: Failed enabling the KVM APIC emulation: %Rrc\n", RTErrConvertFromErrno(errno)));
+            pVM->nem.s.fKvmApic = false;
+        }
+        else
+        {
+            /* Rewrite the configuration tree to point to our APIC emulation. */
+            PCFGMNODE pCfgmDev = CFGMR3GetChild(CFGMR3GetRoot(pVM), "/Devices");
+            Assert(pCfgmDev);
+
+            PCFGMNODE pCfgmApicKvm = NULL;
+            int rc = CFGMR3InsertNode(pCfgmDev, "apic-nem", &pCfgmApicKvm);
+            if (RT_SUCCESS(rc))
+            {
+                rc = CFGMR3CopyTree(pCfgmApicKvm, pCfgmApic, CFGM_COPY_FLAGS_IGNORE_EXISTING_KEYS | CFGM_COPY_FLAGS_IGNORE_EXISTING_VALUES);
+                if (RT_SUCCESS(rc))
+                    CFGMR3RemoveNode(pCfgmApic);
+            }
+
+            if (RT_FAILURE(rc))
+            {
+                rc = RTErrInfoSetF(pErrInfo, rc, "Failed replace APIC device config with KVM one");
+                pVM->nem.s.fKvmApic = false;
+            }
+        }
+    }
+    else
+        pVM->nem.s.fKvmApic = false;
 
     /*
      * Create the VCpus.
@@ -209,6 +253,8 @@ DECLHIDDEN(int) nemR3NativeInitCompletedRing3(PVM pVM)
     MSR_RANGE_ADD(MSR_IA32_SYSENTER_ESP);
     MSR_RANGE_ADD(MSR_IA32_SYSENTER_EIP);
     MSR_RANGE_ADD(MSR_IA32_CR_PAT);
+    if (pVM->nem.s.fKvmApic)
+        MSR_RANGE_ADD(MSR_IA32_APICBASE);
     /** @todo more? */
     MSR_RANGE_END(64);
 
@@ -1486,6 +1532,10 @@ static VBOXSTRICTRC nemHCLnxHandleExitWrMsr(PVMCPUCC pVCpu, struct kvm_run *pRun
 static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run *pRun, bool *pfStatefulExit)
 {
     STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatExitTotal);
+
+    if (pVM->nem.s.fKvmApic)
+        PDMApicImportState(pVCpu);
+
     switch (pRun->exit_reason)
     {
         case KVM_EXIT_EXCEPTION:
@@ -1558,8 +1608,8 @@ static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run
             AssertFailed();
             break;
         case KVM_EXIT_IOAPIC_EOI:
-            AssertFailed();
-            break;
+            PDMIoApicBroadcastEoi(pVCpu->CTX_SUFF(pVM), pRun->eoi.vector);
+            return VINF_SUCCESS;
         case KVM_EXIT_HYPERV:
             AssertFailed();
             break;
@@ -1716,6 +1766,10 @@ VMMR3_INT_DECL(VBOXSTRICTRC) NEMR3RunGC(PVM pVM, PVMCPU pVCpu)
                          pVCpu->idCpu, pRun->s.regs.sregs.cs.selector, pRun->s.regs.regs.rip,
                          !!(pRun->s.regs.regs.rflags & X86_EFL_IF), pRun->s.regs.regs.rflags,
                          pRun->s.regs.sregs.ss.selector, pRun->s.regs.regs.rsp, pRun->s.regs.sregs.cr0));
+
+                if (pVM->nem.s.fKvmApic)
+                    PDMApicExportState(pVCpu);
+
                 TMNotifyStartOfExecution(pVM, pVCpu);
 
                 int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_RUN, 0UL);
