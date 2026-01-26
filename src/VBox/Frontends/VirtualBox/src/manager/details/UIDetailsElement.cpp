@@ -1,4 +1,4 @@
-/* $Id: UIDetailsElement.cpp 112666 2026-01-22 14:39:54Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsElement.cpp 112700 2026-01-26 15:25:49Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsElement class implementation.
  */
@@ -139,6 +139,18 @@ UIDetailsElement::~UIDetailsElement()
     /* Remove item from the parent: */
     AssertMsg(parentItem(), ("No parent set for details element!"));
     parentItem()->removeItem(this);
+}
+
+void UIDetailsElement::setName(const QString &strName)
+{
+    /* Cache name: */
+    m_strName = strName;
+    const QFontMetrics fm(m_nameFont, model()->paintDevice());
+    m_nameSize = QSize(fm.horizontalAdvance(m_strName), fm.height());
+
+    /* Update linked values: */
+    updateMinimumHeaderWidth();
+    updateMinimumHeaderHeight();
 }
 
 void UIDetailsElement::setText(const UITextTable &text)
@@ -336,16 +348,6 @@ void UIDetailsElement::paint(QPainter *pPainter, const QStyleOptionGraphicsItem 
     paintElementInfo(pPainter, pOptions);
 }
 
-QString UIDetailsElement::name() const
-{
-    return tr("%1 details", "like 'General details' or 'Storage details'").arg(m_strName);
-}
-
-QString UIDetailsElement::description() const
-{
-    return QString();
-}
-
 const CMachine &UIDetailsElement::machine()
 {
     return m_pSet->machine();
@@ -359,18 +361,6 @@ const CCloudMachine &UIDetailsElement::cloudMachine()
 bool UIDetailsElement::isLocal() const
 {
     return m_pSet->isLocal();
-}
-
-void UIDetailsElement::setName(const QString &strName)
-{
-    /* Cache name: */
-    m_strName = strName;
-    const QFontMetrics fm(m_nameFont, model()->paintDevice());
-    m_nameSize = QSize(fm.horizontalAdvance(m_strName), fm.height());
-
-    /* Update linked values: */
-    updateMinimumHeaderWidth();
-    updateMinimumHeaderHeight();
 }
 
 void UIDetailsElement::setAdditionalHeight(int iAdditionalHeight)

@@ -1,4 +1,4 @@
-/* $Id: UIDetailsItem.h 112666 2026-01-22 14:39:54Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsItem.h 112700 2026-01-26 15:25:49Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsItem class declaration.
  */
@@ -94,11 +94,6 @@ public:
 
         /** Returns model reference. */
         UIDetailsModel *model() const;
-
-        /** Returns the name of the item. */
-        virtual QString name() const = 0;
-        /** Returns the description of the item. */
-        virtual QString description() const = 0;
 
         /** Installs event-filter for @a pSource object.
           * @note  Base-class implementation does nothing. */

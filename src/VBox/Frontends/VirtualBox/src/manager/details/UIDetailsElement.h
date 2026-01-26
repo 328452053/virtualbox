@@ -1,4 +1,4 @@
-/* $Id: UIDetailsElement.h 112666 2026-01-22 14:39:54Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsElement.h 112700 2026-01-26 15:25:49Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsElement class declaration.
  */
@@ -95,6 +95,11 @@ public:
         /** Returns element type. */
         DetailsElementType elementType() const { return m_enmType; }
 
+        /** Defines element @a strName. */
+        void setName(const QString &strName);
+        /** Returns the name of the item. */
+        QString name() const { return m_strName; }
+
         /** Defines the @a text table as the passed one. */
         void setText(const UITextTable &text);
         /** Returns the reference to the text table. */
@@ -167,11 +172,6 @@ protected:
         /** Returns RTTI item type. */
         virtual int type() const RT_OVERRIDE { return Type; }
 
-        /** Returns the name of the item. */
-        virtual QString name() const RT_OVERRIDE;
-        /** Returns the description of the item. */
-        virtual QString description() const RT_OVERRIDE;
-
         /** Returns cached machine reference. */
         const CMachine &machine();
         /** Returns cached cloud machine reference. */
@@ -179,9 +179,6 @@ protected:
 
         /** Returns whether element is of local type. */
         bool isLocal() const;
-
-        /** Defines element @a strName. */
-        void setName(const QString &strName);
 
         /** Defines @a iAdditionalHeight during toggle animation. */
         void setAdditionalHeight(int iAdditionalHeight);

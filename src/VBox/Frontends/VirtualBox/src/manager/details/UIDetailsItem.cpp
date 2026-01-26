@@ -1,4 +1,4 @@
-/* $Id: UIDetailsItem.cpp 112669 2026-01-22 14:57:42Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsItem.cpp 112700 2026-01-26 15:25:49Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsItem class definition.
  */
@@ -224,13 +224,34 @@ public:
     {
         /* Sanity check: */
         AssertPtrReturn(item(), QString());
+        UIDetailsElement *pElement = item()->toElement();
+        AssertPtrReturn(pElement, QString());
 
         /* Text for known roles: */
         switch (enmTextRole)
         {
-            case QAccessible::Name:        return item()->name();
-            case QAccessible::Description: return item()->description();
-            default: break;
+            case QAccessible::Name:
+            {
+                const QString strName = UIDetailsItem::tr("%1 details", "like 'General details' or 'Storage details'")
+                                                          .arg(pElement->name());
+                return QString("%1, ").arg(strName);
+            }
+            case QAccessible::Description:
+            {
+                QStringList result;
+                foreach (const UITextTableLine &guiTextLine, pElement->text())
+                {
+                    const QString str1 = guiTextLine.string1();
+                    QString str2 = guiTextLine.string2();
+                    if (!str2.isEmpty())
+                        str2.remove(QRegularExpression("<a[^>]*>|</a>"));
+                    const QString strLine = str2.isEmpty() ? str1 : QString("%1: %2").arg(str1, str2);
+                    result << strLine;
+                }
+                return result.join(", ");
+            }
+            default:
+                break;
         }
 
         /* Null-string by default: */
