@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA.h 112692 2026-01-26 11:23:41Z knut.osmundsen@oracle.com $ */
+/* $Id: DevVGA-SVGA.h 112693 2026-01-26 11:57:16Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMware SVGA device
  */
@@ -184,10 +184,19 @@ struct {
  * The code assumes it's at least an order of magnitude less than UINT32_MAX. */
 #define VMSVGA_MAX_Y                    _1M
 
-/** Maximum dimensions (X/Y, in pixel) a cursor can have. */
+/** Maximum dimensions (X/Y, in pixel) a cursor can have.
+ * @note This is a VBox limit that we've set ourselves. Do not know what the
+ *       original device implementation reports.  The main objective is (/was)
+ *       to prevent interger overflows when multiplying the dimensions and to
+ *       check the input data sizes.  Since 7.2.8, this is an inclusive limit,
+ *       prior to that it was exclusive.
+ * @todo Check what the other guys return for SVGA_REG_CURSOR_MAX_DIMENSION. */
 #define VMSVGA_CURSOR_MAX_DIMENSION     2048
-/** Maximum size (in bytes) a cursor can have. */
-#define VMSVGA_CURSOR_MAX_BYTES         (VMSVGA_CURSOR_MAX_DIMENSION * VMSVGA_CURSOR_MAX_DIMENSION * 4 /* RGBA */)
+/** Maximum size (in bytes) a cursor can have.
+ * @note We have to ASSUME color cursors here with 32-bit AND and XOR masks.
+ *       This means twice the size of an alpha cursor.
+ * @todo Check what the other guys returns for SVGA_REG_CURSOR_MAX_BYTE_SIZE. */
+#define VMSVGA_CURSOR_MAX_BYTES         (VMSVGA_CURSOR_MAX_DIMENSION * VMSVGA_CURSOR_MAX_DIMENSION * sizeof(uint32_t) * 2)
 
 /* u32ActionFlags */
 #define VMSVGA_ACTION_CHANGEMODE_BIT    0
