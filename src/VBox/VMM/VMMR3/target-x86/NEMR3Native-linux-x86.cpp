@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112703 2026-01-26 16:37:35Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -254,7 +254,58 @@ DECLHIDDEN(int) nemR3NativeInitCompletedRing3(PVM pVM)
     MSR_RANGE_ADD(MSR_IA32_SYSENTER_EIP);
     MSR_RANGE_ADD(MSR_IA32_CR_PAT);
     if (pVM->nem.s.fKvmApic)
+    {
         MSR_RANGE_ADD(MSR_IA32_APICBASE);
+
+#if 0 /** @todo Not really required I think */
+        /* Exclude the x2APIC MSRs as well. */
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_START);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ID);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_VERSION);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TPR);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_PPR);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_EOI);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_LDR);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_SVR);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ISR0);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ISR1);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ISR2);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ISR3);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ISR4);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ISR5);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ISR6);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ISR7);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TMR0);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TMR1);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TMR2);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TMR3);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TMR4);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TMR5);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TMR6);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TMR7);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_IRR0);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_IRR1);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_IRR2);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_IRR3);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_IRR4);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_IRR5);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_IRR6);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_IRR7);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ESR);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_LVT_CMCI);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_ICR);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_LVT_TIMER);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_LVT_THERMAL);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_LVT_PERF);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_LVT_LINT0);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_LVT_LINT1);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_LVT_ERROR);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TIMER_ICR);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TIMER_CCR);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_TIMER_DCR);
+        MSR_RANGE_ADD(MSR_IA32_X2APIC_SELF_IPI);
+#endif
+    }
     /** @todo more? */
     MSR_RANGE_END(64);
 
@@ -339,9 +390,23 @@ static int nemHCLnxImportState(PVMCPUCC pVCpu, uint64_t fWhat, PCPUMCTX pCtx, st
     /*
      * Stuff that goes into kvm_run::s.regs.sregs.
      *
-     * Note! The apic_base can be ignored because we gets all MSR writes to it
-     *       and VBox always keeps the correct value.
+     * Note! The apic_base can be ignored if the in-kernel APIC is not used,
+     * because we gets all MSR writes to it and VBox always keeps the correct value.
+     * Otherwise it is required to sync any changes.
      */
+    if (pVCpu->CTX_SUFF(pVM)->nem.s.fKvmApic)
+    {
+        uint64_t const uApicBase = pRun->s.regs.sregs.apic_base;
+        if (uApicBase != pVCpu->nem.s.uKvmApicBase)
+        {
+            if ((pVCpu->nem.s.uKvmApicBase ^ uApicBase) & MSR_IA32_APICBASE_EN)
+                Log(("NEM/%u: APICBASE_EN changed %#010RX64 -> %#010RX64\n", pVCpu->idCpu, pVCpu->nem.s.uKvmApicBase, uApicBase));
+            pVCpu->nem.s.uKvmApicBase = uApicBase;
+            int rc = PDMApicSetBaseMsr(pVCpu, uApicBase);
+            AssertMsgRCReturn(rc, ("rc=%Rrc\n", rc), VERR_NEM_IPE_3);
+        }
+    }
+
     bool fMaybeChangedMode = false;
     bool fUpdateCr3        = false;
     if (fWhat & (  CPUMCTX_EXTRN_SREG_MASK | CPUMCTX_EXTRN_TABLE_MASK | CPUMCTX_EXTRN_CR_MASK
@@ -1083,21 +1148,37 @@ DECLHIDDEN(bool) nemR3NativeNeedSpecialWaitMethod(PVM pVM)
 
 VMMR3_INT_DECL(int) NEMR3Halt(PVM pVM, PVMCPU pVCpu)
 {
-    Assert(EMGetState(pVCpu) == EMSTATE_WAIT_SIPI);
+    EMSTATE enmState = EMGetState(pVCpu);
+    if (enmState == EMSTATE_HALTED)
+        EMSetState(pVCpu, EMSTATE_NEM); /* Switch to NEM */
+    else if (enmState == EMSTATE_NEM)
+    {
+        /**
+         * @todo Can happen if we get here through a call to PDMDevHlpVMWaitForDeviceReady() (from VMSVGA for example).
+         *       It is not possible to just use KVM_RUN with immediate_exit as that would return before blocking at least once.
+         *       Just try sleeping here for a bit and hope that RTThreadPoke() also works.
+         *       Fortunately this seems to be used very rarely.
+         */
+        RTThreadSleep(100 * RT_MS_1SEC);
+    }
+    else
+    {
+        Assert(enmState == EMSTATE_WAIT_SIPI);
 
-    /*
-     * Force the vCPU to get out of the SIPI state and into the normal runloop
-     * as KVM doesn't cause VM exits for IPIs so we wouldn't notice when
-     * when the guest brings APs online.
-     * Instead we force the EMT to run the vCPU through KVM which manages the state.
-     */
-    RT_NOREF(pVM);
-    EMSetState(pVCpu, EMSTATE_HALTED);
+        /*
+         * Force the vCPU to get out of the SIPI state and into the normal runloop
+         * as KVM doesn't cause VM exits for IPIs so we wouldn't notice when
+         * when the guest brings APs online.
+         * Instead we force the EMT to run the vCPU through KVM which manages the state.
+         */
+        RT_NOREF(pVM);
+        EMSetState(pVCpu, EMSTATE_HALTED);
 
-    /* Need to set the MP state, so it can receive a SIPI. */
-    struct kvm_mp_state MpState = { KVM_MP_STATE_INIT_RECEIVED };
-    int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_MP_STATE, &MpState);
-    AssertLogRelMsgReturn(rcLnx == 0, ("rcLnx=%d errno=%d\n", rcLnx, errno), VERR_NEM_IPE_4);
+        /* Need to set the MP state, so it can receive a SIPI. */
+        struct kvm_mp_state MpState = { KVM_MP_STATE_INIT_RECEIVED };
+        int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_MP_STATE, &MpState);
+        AssertLogRelMsgReturn(rcLnx == 0, ("rcLnx=%d errno=%d\n", rcLnx, errno), VERR_NEM_IPE_4);
+    }
 
     return VINF_EM_RESCHEDULE;
 }

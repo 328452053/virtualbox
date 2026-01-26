@@ -1,4 +1,4 @@
-/* $Id: APICR3Nem-linux-x86.cpp 112686 2026-01-26 08:24:54Z alexander.eichner@oracle.com $ */
+/* $Id: APICR3Nem-linux-x86.cpp 112703 2026-01-26 16:37:35Z alexander.eichner@oracle.com $ */
 /** @file
  * APIC - Advanced Programmable Interrupt Controller - NEM KVM backend.
  */
@@ -145,8 +145,9 @@ static DECLCALLBACK(void) apicR3KvmInitIpi(PVMCPUCC pVCpu)
  */
 static DECLCALLBACK(int) apicR3KvmSetBaseMsr(PVMCPUCC pVCpu, uint64_t u64BaseMsr)
 {
-    RT_NOREF(pVCpu, u64BaseMsr);
-    AssertReleaseMsgFailed(("idCpu=%u u64BaseMsr=%#RX64\n", pVCpu->idCpu, u64BaseMsr));
+    VMCPU_ASSERT_EMT_OR_NOT_RUNNING(pVCpu);
+    PKVMAPICCPU pKvmApicCpu = VMCPU_TO_KVMAPICCPU(pVCpu);
+    pKvmApicCpu->uApicBaseMsr = u64BaseMsr;
     return VINF_SUCCESS;
 }
 
@@ -757,7 +758,7 @@ DECLCALLBACK(int) apicR3KvmConstruct(PPDMDEVINS pDevIns, int iInstance, PCFGMNOD
         struct kvm_enable_cap CapEn =
         {
             KVM_CAP_X2APIC_API, 0,
-            { KVM_X2APIC_API_USE_32BIT_IDS | KVM_X2APIC_API_DISABLE_BROADCAST_QUIRK, 0, 0, 0}
+            { /** @todo KVM_X2APIC_API_USE_32BIT_IDS | */ KVM_X2APIC_API_DISABLE_BROADCAST_QUIRK, 0, 0, 0}
         };
 
         int rcLnx = ioctl(pKvmApic->iFdVm, KVM_ENABLE_CAP, &CapEn);
