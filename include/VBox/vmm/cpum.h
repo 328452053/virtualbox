@@ -2037,6 +2037,12 @@ typedef struct CPUMDBENTRYARM
         uint32_t                        cSysRegVals;
         /** System register values specific to this CPU core variant. */
         struct SUPARMSYSREGVAL const   *paSysRegVals;
+        /** Explicit padding (must be zero). */
+        uint32_t                        uUnused;
+        /** Number of entries in the table paCacheEntries points to. */
+        uint32_t                        cCacheEntries;
+        /** Cache level info. */
+        struct SUPARMCACHELEVEL const  *paCacheEntries;
     } aVariants[2];
 } CPUMDBENTRYARM;
 /** Pointer to a const ARM CPU database entry. */

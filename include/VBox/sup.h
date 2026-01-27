@@ -196,6 +196,29 @@ typedef SUPHWVIRTMSRS *PSUPHWVIRTMSRS;
 typedef const SUPHWVIRTMSRS *PCSUPHWVIRTMSRS;
 
 /**
+ * ARM cache level details (CSSEL_EL1/CCSIDR_EL1/CCSIDR2_EL1).
+ *
+ * @note Used by CPUM on non-ARM hosts.
+ */
+typedef struct SUPARMCACHELEVEL
+{
+    /** The CSSEL_EL1 value. */
+    uint8_t             bCsSel;
+    /** Reserved - zero. */
+    uint8_t             abReserved[3];
+    /** SUP_ARM_SYS_REG_VAL_F_XXX? */
+    uint32_t            fFlags;
+    /** The corresponding CCSIDR_EL1 value. */
+    uint64_t            uCcsIdR;
+    /** The corresponding CCSIDR2_EL1 value, UINT64_MAX if not present. */
+    uint64_t            uCcs2IdR;
+} SUPARMCACHELEVEL;
+/** Pointer to an ARM cache level info entry. */
+typedef SUPARMCACHELEVEL *PSUPARMCACHELEVEL;
+/** Pointer to a const ARM cache level info entry. */
+typedef SUPARMCACHELEVEL const *PCSUPARMCACHELEVEL;
+
+/**
  * ARM system register value.
  *
  * @note Used by CPUM on non-ARM hosts.
@@ -2046,8 +2069,8 @@ SUPR3DECL(int) SUPR3MsrProberModifyEx(uint32_t uMsr, RTCPUID idCpu, uint64_t fAn
                                       PSUPMSRPROBERMODIFYRESULT pResult);
 
 #endif /* defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86) || defined(DOXYGEN_RUNNING) */
-
 #if defined(RT_ARCH_ARM64) || defined(DOXYGEN_RUNNING)
+
 /**
  * Gets a collection of ARM system registers useful for identify
  * CPU capatbilites.
@@ -2067,6 +2090,29 @@ SUPR3DECL(int) SUPR3MsrProberModifyEx(uint32_t uMsr, RTCPUID idCpu, uint64_t fAn
  */
 SUPR3DECL(int) SUPR3ArmQuerySysRegs(RTCPUID idCpu, uint32_t fFlags, uint32_t cMaxRegs,
                                     uint32_t *pcRegsReturned, uint32_t *pcRegsAvailable, PSUPARMSYSREGVAL paSysRegValues);
+
+/**
+ * Gets a collection of ARM system registers useful for identify
+ * CPU capatbilites.
+ *
+ * @returns VBox status code.
+ * @param   idCpu               The CPU to query the registers on, NIL_RTCPUID
+ *                              if any will do.
+ * @param   cMaxEntries         Maximum number of entries @a paEntries may hold.
+ * @param   pcEntriesReturned   Number of entries returned.
+ * @param   pcEntriesAvailable  Number of entries available, optional. If higher
+ *                              than @a *pcEntriesReturned, try again with an
+ *                              array of this size to get them all.
+ * @param   paEntries           Array where to store the cache level information
+ *                              entries.
+ * @param   puCacheLevelIdReg   The value of the CLIDR_EL1 register. Optional.
+ * @param   puCacheTypeReg      The value of the CTR_EL0 register. Optional.
+ * @param   puDataCacheZeroId   The value of the DCZID_EL0 register. Optional.
+ */
+SUPR3DECL(int) SUPR3ArmQueryCacheInfo(RTCPUID idCpu, uint32_t cMaxEntries,
+                                      uint64_t *puCacheLevelIdReg, uint64_t *puCacheTypeReg, uint64_t *puDataCacheZeroId,
+                                      uint32_t *pcEntriesReturned, uint32_t *pcEntriesAvailable, PSUPARMCACHELEVEL paEntries);
+
 #endif /* defined(RT_ARCH_ARM64) || defined(DOXYGEN_RUNNING) */
 
 /**

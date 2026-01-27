@@ -1,4 +1,4 @@
-/* $Id: SUPDrvIOC.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: SUPDrvIOC.h 112714 2026-01-27 13:33:55Z knut.osmundsen@oracle.com $ */
 /** @file
  * VirtualBox Support Driver - IOCtl definitions.
  */
@@ -1771,6 +1771,63 @@ typedef struct SUPGETHWVIRTMSRS
     } u;
 } SUPGETHWVIRTMSRS, *PSUPGETHWVIRTMSRS;
 /** @} */
+
+
+#if defined(RT_ARCH_ARM64) || defined(DOXYGEN_RUNNING)
+/** @name SUP_IOCTL_ARM_GET_CACHE_INFO
+ * Interface for getting cache information.
+ *
+ * @note ARM specific.
+ *
+ * @{
+ */
+# define SUP_IOCTL_ARM_GET_CACHE_INFO                   SUP_CTL_CODE_BIG(42)
+# define SUP_IOCTL_ARM_GET_CACHE_INFO_SIZE(cEntries)    ((uint32_t)RT_UOFFSETOF_FLEX_ARRAY(SUPARMGETCACHEINFO, u.Out.aEntries, (cEntries)))
+# define SUP_IOCTL_ARM_GET_CACHE_INFO_SIZE_IN           (RT_UOFFSETOF(SUPARMGETCACHEINFO, u.In) + RT_SIZEOFMEMB(SUPARMGETCACHEINFO, u.In))
+# define SUP_IOCTL_ARM_GET_CACHE_INFO_SIZE_OUT(cEntries) SUP_IOCTL_ARM_GET_CACHE_INFO_SIZE(cEntries)
+
+typedef struct SUPARMGETCACHEINFO
+{
+    /** The header. */
+    SUPREQHDR               Hdr;
+
+    /** Input/output union. */
+    union
+    {
+        /** Inputs.  */
+        struct
+        {
+            /** Which CPU to query system registers for. */
+            RTCPUID                 idCpu;
+            /** Reserved, must be zero. */
+            uint32_t                fFlags;
+        } In;
+
+        /** Outputs. */
+        struct
+        {
+            /** The value of the CLIDR_EL1 register. */
+            uint64_t                uCacheLevelIdReg;
+            /** The value of the CTR_EL0 register. */
+            uint64_t                uCacheTypeReg;
+            /** The value of the DCZID_EL0 register. */
+            uint64_t                uDataCacheZeroId;
+
+            /** Number of entries returned. */
+            uint32_t                cEntries;
+            /** Number of entries available.
+             * If larger than cEntries, then retry with larger structure. */
+            uint32_t                cEntriesAvailable;
+
+            /** Array of cache level info entries. */
+            SUPARMCACHELEVEL        aEntries[1];
+        } Out;
+    } u;
+} SUPARMGETCACHEINFO, *PSUPARMGETCACHEINFO;
+AssertCompileMemberAlignment(SUPARMGETCACHEINFO, u, 8);
+AssertCompileMemberAlignment(SUPARMGETCACHEINFO, u.Out.aEntries, 8);
+/** @} */
+#endif /* defined(RT_ARCH_ARM64) || defined(DOXYGEN_RUNNING) */
 
 
 #if defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86)

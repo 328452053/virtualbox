@@ -1,4 +1,4 @@
-/* $Id: ARM_Apple_M2_Max.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: ARM_Apple_M2_Max.h 112714 2026-01-27 13:33:55Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPU database entry "Apple M2 Max".
  * Generated at 2025-04-22T09:46:58Z by VBoxCpuReport v7.1.97r168579 on linux.arm64.
@@ -134,9 +134,12 @@ static CPUMDBENTRYARM const g_Entry_ARM_Apple_M2_Max =
                     /*.u4Implementer = */ 0x61,
                 }
             },
-            /*.enmCoreType  = */ kCpumCoreType_Efficiency,
-            /*.cSysRegVals  = */ ZERO_ALONE(RT_ELEMENTS(g_aVar0SysRegVals_ARM_Apple_M2_Max)),
-            /*.paSysRegVals = */ NULL_ALONE(g_aVar0SysRegVals_ARM_Apple_M2_Max)
+            /*.enmCoreType    = */ kCpumCoreType_Efficiency,
+            /*.cSysRegVals    = */ ZERO_ALONE(RT_ELEMENTS(g_aVar0SysRegVals_ARM_Apple_M2_Max)),
+            /*.paSysRegVals   = */ NULL_ALONE(g_aVar0SysRegVals_ARM_Apple_M2_Max),
+            /*.uUnused        = */ 0,
+            /*.cCacheEntries  = */ 0,
+            /*.paCacheEntries = */ NULL,
         },
         /*.Variants[1] = */
         {
@@ -152,9 +155,12 @@ static CPUMDBENTRYARM const g_Entry_ARM_Apple_M2_Max =
                     /*.u4Implementer = */ 0x61,
                 }
             },
-            /*.enmCoreType  = */ kCpumCoreType_Performance,
-            /*.cSysRegVals  = */ ZERO_ALONE(RT_ELEMENTS(g_aVar1SysRegVals_ARM_Apple_M2_Max)),
-            /*.paSysRegVals = */ NULL_ALONE(g_aVar1SysRegVals_ARM_Apple_M2_Max)
+            /*.enmCoreType    = */ kCpumCoreType_Performance,
+            /*.cSysRegVals    = */ ZERO_ALONE(RT_ELEMENTS(g_aVar1SysRegVals_ARM_Apple_M2_Max)),
+            /*.paSysRegVals   = */ NULL_ALONE(g_aVar1SysRegVals_ARM_Apple_M2_Max),
+            /*.uUnused        = */ 0,
+            /*.cCacheEntries  = */ 0,
+            /*.paCacheEntries = */ NULL,
         },
     }
 };

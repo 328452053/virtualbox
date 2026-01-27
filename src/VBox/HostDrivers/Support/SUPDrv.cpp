@@ -1,4 +1,4 @@
-/* $Id: SUPDrv.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: SUPDrv.cpp 112714 2026-01-27 13:33:55Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxDrv - The VirtualBox Support Driver - Common code.
  */
@@ -192,6 +192,8 @@ static int                  supdrvIOCtl_X86MsrProber(PSUPDRVDEVEXT pDevExt, PSUP
 #endif
 #if defined(RT_ARCH_ARM64)
 static int                  supdrvIOCtl_ArmGetSysRegs(PSUPARMGETSYSREGS pReq, uint32_t cMaxRegs, RTCPUID idCpu, uint32_t fFlags);
+static int                  supdrvIOCtl_ArmGetCacheInfo(PSUPARMGETCACHEINFO pReq, uint32_t cMaxEntries,
+                                                        RTCPUID idCpu, uint32_t fFlags);
 #endif
 static int                  supdrvIOCtl_ResumeSuspendedKbds(void);
 
@@ -2615,6 +2617,27 @@ static int supdrvIOCtlInnerUnrestricted(uintptr_t uIOCtl, PSUPDRVDEVEXT pDevExt,
         }
 
 #endif /* defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86) */
+
+#if defined(RT_ARCH_ARM64)
+        case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_ARM_GET_CACHE_INFO):
+        {
+            /* validate */
+            PSUPARMGETCACHEINFO pReq = (PSUPARMGETCACHEINFO)pReqHdr;
+            uint32_t const cMaxEntries = pReq->Hdr.cbOut <= RT_UOFFSETOF(SUPARMGETCACHEINFO, u.Out.aEntries) ? 0
+                                       :   (pReq->Hdr.cbOut - RT_UOFFSETOF(SUPARMGETCACHEINFO, u.Out.aEntries))
+                                         / sizeof(SUPARMCACHELEVEL);
+            REQ_CHECK_SIZE_IN(SUP_IOCTL_ARM_GET_CACHE_INFO, SUP_IOCTL_ARM_GET_CACHE_INFO_SIZE_IN);
+
+            REQ_CHECK_SIZE_OUT(SUP_IOCTL_ARM_GET_CACHE_INFO, SUP_IOCTL_ARM_GET_CACHE_INFO_SIZE_OUT(cMaxEntries));
+            REQ_CHECK_EXPR_FMT(pReq->u.In.fFlags == 0, ("SUP_IOCTL_ARM_GET_CACHE_INFO: fFlags=%#x!\n", pReq->u.In.fFlags));
+
+            pReqHdr->rc = supdrvIOCtl_ArmGetCacheInfo(pReq, cMaxEntries, pReq->u.In.idCpu, pReq->u.In.fFlags);
+            if (RT_FAILURE(pReqHdr->rc))
+                pReqHdr->cbOut = sizeof(*pReqHdr);
+
+            return 0;
+        }
+#endif
 
         default:
             Log(("Unknown IOCTL %#lx\n", (long)uIOCtl));
@@ -7464,7 +7487,6 @@ static void supdrvIOCtl_ArmGetSysRegsOnCpu(PSUPARMGETSYSREGS pReq, uint32_t cons
     //    READ_SYS_REG_NAMED(3, 1, 0, 0, 2, CCSIDR2_EL1); /** @todo CCSIDR2_EL1 - current cache size \#2? */
 
 # undef READ_SYS_REG
-# undef COMPILER_READ_SYS_REG
 
     /*
      * Complete the request output.
@@ -7524,6 +7546,179 @@ static int supdrvIOCtl_ArmGetSysRegs(PSUPARMGETSYSREGS pReq, uint32_t const cMax
     }
     return rc;
 }
+
+
+/**
+ * Gathers ARM cache information.
+ *
+ * This is either called directly or via RTMpOnSpecific.  The latter means that
+ * we must not trigger any paging activity or block.
+ */
+static void supdrvIOCtl_ArmGetCacheInfoOnCpu(PSUPARMGETCACHEINFO pReq, uint32_t const cMaxEntries, uint32_t fFlags)
+{
+    PSUPARMCACHELEVEL const paEntries = &pReq->u.Out.aEntries[0]; /* to shut up UBSAN array warnings */
+    uint32_t                idxEntry  = 0;
+    RT_NOREF(fFlags);
+
+    /*
+     * Note! We share system registe reader macros with supdrvIOCtl_ArmGetSysRegsOnCpu()!
+     */
+#  ifdef _MSC_VER
+#   define COMPILER_WRITE_SYS_REG(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2, a_u64Value) \
+        _WriteStatusReg(ARMV8_AARCH64_SYSREG_ID_CREATE(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2) & 0x7fff, (a_u64Value))
+#   define COMPILER_WRITE_SYS_REG_NAMED(a_SysRegName, a_u64Value) \
+        _WriteStatusReg(RT_CONCAT(ARMV8_AARCH64_SYSREG_,a_SysRegName) & 0x7fff, (a_u64Value))
+#  else
+#   define COMPILER_WRITE_SYS_REG(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2, a_u64Value) \
+        __asm__ __volatile__ ("msr s" #a_Op0 "_" #a_Op1 "_c" #a_CRn "_c" #a_CRm "_" #a_Op2 ", %0" : : "r" (a_u64Value))
+#   define COMPILER_WRITE_SYS_REG_NAMED(a_SysRegName, a_u64Value) \
+        __asm__ __volatile__ ("msr " #a_SysRegName ", %0"  : : "r" (a_u64Value))
+#  endif
+
+    /* Read CTR_EL0 & DCZID_EL0 for the return request data.  */
+    COMPILER_READ_SYS_REG_NAMED(pReq->u.Out.uCacheTypeReg, CTR_EL0);
+    COMPILER_READ_SYS_REG_NAMED(pReq->u.Out.uDataCacheZeroId, DCZID_EL0);
+
+    /* Check if CCSIDR2_EL1 is available on this CPU. */
+    uint64_t                uReg = 0;
+    COMPILER_READ_SYS_REG_NAMED(uReg, ID_AA64MMFR2_EL1);
+    bool const              fFeatCcIdx = ((uReg >> 20) & UINT32_C(0xf) /*CCIDX*/) >= 1;
+
+    /* Check if FEAT_MTE2 is available on this CPU. */
+    uReg = 0;
+    COMPILER_READ_SYS_REG_NAMED(uReg, ID_AA64PFR1_EL1);
+    bool const              fFeatMte2 = ((uReg >> 8) & UINT32_C(0xf) /*MTE*/) >= 2;
+
+    /* Read the cache level ID register CLIDR_EL1 register so we can enumerate the levels correctly. */
+    uint64_t                uCacheLevelIdReg;
+    COMPILER_READ_SYS_REG_NAMED(uCacheLevelIdReg, CLIDR_EL1);
+    pReq->u.Out.uCacheLevelIdReg = uCacheLevelIdReg;
+
+    /* Read the original selector register value. */
+    uint64_t               uOrgSelValue;
+    COMPILER_READ_SYS_REG_NAMED(uOrgSelValue, CSSELR_EL1);
+
+    /*
+     * Loop thru the up to 7 cache levels and read the CCSIDR_EL1 & CCS2IDR_EL1
+     * values for each one present in CLIDR_EL1.
+     */
+    for (uint32_t uLevel = 0; uLevel < 7; uLevel++)
+    {
+        uint32_t const uCacheType = (uCacheLevelIdReg >> (uLevel * 3)) & 0x7;
+        if (uCacheType != 0)
+        {
+            uint32_t const uTagType   = fFeatMte2 ? (uCacheLevelIdReg >> (33 + uLevel * 2)) & 0x3 : 0;
+
+            /* Figure out the relevant selector register values for this level. */
+            unsigned       cSelValues = 0;
+            uint64_t       auSelValues[4];
+            if (uCacheType != 1 /* only instruction cache */)
+            {
+                auSelValues[cSelValues++]     = (uLevel << 1);
+                if (uTagType == 1)
+                    auSelValues[cSelValues++] = (uLevel << 1) | 0x10 /* tag */;
+            }
+            if (uCacheType == 1 /* only instruction cache */ || uCacheType == 3 /* separate data & instruction caches */)
+            {
+                auSelValues[cSelValues++]     = (uLevel << 1) | 1 /* instr */;
+                if (uTagType == 1)
+                    auSelValues[cSelValues++] = (uLevel << 1) | 1 /* instr */ | 0x10 /* tag */;
+            }
+
+            /* Do the reading. */
+            for (unsigned i = 0; i < cSelValues; i++)
+            {
+                /* Set CSSEL_EL1, read the size registers and restore CSSEL_EL1. */
+                uint64_t uCcsIdR  = 0;
+                uint64_t uCcs2IdR = UINT64_MAX;
+
+                COMPILER_WRITE_SYS_REG_NAMED(CSSELR_EL1, auSelValues[i]);
+                COMPILER_READ_SYS_REG_NAMED(uCcsIdR, CCSIDR_EL1);
+                if (fFeatCcIdx)
+                {
+#ifdef RT_OS_WINDOWS
+                    COMPILER_READ_SYS_REG_NAMED(uCcs2IdR, CCSIDR2_EL1);
+#else
+                    COMPILER_READ_SYS_REG(uCcs2IdR, 3, 1, 0, 0, 2);
+#endif
+                }
+                COMPILER_WRITE_SYS_REG_NAMED(CSSELR_EL1, uOrgSelValue);
+
+                /* Add the value to the return array. */
+                if (idxEntry < cMaxEntries)
+                {
+                    paEntries[idxEntry].bCsSel          = (uint8_t)auSelValues[i];
+                    paEntries[idxEntry].abReserved[0]   = 0;
+                    paEntries[idxEntry].abReserved[1]   = 0;
+                    paEntries[idxEntry].abReserved[2]   = 0;
+                    paEntries[idxEntry].fFlags          = SUP_ARM_SYS_REG_VAL_F_FROM_CPU;
+                    paEntries[idxEntry].uCcsIdR         = uCcsIdR;
+                    paEntries[idxEntry].uCcs2IdR        = uCcs2IdR;
+                }
+                idxEntry++;
+            }
+        }
+    }
+
+    /*
+     * Complete the request output.
+     */
+    pReq->u.Out.cEntriesAvailable = idxEntry;
+    if (idxEntry > cMaxEntries)
+        idxEntry = cMaxEntries;
+    pReq->u.Out.cEntries          = idxEntry;
+    pReq->Hdr.cbOut = SUP_IOCTL_ARM_GET_CACHE_INFO_SIZE_OUT(idxEntry);
+}
+
+
+/** Argument package for updrvIOCtl_ArmGetCacheInfoOnCpuWorker. */
+typedef struct SUPARMGETCACHEINFOONCPUARGS
+{
+    uint32_t            cMaxEntries;
+    uint32_t            fFlags;
+} SUPARMGETCACHEINFOONCPUARGS;
+
+
+/** @callback_method_impl{FNRTMPWORKER}   */
+static DECLCALLBACK(void) supdrvIOCtl_ArmGetCacheInfoOnCpuCallback(RTCPUID idCpu, void *pvUser1, void *pvUser2)
+{
+    const SUPARMGETCACHEINFOONCPUARGS *pArgs = (const SUPARMGETCACHEINFOONCPUARGS *)pvUser2;
+    supdrvIOCtl_ArmGetCacheInfoOnCpu((PSUPARMGETCACHEINFO)pvUser1, pArgs->cMaxEntries, pArgs->fFlags);
+    RT_NOREF(idCpu);
+}
+
+
+/**
+ * Implementes the ARM cache information gatherer.
+ *
+ * @returns VBox status code.
+ * @param   pReq        The request.
+ * @param   cMaxEntries The maximum number of entries we can return.
+ * @param   idCpu       The CPU to get cache info for.
+ * @param   fFlags      The request flags.
+ */
+static int supdrvIOCtl_ArmGetCacheInfo(PSUPARMGETCACHEINFO pReq, uint32_t const cMaxEntries, RTCPUID idCpu, uint32_t fFlags)
+{
+    int rc;
+
+    /* Zero the request array just in case someone hands us a pagable buffer. */
+    RT_BZERO(&pReq->u.Out.aEntries[0], cMaxEntries * sizeof(pReq->u.Out.aEntries[0]));
+
+    if (idCpu == NIL_RTCPUID)
+    {
+        supdrvIOCtl_ArmGetCacheInfoOnCpu(pReq, cMaxEntries, fFlags);
+        rc = VINF_SUCCESS;
+    }
+    else
+    {
+        SUPARMGETCACHEINFOONCPUARGS Args;
+        Args.cMaxEntries = cMaxEntries;
+        Args.fFlags      = fFlags;
+        rc = RTMpOnSpecific(idCpu, supdrvIOCtl_ArmGetCacheInfoOnCpuCallback, pReq, &Args);
+    }
+    return rc;
+}
+
 
 #endif /* RT_ARCH_ARM64 */
 

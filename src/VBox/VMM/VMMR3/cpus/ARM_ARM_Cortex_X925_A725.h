@@ -1,4 +1,4 @@
-/* $Id: ARM_ARM_Cortex_X925_A725.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: ARM_ARM_Cortex_X925_A725.h 112714 2026-01-27 13:33:55Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPU database entry "ARM_Cortex_X925_A725".
  * Generated at 2025-12-05T01:36:04Z by VBoxCpuReport v7.2.97r171671 on linux.arm64.
@@ -160,9 +160,12 @@ static CPUMDBENTRYARM const g_Entry_ARM_ARM_Cortex_X925_A725 =
                     /*.u4Implementer = */ 0x41,
                 }
             },
-            /*.enmCoreType  = */ kCpumCoreType_Efficiency,
-            /*.cSysRegVals  = */ ZERO_ALONE(RT_ELEMENTS(g_aVar0SysRegVals_ARM_ARM_Cortex_X925_A725)),
-            /*.paSysRegVals = */ NULL_ALONE(g_aVar0SysRegVals_ARM_ARM_Cortex_X925_A725)
+            /*.enmCoreType    = */ kCpumCoreType_Efficiency,
+            /*.cSysRegVals    = */ ZERO_ALONE(RT_ELEMENTS(g_aVar0SysRegVals_ARM_ARM_Cortex_X925_A725)),
+            /*.paSysRegVals   = */ NULL_ALONE(g_aVar0SysRegVals_ARM_ARM_Cortex_X925_A725),
+            /*.uUnused        = */ 0,
+            /*.cCacheEntries  = */ 0,
+            /*.paCacheEntries = */ NULL,
         },
         /*.Variants[1] = */
         {
@@ -178,9 +181,12 @@ static CPUMDBENTRYARM const g_Entry_ARM_ARM_Cortex_X925_A725 =
                     /*.u4Implementer = */ 0x41,
                 }
             },
-            /*.enmCoreType  = */ kCpumCoreType_Performance,
-            /*.cSysRegVals  = */ ZERO_ALONE(RT_ELEMENTS(g_aVar1SysRegVals_ARM_ARM_Cortex_X925_A725)),
-            /*.paSysRegVals = */ NULL_ALONE(g_aVar1SysRegVals_ARM_ARM_Cortex_X925_A725)
+            /*.enmCoreType    = */ kCpumCoreType_Performance,
+            /*.cSysRegVals    = */ ZERO_ALONE(RT_ELEMENTS(g_aVar1SysRegVals_ARM_ARM_Cortex_X925_A725)),
+            /*.paSysRegVals   = */ NULL_ALONE(g_aVar1SysRegVals_ARM_ARM_Cortex_X925_A725),
+            /*.uUnused        = */ 0,
+            /*.cCacheEntries  = */ 0,
+            /*.paCacheEntries = */ NULL,
         },
     }
 };
