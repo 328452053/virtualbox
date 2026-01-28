@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112726 2026-01-28 17:01:44Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112731 2026-01-28 20:02:07Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -194,6 +194,46 @@ static int nemR3LnxUpdateCpuIdsLeaves(PVM pVM, PVMCPU pVCpu)
 }
 
 
+/**
+ * @callback_method_impl{PFNSSMINTLOADDONE,
+ *          For setting the MP state after a saved state was loaded.}
+ */
+static DECLCALLBACK(int) nemR3LnxLoadDone(PVM pVM, PSSMHANDLE pSSM)
+{
+    RT_NOREF(pSSM);
+
+    VM_ASSERT_EMT(pVM);
+
+    /* Need to set the proper MP state for all vCPUs in KVM so they will work correctly. */
+    if (pVM->nem.s.fKvmApic)
+    {
+        for (VMCPUID idCpu = 0; idCpu < pVM->cCpus; idCpu++)
+        {
+            PVMCPU pVCpu = pVM->apCpusR3[idCpu];
+            EMSTATE enmState = EMGetPrevState(pVCpu);
+            struct kvm_mp_state MpState = {UINT32_MAX};
+
+            /* See EMR3.cpp:emR3Save() for possible values which get saved. */
+            switch (enmState)
+            {
+                case EMSTATE_NONE:      MpState.mp_state = KVM_MP_STATE_RUNNABLE;      break;
+                case EMSTATE_HALTED:    MpState.mp_state = KVM_MP_STATE_HALTED;        break;
+                case EMSTATE_WAIT_SIPI: MpState.mp_state = KVM_MP_STATE_INIT_RECEIVED; break;
+                default:
+                    return SSMR3SetLoadError(pSSM, VERR_NEM_IPE_6, RT_SRC_POS, "Unexpected EM state %d", enmState);
+            }
+
+            int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_MP_STATE, &MpState);
+            if (rcLnx == -1)
+                    return SSMR3SetLoadError(pSSM, VERR_NEM_IPE_6, RT_SRC_POS, "ioctl(%d, KVM_SET_MP_STATE, ) -> rcLnx=%d errno=%d",
+                                             pVCpu->nem.s.fdVCpu, rcLnx, errno);
+        }
+    }
+
+    return VINF_SUCCESS;
+}
+
+
 DECLHIDDEN(int) nemR3NativeInitCompletedRing3(PVM pVM)
 {
     /*
@@ -330,6 +370,30 @@ DECLHIDDEN(int) nemR3NativeInitCompletedRing3(PVM pVM)
     if (rcLnx == -1)
         return VMSetError(pVM, VERR_NEM_VM_CREATE_FAILED, RT_SRC_POS,
                           "Failed to enable KVM_X86_SET_MSR_FILTER failed: %u", errno);
+
+    /* Need to set the MP state for all APs when the in-kernel APIC is used, so it can receive a SIPI. */
+    if (pVM->nem.s.fKvmApic)
+    {
+        for (VMCPUID idCpu = 1; idCpu < pVM->cCpus; idCpu++)
+        {
+            PVMCPU pVCpu = pVM->apCpusR3[idCpu];
+
+            struct kvm_mp_state MpState = { KVM_MP_STATE_INIT_RECEIVED };
+            rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_MP_STATE, &MpState);
+            AssertLogRelMsgReturn(rcLnx == 0, ("rcLnx=%d errno=%d\n", rcLnx, errno), VERR_NEM_IPE_4);
+        }
+    }
+
+    /*
+     * Register the saved state data unit, only required to set the initial MP state correctly,
+     * after a saved state was loaded.
+     */
+    int rc = SSMR3RegisterInternal(pVM, "nem-lnx", 1, 0 /*uVersion*/, 0 /*cbGuess*/,
+                                   NULL, NULL, NULL,
+                                   NULL, NULL, NULL,
+                                   NULL, NULL, nemR3LnxLoadDone);
+    if (RT_FAILURE(rc))
+        return rc;
 
     return VINF_SUCCESS;
 }
@@ -1095,8 +1159,41 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx, struct kvm_
 VMM_INT_DECL(int) NEMHCQueryCpuTick(PVMCPUCC pVCpu, uint64_t *pcTicks, uint32_t *puAux)
 {
     STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatQueryCpuTick);
-    // KVM_GET_CLOCK?
-    RT_NOREF(pVCpu, pcTicks, puAux);
+
+#if 0
+    struct kvm_clock_data Clk;
+    int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_GET_CLOCK, &Clk);
+    AssertLogRelMsgReturn(rcLnx == 0, ("rcLnx=%d errno=%d\n", rcLnx, errno), VERR_NEM_IPE_3);
+
+    /** @todo What about the other values? KVM_CLOCK_REALTIME seems to be used by KVM_SET_CLOCK,
+     * while KVM_CLOCK_HOST_TSC and KVM_CLOCK_TSC_STABLE seem to be purely informational. */
+    *pcTicks = Clk.clock;
+    *puAux   = 0;
+#else
+    union
+    {
+        struct kvm_msrs Core;
+        uint64_t padding[2 + 2 * sizeof(struct kvm_msr_entry)];
+    } uBuf;
+
+    uBuf.Core.entries[0].index    = MSR_IA32_TSC;
+    uBuf.Core.entries[0].reserved = 0;
+    uBuf.Core.entries[0].data     = UINT64_MAX;
+    uBuf.Core.entries[1].index    = MSR_K8_TSC_AUX;
+    uBuf.Core.entries[1].reserved = 0;
+    uBuf.Core.entries[1].data     = UINT64_MAX;
+
+    uBuf.Core.pad   = 0;
+    uBuf.Core.nmsrs = 1;
+    int rc = ioctl(pVCpu->nem.s.fdVCpu, KVM_GET_MSRS, &uBuf);
+    AssertMsgReturn(rc == 2,
+                    ("rc=%d iMsr=%d (->%#x) errno=%d\n",
+                     rc, 2, (uint32_t)rc < 2 ? uBuf.Core.entries[rc].index : 0, errno),
+                    VERR_NEM_IPE_3);
+
+    *pcTicks = uBuf.Core.entries[0].data;
+    *puAux   = uBuf.Core.entries[1].data;
+#endif
     return VINF_SUCCESS;
 }
 
@@ -1113,9 +1210,54 @@ VMM_INT_DECL(int) NEMHCQueryCpuTick(PVMCPUCC pVCpu, uint64_t *pcTicks, uint32_t 
  */
 VMM_INT_DECL(int) NEMHCResumeCpuTickOnAll(PVMCC pVM, PVMCPUCC pVCpu, uint64_t uPausedTscValue)
 {
-    // KVM_SET_CLOCK?
-    RT_NOREF(pVM, pVCpu, uPausedTscValue);
+    RT_NOREF(pVCpu);
+
+#if 0
+    struct kvm_clock_data Clk; RT_ZERO(Clk);
+
+    Clk.clock = uPausedTscValue;
+
+    int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_CLOCK, &Clk);
+    AssertLogRelMsgReturn(rcLnx == 0, ("rcLnx=%d errno=%d\n", rcLnx, errno), VERR_NEM_IPE_3);
     return VINF_SUCCESS;
+#else
+    /*
+     * Call the offical API to do the job.
+     */
+    if (pVM->cCpus > 1)
+        RTThreadYield(); /* Try decrease the chance that we get rescheduled in the middle. */
+
+    union
+    {
+        struct kvm_msrs Core;
+        uint64_t padding[2 + sizeof(struct kvm_msr_entry)];
+    } uBuf;
+
+    uBuf.Core.entries[0].index    = MSR_IA32_TSC;
+    uBuf.Core.entries[0].reserved = 0;
+    uBuf.Core.entries[0].data     = uPausedTscValue;
+    uint64_t const     uFirstTsc = ASMReadTSC();
+
+    uBuf.Core.pad   = 0;
+    uBuf.Core.nmsrs = 1;
+    int rcLnx = ioctl(pVM->apCpusR3[0]->nem.s.fdVCpu, KVM_SET_MSRS, &uBuf);
+    AssertMsgReturn(rcLnx == 1, ("rc=%d errno=%d\n", rc, errno), VERR_NEM_IPE_3);
+
+    /* Do the other CPUs, adjusting for elapsed TSC and keeping finger crossed
+       that we don't introduce too much drift here. */
+    for (VMCPUID idCpu = 1; idCpu < pVM->cCpus; idCpu++)
+    {
+        PVMCPU pVCpuDst = pVM->apCpusR3[idCpu];
+
+        const uint64_t offDelta = ASMReadTSC() - uFirstTsc;
+        uBuf.Core.entries[0].data = uPausedTscValue + offDelta;
+
+        rcLnx = ioctl(pVCpuDst->nem.s.fdVCpu, KVM_SET_MSRS, &uBuf);
+        AssertMsgReturn(rcLnx == 1, ("rc=%d errno=%d\n", rc, errno), VERR_NEM_SET_TSC);
+    }
+
+    return VINF_SUCCESS;
+#endif
 }
 
 
@@ -1189,11 +1331,6 @@ VMMR3_INT_DECL(int) NEMR3Halt(PVM pVM, PVMCPU pVCpu)
          */
         RT_NOREF(pVM);
         EMSetState(pVCpu, EMSTATE_HALTED);
-
-        /* Need to set the MP state, so it can receive a SIPI. */
-        struct kvm_mp_state MpState = { KVM_MP_STATE_INIT_RECEIVED };
-        int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_MP_STATE, &MpState);
-        AssertLogRelMsgReturn(rcLnx == 0, ("rcLnx=%d errno=%d\n", rcLnx, errno), VERR_NEM_IPE_4);
     }
 
     return VINF_EM_RESCHEDULE;
@@ -2074,6 +2211,34 @@ VMMR3_INT_DECL(VBOXSTRICTRC) NEMR3RunGC(PVM pVM, PVMCPU pVCpu)
     {
         pVCpu->cpum.GstCtx.fExtrn = 0;
         STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatImportOnReturnSkipped);
+    }
+
+    /*
+     * Always set the appropriate EM state based on the MP state on our way out,
+     * so we have that reflected in a possible saved state.
+     */
+    struct kvm_mp_state MpState = {UINT32_MAX};
+    int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_GET_MP_STATE, &MpState);
+    if (!rcLnx)
+    {
+        EMSTATE enmState = EMSTATE_INVALID;
+        switch (MpState.mp_state)
+        {
+            case KVM_MP_STATE_RUNNABLE:      enmState = EMSTATE_NEM;    break;
+            case KVM_MP_STATE_HALTED:        enmState = EMSTATE_HALTED; break;
+            case KVM_MP_STATE_INIT_RECEIVED: enmState = EMSTATE_WAIT_SIPI; break;
+            default:
+                AssertLogRelMsgFailedBreakStmt(("Unexpected MP state %d received\n", MpState.mp_state),
+                                                rcStrict = VERR_NEM_IPE_6);
+        }
+
+        if (RT_SUCCESS(rcStrict))
+            EMSetState(pVCpu, enmState);
+    }
+    else
+    {
+        rcStrict = RTErrConvertFromErrno(errno);
+        LogRelMax(10, ("NEM/KVM#%u: Failed to query the MP state %Rrc (errno=%d)\n", VBOXSTRICTRC_VAL(rcStrict), errno));
     }
 
     LogFlow(("NEM/%u: %04x:%08RX64 efl=%#08RX64 => %Rrc\n", pVCpu->idCpu, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip,

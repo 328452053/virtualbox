@@ -1,4 +1,4 @@
-/* $Id: EMAll.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: EMAll.cpp 112731 2026-01-28 20:02:07Z alexander.eichner@oracle.com $ */
 /** @file
  * EM - Execution Monitor(/Manager) - All contexts
  */
@@ -66,6 +66,18 @@ VMM_INT_DECL(EMSTATE) EMGetState(PVMCPU pVCpu)
 
 
 /**
+ * Get the previous execution manager status.
+ *
+ * @returns Previous status.
+ * @param   pVCpu         The cross context virtual CPU structure.
+ */
+VMM_INT_DECL(EMSTATE) EMGetPrevState(PVMCPU pVCpu)
+{
+    return pVCpu->em.s.enmPrevState;
+}
+
+
+/**
  * Sets the current execution manager status. (use only when you know what you're doing!)
  *
  * @param   pVCpu       The cross context virtual CPU structure.
@@ -73,8 +85,12 @@ VMM_INT_DECL(EMSTATE) EMGetState(PVMCPU pVCpu)
  */
 VMM_INT_DECL(void)    EMSetState(PVMCPU pVCpu, EMSTATE enmNewState)
 {
-    /* Only allowed combination: */
-    Assert(pVCpu->em.s.enmState == EMSTATE_WAIT_SIPI && enmNewState == EMSTATE_HALTED);
+    /*
+     * Only allowed combination, except for NEM where we use it to set the
+     * state explicitely for saved state compatibility:
+     */
+    Assert(   VM_IS_NEM_ENABLED(pVCpu->CTX_SUFF(pVM))
+           || (pVCpu->em.s.enmState == EMSTATE_WAIT_SIPI && enmNewState == EMSTATE_HALTED));
     pVCpu->em.s.enmState = enmNewState;
 }
 

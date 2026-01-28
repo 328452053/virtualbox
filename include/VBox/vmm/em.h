@@ -110,6 +110,7 @@ AssertCompile(EMSTATE_HALTED == 6);
 AssertCompile(EMSTATE_WAIT_SIPI == 7);
 
 VMM_INT_DECL(EMSTATE)           EMGetState(PVMCPU pVCpu);
+VMM_INT_DECL(EMSTATE)           EMGetPrevState(PVMCPU pVCpu);
 VMM_INT_DECL(void)              EMSetState(PVMCPU pVCpu, EMSTATE enmNewState);
 VMMDECL(void)                   EMSetHypercallInstructionsEnabled(PVMCPU pVCpu, bool fEnabled);
 VMMDECL(bool)                   EMAreHypercallInstructionsEnabled(PVMCPU pVCpu);
