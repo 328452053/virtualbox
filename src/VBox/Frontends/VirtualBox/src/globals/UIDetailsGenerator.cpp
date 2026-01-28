@@ -1,4 +1,4 @@
-/* $Id: UIDetailsGenerator.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDetailsGenerator.cpp 112722 2026-01-28 10:39:03Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsGenerator implementation.
  */
@@ -108,10 +108,11 @@ UITextTable UIDetailsGenerator::generateMachineInformationGeneral(CMachine &comM
         /* Configure hovering anchor: */
         const QString strAnchorType = QString("machine_name");
         const QString strName = comMachine.GetName();
+        QString strAnchorName = strName;
+        strAnchorName.replace("<", "&lt;").replace(">", "&gt;");
         table << UITextTableLine(QApplication::translate("UIDetails", "Name", "details (general)"),
-                                 QString("<a href=#%1,%2>%2</a>")
-                                     .arg(strAnchorType,
-                                          strName));
+                                 QString("<a href=#%1,%2>%3</a>")
+                                     .arg(strAnchorType, strAnchorName, strName));
     }
 
     /* Operating system: */
@@ -133,11 +134,11 @@ UITextTable UIDetailsGenerator::generateMachineInformationGeneral(CMachine &comM
         /* Configure hovering anchor: */
         const QString strAnchorType = QString("machine_location");
         const QString strMachineLocation = comMachine.GetSettingsFilePath();
+        QString strAnchorName = strMachineLocation;
+        strAnchorName.replace("<", "&lt;").replace(">", "&gt;");
         table << UITextTableLine(QApplication::translate("UIDetails", "Settings File Location", "details (general)"),
                                  QString("<a href=#%1,%2>%3</a>")
-                                     .arg(strAnchorType,
-                                          strMachineLocation,
-                                          QDir::toNativeSeparators(QFileInfo(strMachineLocation).absolutePath())));
+                                     .arg(strAnchorType, strAnchorName, strMachineLocation));
     }
 
     /* Groups: */
@@ -196,7 +197,8 @@ UITextTable UIDetailsGenerator::generateMachineInformationGeneral(CCloudMachine 
                 continue;
 
             /* Acquire label: */
-            const QString strLabel = comIteratedValue.GetLabel();
+            QString strLabel = comIteratedValue.GetLabel();
+            strLabel.replace("<", "&lt;").replace(">", "&gt;");
             /* Generate value: */
             const QString strValue = generateFormValueInformation(comIteratedValue);
 
@@ -616,7 +618,8 @@ UITextTable UIDetailsGenerator::generateMachineInformationStorage(CMachine &comM
                 const QString strAnchorType = enmDeviceType == KDeviceType_DVD || enmDeviceType == KDeviceType_Floppy ? QString("mount") :
                     enmDeviceType == KDeviceType_HardDisk ? QString("attach") : QString();
                 const CMedium medium = attachment.GetMedium();
-                const QString strMediumLocation = medium.isNull() ? QString() : medium.GetLocation();
+                QString strMediumLocation = medium.isNull() ? QString() : medium.GetLocation();
+                strMediumLocation.replace("<", "&lt;").replace(">", "&gt;");
                 if (fLink)
                     attachmentsMap.insert(attachmentSlot,
                                           QString("<a href=#%1,%2,%3,%4>%5</a>")

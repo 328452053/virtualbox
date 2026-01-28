@@ -1,4 +1,4 @@
-/* $Id: UIDetailsElement.cpp 112700 2026-01-26 15:25:49Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsElement.cpp 112722 2026-01-28 10:39:03Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsElement class implementation.
  */
@@ -506,7 +506,10 @@ void UIDetailsElement::sltHandleAnchorClicked(const QString &strAnchor)
 
     /* Current anchor role: */
     const QString strRole = strAnchor.section(',', 0, 0);
-    const QString strData = strAnchor.section(',', 1);
+    QString strData = strAnchor.section(',', 1);
+
+    /* Hack anchor data, just for editor representation: */
+    strData.replace("&lt;", "<").replace("&gt;", ">");
 
     /* Handle known anchor roles: */
     const AnchorRole enmRole = roles.value(strRole, AnchorRole_Invalid);
