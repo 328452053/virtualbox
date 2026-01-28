@@ -1,4 +1,4 @@
-/* $Id: UIExtraDataDefs.h 112712 2026-01-27 11:13:50Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIExtraDataDefs.h 112723 2026-01-28 12:17:37Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - Extra-data related definitions.
  */
@@ -1184,6 +1184,10 @@ enum VMActivityOverviewColumn
     VMActivityOverviewColumn_DiskIOWriteRate,
     VMActivityOverviewColumn_DiskIOReadTotal,
     VMActivityOverviewColumn_DiskIOWriteTotal,
+    VMActivityOverviewColumn_USBReadRate,
+    VMActivityOverviewColumn_USBWriteRate,
+    VMActivityOverviewColumn_USBReadTotal,
+    VMActivityOverviewColumn_USBWriteTotal,
     VMActivityOverviewColumn_VMExits,
     VMActivityOverviewColumn_Max
 };

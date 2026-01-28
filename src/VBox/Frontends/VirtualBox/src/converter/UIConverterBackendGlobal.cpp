@@ -1,4 +1,4 @@
-/* $Id: UIConverterBackendGlobal.cpp 112712 2026-01-27 11:13:50Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIConverterBackendGlobal.cpp 112723 2026-01-28 12:17:37Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIConverterBackendGlobal implementation.
  */
@@ -2854,20 +2854,24 @@ template<> SHARED_LIBRARY_STUFF QString UIConverter::toInternalString(const VMAc
     QString strResult;
     switch (enmVMActivityOverviewColumn)
     {
-        case VMActivityOverviewColumn_Name:              strResult = "VMName"; break;
-        case VMActivityOverviewColumn_CPUGuestLoad:      strResult = "CPUGuestLoad"; break;
-        case VMActivityOverviewColumn_CPUVMMLoad:        strResult = "CPUVMMLoad"; break;
-        case VMActivityOverviewColumn_RAMUsedAndTotal:   strResult = "RAMUsedAndTotal"; break;
-        case VMActivityOverviewColumn_RAMUsedPercentage: strResult = "RAMUsedPercentage"; break;
-        case VMActivityOverviewColumn_NetworkTransmitRate:     strResult = "NetworkTransmitRate"; break;
+        case VMActivityOverviewColumn_Name:                 strResult = "VMName"; break;
+        case VMActivityOverviewColumn_CPUGuestLoad:         strResult = "CPUGuestLoad"; break;
+        case VMActivityOverviewColumn_CPUVMMLoad:           strResult = "CPUVMMLoad"; break;
+        case VMActivityOverviewColumn_RAMUsedAndTotal:      strResult = "RAMUsedAndTotal"; break;
+        case VMActivityOverviewColumn_RAMUsedPercentage:    strResult = "RAMUsedPercentage"; break;
+        case VMActivityOverviewColumn_NetworkTransmitRate:  strResult = "NetworkTransmitRate"; break;
         case VMActivityOverviewColumn_NetworkReceiveRate:   strResult = "NetworkReceiveRate"; break;
-        case VMActivityOverviewColumn_NetworkTransmitTotal:    strResult = "NetworkTransmitTotal"; break;
+        case VMActivityOverviewColumn_NetworkTransmitTotal: strResult = "NetworkTransmitTotal"; break;
         case VMActivityOverviewColumn_NetworkReceiveTotal:  strResult = "NetworkReceiveTotal"; break;
-        case VMActivityOverviewColumn_DiskIOReadRate:    strResult = "DiskIOReadRate"; break;
-        case VMActivityOverviewColumn_DiskIOWriteRate:   strResult = "DiskIOWriteRate"; break;
-        case VMActivityOverviewColumn_DiskIOReadTotal:   strResult = "DiskIOReadTotal"; break;
-        case VMActivityOverviewColumn_DiskIOWriteTotal:  strResult = "DiskIOWriteTotal"; break;
-        case VMActivityOverviewColumn_VMExits:           strResult = "VMExits"; break;
+        case VMActivityOverviewColumn_DiskIOReadRate:       strResult = "DiskIOReadRate"; break;
+        case VMActivityOverviewColumn_DiskIOWriteRate:      strResult = "DiskIOWriteRate"; break;
+        case VMActivityOverviewColumn_DiskIOReadTotal:      strResult = "DiskIOReadTotal"; break;
+        case VMActivityOverviewColumn_DiskIOWriteTotal:     strResult = "DiskIOWriteTotal"; break;
+        case VMActivityOverviewColumn_USBReadRate:          strResult = "USBReadRate"; break;
+        case VMActivityOverviewColumn_USBWriteRate:         strResult = "USBWriteRate"; break;
+        case VMActivityOverviewColumn_USBReadTotal:         strResult = "USBReadTotal"; break;
+        case VMActivityOverviewColumn_USBWriteTotal:        strResult = "USBWriteTotal"; break;
+        case VMActivityOverviewColumn_VMExits:              strResult = "VMExits"; break;
         default:
             {
                 AssertMsgFailed(("No text for VM Activity Overview Column=%d", enmVMActivityOverviewColumn));
@@ -2906,6 +2910,14 @@ template<> SHARED_LIBRARY_STUFF VMActivityOverviewColumn UIConverter::fromIntern
         return VMActivityOverviewColumn_DiskIOReadTotal;
     if (strVMActivityOverviewColumn.compare("DiskIOWriteTotal", Qt::CaseInsensitive) == 0)
         return VMActivityOverviewColumn_DiskIOWriteTotal;
+    if (strVMActivityOverviewColumn.compare("USBReadRate", Qt::CaseInsensitive) == 0)
+        return VMActivityOverviewColumn_USBReadRate;
+    if (strVMActivityOverviewColumn.compare("USBWriteRate", Qt::CaseInsensitive) == 0)
+        return VMActivityOverviewColumn_USBWriteRate;
+    if (strVMActivityOverviewColumn.compare("USBReadTotal", Qt::CaseInsensitive) == 0)
+        return VMActivityOverviewColumn_USBReadTotal;
+    if (strVMActivityOverviewColumn.compare("USBWriteTotal", Qt::CaseInsensitive) == 0)
+        return VMActivityOverviewColumn_USBWriteTotal;
     if (strVMActivityOverviewColumn.compare("VMExits", Qt::CaseInsensitive) == 0)
         return VMActivityOverviewColumn_VMExits;
     return VMActivityOverviewColumn_Max;

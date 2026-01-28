@@ -1,4 +1,4 @@
-/* $Id: UIVMActivityOverviewWidget.cpp 112712 2026-01-27 11:13:50Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIVMActivityOverviewWidget.cpp 112723 2026-01-28 12:17:37Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMActivityOverviewWidget class implementation.
  */
@@ -1057,14 +1057,18 @@ void UIVMActivityOverviewWidget::sltRetranslateUI()
     m_columnTitles[VMActivityOverviewColumn_CPUVMMLoad] = UIVMActivityOverviewWidget::tr("CPU VMM");
     m_columnTitles[VMActivityOverviewColumn_RAMUsedAndTotal] = UIVMActivityOverviewWidget::tr("RAM Used/Total");
     m_columnTitles[VMActivityOverviewColumn_RAMUsedPercentage] = UIVMActivityOverviewWidget::tr("RAM %");
-    m_columnTitles[VMActivityOverviewColumn_NetworkTransmitRate] = UIVMActivityOverviewWidget::tr("Network Upload Rate");
-    m_columnTitles[VMActivityOverviewColumn_NetworkReceiveRate] = UIVMActivityOverviewWidget::tr("Network Download Rate");
-    m_columnTitles[VMActivityOverviewColumn_NetworkTransmitTotal] = UIVMActivityOverviewWidget::tr("Network Upload Total");
-    m_columnTitles[VMActivityOverviewColumn_NetworkReceiveTotal] = UIVMActivityOverviewWidget::tr("Network Download Total");
+    m_columnTitles[VMActivityOverviewColumn_NetworkTransmitRate] = UIVMActivityOverviewWidget::tr("Network Transmit Rate");
+    m_columnTitles[VMActivityOverviewColumn_NetworkReceiveRate] = UIVMActivityOverviewWidget::tr("Network Receive Rate");
+    m_columnTitles[VMActivityOverviewColumn_NetworkTransmitTotal] = UIVMActivityOverviewWidget::tr("Network Transmit Total");
+    m_columnTitles[VMActivityOverviewColumn_NetworkReceiveTotal] = UIVMActivityOverviewWidget::tr("Network Receive Total");
     m_columnTitles[VMActivityOverviewColumn_DiskIOReadRate] = UIVMActivityOverviewWidget::tr("Disk Read Rate");
     m_columnTitles[VMActivityOverviewColumn_DiskIOWriteRate] = UIVMActivityOverviewWidget::tr("Disk Write Rate");
     m_columnTitles[VMActivityOverviewColumn_DiskIOReadTotal] = UIVMActivityOverviewWidget::tr("Disk Read Total");
     m_columnTitles[VMActivityOverviewColumn_DiskIOWriteTotal] = UIVMActivityOverviewWidget::tr("Disk Write Total");
+    m_columnTitles[VMActivityOverviewColumn_USBReadRate] = UIVMActivityOverviewWidget::tr("USB Read Rate");
+    m_columnTitles[VMActivityOverviewColumn_USBWriteRate] = UIVMActivityOverviewWidget::tr("USB Write Rate");
+    m_columnTitles[VMActivityOverviewColumn_USBReadTotal] = UIVMActivityOverviewWidget::tr("USB Read Total");
+    m_columnTitles[VMActivityOverviewColumn_USBWriteTotal] = UIVMActivityOverviewWidget::tr("USB Write Total");
     m_columnTitles[VMActivityOverviewColumn_VMExits] = UIVMActivityOverviewWidget::tr("VM Exits");
 
     updateColumnsMenu();
