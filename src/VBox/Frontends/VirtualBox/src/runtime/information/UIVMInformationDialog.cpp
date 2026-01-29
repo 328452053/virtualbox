@@ -1,4 +1,4 @@
-/* $Id: UIVMInformationDialog.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVMInformationDialog.cpp 112755 2026-01-29 16:40:20Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMInformationDialog class implementation.
  */
@@ -55,7 +55,7 @@
 #include "VBoxUtils.h"
 
 UIVMInformationDialog::UIVMInformationDialog(UIActionPool *pActionPool)
-    : QMainWindowWithRestorableGeometry(0)
+    : QIMainWindow(0)
     , m_pTabWidget(0)
     , m_fCloseEmitted(false)
     , m_iGeometrySaveTimerId(-1)
@@ -130,7 +130,7 @@ bool UIVMInformationDialog::event(QEvent *pEvent)
         default:
             break;
     }
-    return QMainWindowWithRestorableGeometry::event(pEvent);
+    return QIMainWindow::event(pEvent);
 }
 
 void UIVMInformationDialog::sltHandlePageChanged(int iIndex)
