@@ -1,4 +1,4 @@
-/* $Id: HostImpl.cpp 112681 2026-01-25 16:48:09Z alexander.eichner@oracle.com $ */
+/* $Id: HostImpl.cpp 112738 2026-01-29 09:33:31Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox COM class implementation: Host
  */
@@ -4290,6 +4290,12 @@ BOOL Host::i_HostIsNativeApiSupported()
         return FALSE;
     if (cMaxHyperLeaf >= UINT32_C(0x40000005))
         return TRUE;
+#  elif defined(RT_ARCH_ARM64)
+    /** @todo would be great if we could recognize a root partition from the
+     *        CPUID info, but I currently don't dare do that. Just assume that
+     *        it is supported if running on ARM, all hardware supported by Windows/ARM
+     *        seems to support that after all. */
+    return TRUE;
 #  endif
 # elif defined(RT_OS_LINUX)
     int fdKvm = open("/dev/kvm", O_RDWR | O_CLOEXEC);
