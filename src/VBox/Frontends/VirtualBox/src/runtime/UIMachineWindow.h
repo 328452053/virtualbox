@@ -1,4 +1,4 @@
-/* $Id: UIMachineWindow.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineWindow.h 112763 2026-01-30 11:00:45Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineWindow class declaration.
  */
@@ -161,7 +161,7 @@ protected:
     virtual void prepareMenu() {}
     virtual void prepareStatusBar() {}
     virtual void prepareMachineView();
-    virtual void prepareNotificationCenter();
+    virtual void prepareNotificationCenter() {}
     virtual void prepareVisualState() {}
     virtual void prepareHandlers();
     virtual void loadSettings() {}
@@ -170,7 +170,7 @@ protected:
     virtual void saveSettings() {}
     virtual void cleanupHandlers();
     virtual void cleanupVisualState() {}
-    virtual void cleanupNotificationCenter();
+    virtual void cleanupNotificationCenter() {}
     virtual void cleanupMachineView();
     virtual void cleanupStatusBar() {}
     virtual void cleanupMenu() {}

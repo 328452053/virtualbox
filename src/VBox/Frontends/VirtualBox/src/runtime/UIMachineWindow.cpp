@@ -1,4 +1,4 @@
-/* $Id: UIMachineWindow.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineWindow.cpp 112763 2026-01-30 11:00:45Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineWindow class implementation.
  */
@@ -107,7 +107,7 @@ void UIMachineWindow::prepare()
     /* Prepare dialog itself: */
     prepareSelf();
 
-    /* Prepare session-connections: */
+    /* Prepare session connections: */
     prepareSessionConnections();
 
     /* Prepare main-layout: */
@@ -595,11 +595,6 @@ void UIMachineWindow::prepareMachineView()
     setFocusProxy(m_pMachineView);
 }
 
-void UIMachineWindow::prepareNotificationCenter()
-{
-    // for now it will be added from within particular visual mode windows ..
-}
-
 void UIMachineWindow::prepareHandlers()
 {
     /* Register keyboard-handler: */
@@ -616,11 +611,6 @@ void UIMachineWindow::cleanupHandlers()
 
     /* Unregister keyboard-handler: */
     machineLogic()->keyboardHandler()->cleanupListener(m_uScreenId);
-}
-
-void UIMachineWindow::cleanupNotificationCenter()
-{
-    // for now it will be removed from within particular visual mode windows ..
 }
 
 void UIMachineWindow::cleanupMachineView()
