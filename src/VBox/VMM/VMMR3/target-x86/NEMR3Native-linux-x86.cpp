@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112770 2026-01-30 14:34:35Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112771 2026-01-30 16:30:17Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -151,6 +151,39 @@ static int nemR3LnxInitSetupVm(PVM pVM, PRTERRINFO pErrInfo)
         /* We want all x86 registers and events on each exit. */
         pVCpu->nem.s.pRun->kvm_valid_regs = KVM_SYNC_X86_REGS | KVM_SYNC_X86_SREGS | KVM_SYNC_X86_EVENTS;
     }
+    return VINF_SUCCESS;
+}
+
+
+/**
+ * Queries a single MSR.
+ *
+ * @returns VBox status code.
+ * @param   pVCpu       The cross context CPU structure.
+ * @param   idMsr       The MSR to query.
+ * @param   pu64        Where to return the data on success.
+ */
+static int nemR3LnxMsrQueryOne(PVMCPU pVCpu, uint32_t idMsr, uint64_t *pu64)
+{
+    union
+    {
+        struct kvm_msrs Core;
+        uint64_t padding[2 + sizeof(struct kvm_msr_entry)];
+    } uBuf;
+
+    uBuf.Core.entries[0].index    = idMsr;
+    uBuf.Core.entries[0].reserved = 0;
+    uBuf.Core.entries[0].data     = UINT64_MAX;
+
+    uBuf.Core.pad   = 0;
+    uBuf.Core.nmsrs = 1;
+    int rc = ioctl(pVCpu->nem.s.fdVCpu, KVM_GET_MSRS, &uBuf);
+    AssertMsgReturn(rc == 1,
+                    ("rc=%d iMsr=%d (->%#x) errno=%d\n",
+                     rc, 1, (uint32_t)rc < 1 ? uBuf.Core.entries[rc].index : 0, errno),
+                    VERR_NEM_IPE_3);
+
+    *pu64 = uBuf.Core.entries[0].data;
     return VINF_SUCCESS;
 }
 
@@ -371,13 +404,21 @@ DECLHIDDEN(int) nemR3NativeInitCompletedRing3(PVM pVM)
         return VMSetError(pVM, VERR_NEM_VM_CREATE_FAILED, RT_SRC_POS,
                           "Failed to enable KVM_X86_SET_MSR_FILTER failed: %u", errno);
 
-    /* Need to set the MP state for all APs when the in-kernel APIC is used, so it can receive a SIPI. */
-    if (pVM->nem.s.fKvmApic)
+    /* Init som per vCPU things. */
+    for (VMCPUID idCpu = 1; idCpu < pVM->cCpus; idCpu++)
     {
-        for (VMCPUID idCpu = 1; idCpu < pVM->cCpus; idCpu++)
-        {
-            PVMCPU pVCpu = pVM->apCpusR3[idCpu];
+        PVMCPU pVCpu = pVM->apCpusR3[idCpu];
 
+        /* Query MSR_IA32_MTRR_CAP to know how many variable MTRRs KVM supports. */
+        uint64_t u64MsrMtrrCap = 0;
+        int rc = nemR3LnxMsrQueryOne(pVCpu, MSR_IA32_MTRR_CAP, &u64MsrMtrrCap);
+        AssertRCReturn(rc, rc);
+
+        pVCpu->nem.s.cVarMtrrs = u64MsrMtrrCap & MSR_IA32_MTRR_CAP_VCNT_MASK;
+
+        /* Need to set the MP state for all APs when the in-kernel APIC is used, so it can receive a SIPI. */
+        if (pVM->nem.s.fKvmApic)
+        {
             struct kvm_mp_state MpState = { KVM_MP_STATE_INIT_RECEIVED };
             rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_MP_STATE, &MpState);
             AssertLogRelMsgReturn(rcLnx == 0, ("rcLnx=%d errno=%d\n", rcLnx, errno), VERR_NEM_IPE_4);
@@ -1045,13 +1086,13 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx, struct kvm_
         union
         {
             struct kvm_msrs Core;
-            uint64_t padding[2 + sizeof(struct kvm_msr_entry) * 32];
+            uint64_t padding[2 + sizeof(struct kvm_msr_entry) * 64];
         }                   uBuf;
         uint32_t            iMsr     = 0;
         PCPUMCTXMSRS const  pCtxMsrs = CPUMQueryGuestCtxMsrsPtr(pVCpu);
 
 #define ADD_MSR(a_Msr, a_uValue) do { \
-            Assert(iMsr < 32); \
+            Assert(iMsr < 64); \
             uBuf.Core.entries[iMsr].index    = (a_Msr); \
             uBuf.Core.entries[iMsr].reserved = 0; \
             uBuf.Core.entries[iMsr].data     = (a_uValue); \
@@ -1078,8 +1119,32 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx, struct kvm_
         if (fExtrn & CPUMCTX_EXTRN_OTHER_MSRS)
         {
             ADD_MSR(MSR_IA32_CR_PAT, pCtx->msrPAT);
+
+            if (pVM->cpum.ro.GuestFeatures.fMtrr)
+            {
+                /*ADD_MSR(MSR_IA32_MTRR_CAP,          pCtxMsrs->msr.MtrrCap); Not writable */
+                ADD_MSR(MSR_IA32_MTRR_DEF_TYPE,     pCtxMsrs->msr.MtrrDefType);
+                ADD_MSR(MSR_IA32_MTRR_FIX64K_00000, pCtxMsrs->msr.MtrrFix64K_00000);
+                ADD_MSR(MSR_IA32_MTRR_FIX16K_80000, pCtxMsrs->msr.MtrrFix16K_80000);
+                ADD_MSR(MSR_IA32_MTRR_FIX16K_A0000, pCtxMsrs->msr.MtrrFix16K_A0000);
+                ADD_MSR(MSR_IA32_MTRR_FIX4K_C0000,  pCtxMsrs->msr.MtrrFix4K_C0000);
+                ADD_MSR(MSR_IA32_MTRR_FIX4K_C8000,  pCtxMsrs->msr.MtrrFix4K_C8000);
+                ADD_MSR(MSR_IA32_MTRR_FIX4K_D0000,  pCtxMsrs->msr.MtrrFix4K_D0000);
+                ADD_MSR(MSR_IA32_MTRR_FIX4K_D8000,  pCtxMsrs->msr.MtrrFix4K_D8000);
+                ADD_MSR(MSR_IA32_MTRR_FIX4K_E0000,  pCtxMsrs->msr.MtrrFix4K_E0000);
+                ADD_MSR(MSR_IA32_MTRR_FIX4K_E8000,  pCtxMsrs->msr.MtrrFix4K_E8000);
+                ADD_MSR(MSR_IA32_MTRR_FIX4K_F0000,  pCtxMsrs->msr.MtrrFix4K_F0000);
+                ADD_MSR(MSR_IA32_MTRR_FIX4K_F8000,  pCtxMsrs->msr.MtrrFix4K_F8000);
+
+                for (uint8_t i = 0; i < pVCpu->nem.s.cVarMtrrs; i++)
+                {
+                    ADD_MSR(MSR_IA32_MTRR_PHYSBASE0 + (2 * i), pCtxMsrs->msr.aMtrrVarMsrs[i].MtrrPhysBase);
+                    ADD_MSR(MSR_IA32_MTRR_PHYSMASK0 + (2 * i), pCtxMsrs->msr.aMtrrVarMsrs[i].MtrrPhysMask);
+                }
+            }
+
             /** @todo What do we _have_ to add here?
-             * We also have: Mttr*, MiscEnable, FeatureControl. */
+             * We also have: MiscEnable, FeatureControl. */
         }
 
         uBuf.Core.pad   = 0;

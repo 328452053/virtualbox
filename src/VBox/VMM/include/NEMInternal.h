@@ -1,4 +1,4 @@
-/* $Id: NEMInternal.h 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
+/* $Id: NEMInternal.h 112771 2026-01-30 16:30:17Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Internal header file.
  */
@@ -470,6 +470,8 @@ typedef struct NEMCPU
 # elif defined(VBOX_VMM_TARGET_X86)
     /** The MSR_IA32_APICBASE value known to KVM. */
     uint64_t                    uKvmApicBase;
+    /** The number of variable MTRRs KVM supports, returned from MSR_IA32_MTRR_CAP. */
+    uint8_t                     cVarMtrrs;
 # endif
 
     /** @name Statistics
