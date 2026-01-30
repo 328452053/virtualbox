@@ -1,4 +1,4 @@
-/* $Id: UIMachineWindow.cpp 112763 2026-01-30 11:00:45Z sergey.dubov@oracle.com $ */
+/* $Id: UIMachineWindow.cpp 112765 2026-01-30 11:10:06Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineWindow class implementation.
  */
@@ -128,6 +128,9 @@ void UIMachineWindow::prepare()
     /* Prepare notification-center: */
     prepareNotificationCenter();
 
+    /* Prepare other connections: */
+    prepareOtherConnections();
+
     /* Prepare handlers: */
     prepareHandlers();
 
@@ -166,6 +169,9 @@ void UIMachineWindow::cleanup()
 
     /* Cleanup handlers: */
     cleanupHandlers();
+
+    /* Cleanup other connections: */
+    cleanupOtherConnections();
 
     /* Cleanup visual-state: */
     cleanupVisualState();

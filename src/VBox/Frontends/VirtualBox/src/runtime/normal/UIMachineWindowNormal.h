@@ -1,4 +1,4 @@
-/* $Id: UIMachineWindowNormal.h 112764 2026-01-30 11:05:32Z sergey.dubov@oracle.com $ */
+/* $Id: UIMachineWindowNormal.h 112765 2026-01-30 11:10:06Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineWindowNormal class declaration.
  */
@@ -78,6 +78,9 @@ private slots:
     void sltActionHovered(UIAction *pAction);
 #endif /* VBOX_WS_MAC */
 
+    /** Handles request to commit data. */
+    void sltHandleCommitData();
+
 private:
 
 #ifndef VBOX_WS_MAC
@@ -88,6 +91,8 @@ private:
     void prepareStatusBar() RT_OVERRIDE;
     /** Prepare notification-center routine. */
     void prepareNotificationCenter() RT_OVERRIDE;
+    /** Prepare notification-center routine. */
+    void prepareOtherConnections() RT_OVERRIDE;
     /** Prepare visual-state routine. */
     void prepareVisualState() RT_OVERRIDE;
     /** Load settings routine. */
