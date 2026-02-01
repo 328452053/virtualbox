@@ -299,12 +299,14 @@ typedef enum CPUMMICROARCH
     kCpumMicroarch_Apple_End,
 
     kCpumMicroarch_Qualcomm_First,
-    kCpumMicroarch_Qualcomm_Kyro = kCpumMicroarch_Qualcomm_First,
+    kCpumMicroarch_Qualcomm_Kyro = kCpumMicroarch_Qualcomm_First,   /**< Just kCpumMicroarch_Arm_Hercules/Hera? */
     kCpumMicroarch_Qualcomm_Oryon,
     kCpumMicroarch_Qualcomm_End,
 
     kCpumMicroarch_Arm_First,
-    kCpumMicroarch_Arm_Chaberton = kCpumMicroarch_Arm_First,    /**< ARM Cortex-A725 */
+    kCpumMicroarch_Arm_Hercules  = kCpumMicroarch_Arm_First,    /**< ARM Cortex-A78 */
+    kCpumMicroarch_Arm_Hera,                                    /**< ARM Cortex-X1 */
+    kCpumMicroarch_Arm_Chaberton,                               /**< ARM Cortex-A725 */
     kCpumMicroarch_Arm_Blackhawk,                               /**< ARM Cortex-A925 */
     kCpumMicroarch_Arm_End,
 
