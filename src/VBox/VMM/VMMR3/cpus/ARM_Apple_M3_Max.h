@@ -1,7 +1,7 @@
-/* $Id: ARM_Apple_M3_Max.h 112714 2026-01-27 13:33:55Z knut.osmundsen@oracle.com $ */
+/* $Id: ARM_Apple_M3_Max.h 112776 2026-02-01 01:39:09Z knut.osmundsen@oracle.com $ */
 /** @file
  * CPU database entry "Apple M3 Max".
- * Generated at 2025-05-02T20:19:41Z by VBoxCpuReport v7.1.97r168686 on darwin.arm64.
+ * Generated at 2026-02-01T01:34:33Z by VBoxCpuReport v7.2.97r172494 on darwin.arm64.
  */
 
 /*
@@ -42,15 +42,15 @@ static SUPARMSYSREGVAL const g_aCmnSysRegVals_ARM_Apple_M3_Max[] =
     { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 0, 6), 0x0 }, /* REVIDR_EL1 */
     { UINT64_C(0x1101000010110111), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 4, 0), 0x0 }, /* ID_AA64PFR0_EL1 */
     { UINT64_C(0x0000000100000021), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 4, 1), 0x0 }, /* ID_AA64PFR1_EL1 */
-    { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 4, 2), 0x0 },
+    { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 4, 2), 0x0 }, /* ID_AA64PFR2_EL1 */
     { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 4, 3), 0x0 },
     { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 4, 4), 0x0 }, /* ID_AA64ZFR0_EL1 */
     { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 4, 5), 0x0 }, /* ID_AA64SMFR0_EL1 */
     { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 4, 6), 0x0 },
-    { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 4, 7), 0x0 },
+    { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 4, 7), 0x0 }, /* ID_AA64FPFR0_EL1 */
     { UINT64_C(0x0000000010305f09), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 5, 0), 0x0 }, /* ID_AA64DFR0_EL1 */
     { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 5, 1), 0x0 }, /* ID_AA64DFR1_EL1 */
-    { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 5, 2), 0x0 },
+    { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 5, 2), 0x0 }, /* ID_AA64DFR2_EL1 */
     { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 5, 3), 0x0 },
     { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 5, 4), 0x0 }, /* ID_AA64AFR0_EL1 */
     { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 5, 5), 0x0 }, /* ID_AA64AFR1_EL1 */
@@ -75,6 +75,7 @@ static SUPARMSYSREGVAL const g_aCmnSysRegVals_ARM_Apple_M3_Max[] =
     { UINT64_C(0x0000000000000000), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 5, 3, 0), 0x0 }, /* ERRIDR_EL1 */
     { UINT64_C(0x0000000081000023), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 1, 0, 0, 1), 0x0 }, /* CLIDR_EL1 */
     { UINT64_C(0x000000016a695797), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 1, 0, 0, 7), 0x0 }, /* AIDR_EL1 */
+    { UINT64_C(0x000000009444c004), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 3, 0, 0, 1), 0x0 }, /* CTR_EL0 */
     { UINT64_C(0x0000000000000004), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 3, 0, 0, 7), 0x0 }, /* DCZID_EL0 */
     { UINT64_C(0x00000000016e3600), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 3,14, 0, 0), 0x0 }, /* CNTFRQ_EL0 */
 };
@@ -87,7 +88,18 @@ static SUPARMSYSREGVAL const g_aCmnSysRegVals_ARM_Apple_M3_Max[] =
 static SUPARMSYSREGVAL const g_aVar0SysRegVals_ARM_Apple_M3_Max[] =
 {
     { UINT64_C(0x00000000611f0482), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 0, 0), 0x0 }, /* MIDR_EL1 */
-    { UINT64_C(0x00000000700fe03a), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 1, 0, 0, 0), 0x0 }, /* CCSIDR_EL1 */
+};
+
+
+/**
+ * System register values for Apple M3 Max (Sawtooth), variation #0.
+ * 4 CPUs shares this variant: 0, 1, 2, 3
+ */
+static SUPARMCACHELEVEL const g_aVar0CacheEntries_ARM_Apple_M3_Max[] =
+{
+    { 0x00, {0,0,0}, 0, UINT64_C(0x0000700fe03a), UINT64_MAX }, /* CSSEL=L0-data cbLine=64  cSets=128   Asc=8  (64 KiB) */
+    { 0x01, {0,0,0}, 0, UINT64_C(0x0000203fe01a), UINT64_MAX }, /* CSSEL=L0-inst cbLine=64  cSets=512   Asc=4  (128 KiB) */
+    { 0x02, {0,0,0}, 0, UINT64_C(0x000070ffe07b), UINT64_MAX }, /* CSSEL=L1-unif cbLine=128 cSets=2048  Asc=16 (4 MiB) */
 };
 
 
@@ -98,7 +110,18 @@ static SUPARMSYSREGVAL const g_aVar0SysRegVals_ARM_Apple_M3_Max[] =
 static SUPARMSYSREGVAL const g_aVar1SysRegVals_ARM_Apple_M3_Max[] =
 {
     { UINT64_C(0x00000000611f0492), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 0, 0, 0, 0), 0x0 }, /* MIDR_EL1 */
-    { UINT64_C(0x00000000701fe03a), ARMV8_AARCH64_SYSREG_ID_CREATE(3, 1, 0, 0, 0), 0x0 }, /* CCSIDR_EL1 */
+};
+
+
+/**
+ * System register values for Apple M3 Max (Everest), variation #1.
+ * 12 CPUs shares this variant: 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+ */
+static SUPARMCACHELEVEL const g_aVar1CacheEntries_ARM_Apple_M3_Max[] =
+{
+    { 0x00, {0,0,0}, 0, UINT64_C(0x0000701fe03a), UINT64_MAX }, /* CSSEL=L0-data cbLine=64  cSets=256   Asc=8  (128 KiB) */
+    { 0x01, {0,0,0}, 0, UINT64_C(0x0000203fe02a), UINT64_MAX }, /* CSSEL=L0-inst cbLine=64  cSets=512   Asc=6  (192 KiB) */
+    { 0x02, {0,0,0}, 0, UINT64_C(0x000073ffe07b), UINT64_MAX }, /* CSSEL=L1-unif cbLine=128 cSets=8192  Asc=16 (16 MiB) */
 };
 
 
@@ -138,8 +161,11 @@ static CPUMDBENTRYARM const g_Entry_ARM_Apple_M3_Max =
             /*.cSysRegVals    = */ ZERO_ALONE(RT_ELEMENTS(g_aVar0SysRegVals_ARM_Apple_M3_Max)),
             /*.paSysRegVals   = */ NULL_ALONE(g_aVar0SysRegVals_ARM_Apple_M3_Max),
             /*.uUnused        = */ 0,
-            /*.cCacheEntries  = */ 0,
-            /*.paCacheEntries = */ NULL,
+            /*.cCacheEntries  = */ ZERO_ALONE(RT_ELEMENTS(g_aVar0CacheEntries_ARM_Apple_M3_Max)),
+            /*.paCacheEntries = */ NULL_ALONE(g_aVar0CacheEntries_ARM_Apple_M3_Max)
+            /* info: CLIDR_EL1  = 0x81000023 - L1=i&d L2=unified */
+            /* info: CTR_EL0    = 0x9444c004 */
+            /* info: DCZID_EL0: = 0x4 */
         },
         /*.Variants[1] = */
         {
@@ -159,8 +185,11 @@ static CPUMDBENTRYARM const g_Entry_ARM_Apple_M3_Max =
             /*.cSysRegVals    = */ ZERO_ALONE(RT_ELEMENTS(g_aVar1SysRegVals_ARM_Apple_M3_Max)),
             /*.paSysRegVals   = */ NULL_ALONE(g_aVar1SysRegVals_ARM_Apple_M3_Max),
             /*.uUnused        = */ 0,
-            /*.cCacheEntries  = */ 0,
-            /*.paCacheEntries = */ NULL,
+            /*.cCacheEntries  = */ ZERO_ALONE(RT_ELEMENTS(g_aVar1CacheEntries_ARM_Apple_M3_Max)),
+            /*.paCacheEntries = */ NULL_ALONE(g_aVar1CacheEntries_ARM_Apple_M3_Max)
+            /* info: CLIDR_EL1  = 0x81000023 - L1=i&d L2=unified */
+            /* info: CTR_EL0    = 0x9444c004 */
+            /* info: DCZID_EL0: = 0x4 */
         },
     }
 };
