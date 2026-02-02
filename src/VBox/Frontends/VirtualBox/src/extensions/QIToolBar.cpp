@@ -1,4 +1,4 @@
-/* $Id: QIToolBar.cpp 112409 2026-01-12 14:14:27Z sergey.dubov@oracle.com $ */
+/* $Id: QIToolBar.cpp 112782 2026-02-02 16:11:00Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - QIToolBar class implementation.
  */
@@ -36,7 +36,7 @@
 #include "QIToolBar.h"
 #include "UICommon.h"
 #ifdef VBOX_WS_MAC
-# include "VBoxUtils.h"
+# include "VBoxUtils-darwin.h"
 #endif
 
 

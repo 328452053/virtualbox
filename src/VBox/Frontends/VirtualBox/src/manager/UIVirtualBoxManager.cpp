@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.cpp 112762 2026-01-29 17:10:41Z sergey.dubov@oracle.com $ */
+/* $Id: UIVirtualBoxManager.cpp 112782 2026-02-02 16:11:00Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class implementation.
  */
@@ -100,7 +100,7 @@
 # include "UIImageTools.h"
 # include "UIWindowMenuManager.h"
 # include "UIVersion.h"
-# include "VBoxUtils.h"
+# include "VBoxUtils-darwin.h"
 #else
 # include "UIMenuBar.h"
 #endif

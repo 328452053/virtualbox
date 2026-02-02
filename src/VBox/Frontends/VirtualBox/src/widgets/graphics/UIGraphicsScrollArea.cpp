@@ -1,4 +1,4 @@
-/* $Id: UIGraphicsScrollArea.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIGraphicsScrollArea.cpp 112782 2026-02-02 16:11:00Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIGraphicsScrollArea class implementation.
  */
@@ -33,7 +33,7 @@
 #include "UIGraphicsScrollArea.h"
 #include "UIGraphicsScrollBar.h"
 #ifdef VBOX_WS_MAC
-# include "VBoxUtils.h"
+# include "VBoxUtils-darwin.h"
 #endif
 
 

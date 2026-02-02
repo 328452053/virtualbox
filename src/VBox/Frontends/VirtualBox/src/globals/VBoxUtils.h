@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxUtils.h 112782 2026-02-02 16:11:00Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Declarations of utility classes and functions.
  */
@@ -38,9 +38,6 @@
 
 /* GUI includes: */
 #include "UILibraryDefs.h"
-#ifdef VBOX_WS_MAC
-# include "VBoxUtils-darwin.h"
-#endif
 
 
 /** QObject subclass,

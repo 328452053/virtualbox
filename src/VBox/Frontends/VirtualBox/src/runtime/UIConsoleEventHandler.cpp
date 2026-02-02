@@ -1,4 +1,4 @@
-/* $Id: UIConsoleEventHandler.cpp 112641 2026-01-19 13:59:27Z sergey.dubov@oracle.com $ */
+/* $Id: UIConsoleEventHandler.cpp 112782 2026-02-02 16:11:00Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIConsoleEventHandler class implementation.
  */
@@ -33,7 +33,7 @@
 #include "UIMousePointerShapeData.h"
 #include "UISession.h"
 #ifdef VBOX_WS_MAC
-# include "VBoxUtils.h"
+# include "VBoxUtils-darwin.h"
 #endif
 
 /* COM includes: */
