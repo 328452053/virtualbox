@@ -1,4 +1,4 @@
-/* $Id: UICocoaApplication.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UICocoaApplication.h 112783 2026-02-02 16:11:44Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UICocoaApplication class declaration.
  */
@@ -35,7 +35,6 @@
 #include <QMap>
 
 /* GUI includes: */
-#include "VBoxCocoaHelper.h"
 #include "VBoxUtils-darwin.h"
 #include "UILibraryDefs.h"
 
