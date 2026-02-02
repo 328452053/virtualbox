@@ -1,4 +1,4 @@
-/* $Id: NetIf-linux.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: NetIf-linux.cpp 112794 2026-02-02 23:21:37Z knut.osmundsen@oracle.com $ */
 /** @file
  * Main - NetIfList, Linux implementation.
  */
@@ -154,16 +154,19 @@ static int getInterfaceInfo(int iSocket, const char *pszName, PNETIFINFO pInfo)
                 pInfo->enmMediumType = NETIF_T_UNKNOWN;
                 break;
         }
-        /* Generate UUID from name and MAC address. */
+
+        memcpy(&pInfo->MACAddress, Req.ifr_hwaddr.sa_data, sizeof(pInfo->MACAddress));
+
+        /*
+         * Generate UUID from name and MAC address.
+         */
         RTUUID uuid;
-        RTUuidClear(&uuid);
+        RTUuidClear(&uuid); /** @todo why use stack copy */
 #ifdef VBOXNETFLT_LINUX_NAMESPACE_SUPPORT
         uuid.au32[0] = 0;   /* Use 0 as the indicator of missing namespace info. */
-        /*
-         * Namespace links use the following naming convention: "net:[1234567890]".
-         * The maximum value of inode number is 4294967295, which gives up precisely
-         * 16 characters without terminating zero.
-         */
+        /* Namespace links use the following naming convention: "net:[1234567890]".
+           The maximum value of inode number is 4294967295, which gives up precisely
+           16 characters without terminating zero. */
         char szBuf[24];
         ssize_t len = readlink("/proc/self/ns/net", szBuf, sizeof(szBuf) - 1);
         if (len == -1)
@@ -175,7 +178,7 @@ static int getInterfaceInfo(int iSocket, const char *pszName, PNETIFINFO pInfo)
         Log(("NetIfList: VBoxSVC namespace inode %u\n", uuid.au32[0]));
         /* Hashing the name is probably an overkill as MAC addresses should ensure uniqueness */
         uuid.au32[1] = RTStrHash1(pszName);
-#else /* !VBOXNETFLT_LINUX_NAMESPACE_SUPPORT */
+#else  /* !VBOXNETFLT_LINUX_NAMESPACE_SUPPORT */
         memcpy(&uuid, Req.ifr_name, RT_MIN(sizeof(Req.ifr_name), sizeof(uuid)));
 #endif /* !VBOXNETFLT_LINUX_NAMESPACE_SUPPORT */
         uuid.Gen.u8ClockSeqHiAndReserved = (uint8_t)((uuid.Gen.u8ClockSeqHiAndReserved & 0x3f) | 0x80);
@@ -183,8 +186,9 @@ static int getInterfaceInfo(int iSocket, const char *pszName, PNETIFINFO pInfo)
         memcpy(uuid.Gen.au8Node, &Req.ifr_hwaddr.sa_data, sizeof(uuid.Gen.au8Node));
         pInfo->Uuid = uuid;
 
-        memcpy(&pInfo->MACAddress, Req.ifr_hwaddr.sa_data, sizeof(pInfo->MACAddress));
-
+        /*
+         * Get the primary IP address, mask and status.
+         */
         if (ioctl(iSocket, SIOCGIFADDR, &Req) >= 0)
             memcpy(pInfo->IPAddress.au8,
                    &((struct sockaddr_in *)&Req.ifr_addr)->sin_addr.s_addr,
@@ -198,21 +202,19 @@ static int getInterfaceInfo(int iSocket, const char *pszName, PNETIFINFO pInfo)
         if (ioctl(iSocket, SIOCGIFFLAGS, &Req) >= 0)
             pInfo->enmStatus = Req.ifr_flags & IFF_UP ? NETIF_S_UP : NETIF_S_DOWN;
 
-        /* Detect if given interfece is wireless, assume 'no' by default. */
+        /*
+         * Detect if given interfece is wireless, assume 'no' by default.
+         */
         pInfo->fWireless = false;
 
         RTFILE hFile;
         int vrc = RTLinuxSysFsOpen(&hFile, "class/net/%s/uevent", pszName);
         if (RT_SUCCESS(vrc))
         {
-            char szSysFsBuf[256];
-            size_t cchRead = 0;
-
-            RT_ZERO(szBuf);
-            vrc = RTLinuxSysFsReadStr(hFile, szSysFsBuf, sizeof(szSysFsBuf) - 1, &cchRead);
-            if (RT_SUCCESS(vrc))
+            char szSysFsBuf[256] = {0 /*paranoia^2*/};
+            vrc = RTLinuxSysFsReadStr(hFile, szSysFsBuf, sizeof(szSysFsBuf) - 1 /*paranoia^2*/, NULL);
+            if (RT_SUCCESS(vrc) || vrc == VERR_BUFFER_OVERFLOW)
                 pInfo->fWireless = RTStrStr(szSysFsBuf, "DEVTYPE=wlan") != NULL;
-
             RTFileClose(hFile);
         }
 
@@ -225,20 +227,21 @@ static int getInterfaceInfo(int iSocket, const char *pszName, PNETIFINFO pInfo)
             pInfo->fWireless = ioctl(iSocket, SIOCGIWNAME, &WRq) >= 0;
         }
 
+        /*
+         * Get primary IPv6 address.
+         */
         FILE *fp = fopen("/proc/net/if_inet6", "r");
         if (fp)
         {
-            RTNETADDRIPV6 IPv6Address;
-            unsigned uIndex, uLength, uScope, uTmp;
-            char szName[30];
             for (;;)
             {
-                RT_ZERO(szName);
+                RTNETADDRIPV6 IPv6Address = {{0,0}};
+                unsigned uIndex = 0 , uLength = 0, uScope = 0, uTmp = 0;
+                char szName[30] = {0};
                 int n = fscanf(fp,
                                "%08x%08x%08x%08x"
                                " %02x %02x %02x %02x %20s\n",
-                               &IPv6Address.au32[0], &IPv6Address.au32[1],
-                               &IPv6Address.au32[2], &IPv6Address.au32[3],
+                               &IPv6Address.au32[0], &IPv6Address.au32[1], &IPv6Address.au32[2], &IPv6Address.au32[3],
                                &uIndex, &uLength, &uScope, &uTmp, szName);
                 if (n == EOF)
                     break;
@@ -259,6 +262,7 @@ static int getInterfaceInfo(int iSocket, const char *pszName, PNETIFINFO pInfo)
             }
             fclose(fp);
         }
+
         /*
          * Don't even try to get speed for non-Ethernet interfaces, it only
          * produces errors.
