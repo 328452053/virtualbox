@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112771 2026-01-30 16:30:17Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112790 2026-02-02 17:31:52Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -1790,12 +1790,14 @@ static VBOXSTRICTRC nemHCLnxHandleExitMmio(PVMCC pVM, PVMCPUCC pVCpu, struct kvm
  */
 static VBOXSTRICTRC nemHCLnxHandleExitRdMsr(PVMCPUCC pVCpu, struct kvm_run *pRun)
 {
+    kvm_run_exit_msr *pMsr = (kvm_run_exit_msr *)&pRun->padding[0];
+
     /*
      * Input validation.
      */
-    Assert(   pRun->msr.reason == KVM_MSR_EXIT_REASON_INVAL
-           || pRun->msr.reason == KVM_MSR_EXIT_REASON_UNKNOWN
-           || pRun->msr.reason == KVM_MSR_EXIT_REASON_FILTER);
+    Assert(   pMsr->reason == KVM_MSR_EXIT_REASON_INVAL
+           || pMsr->reason == KVM_MSR_EXIT_REASON_UNKNOWN
+           || pMsr->reason == KVM_MSR_EXIT_REASON_FILTER);
 
     /*
      * We cannot easily act on the exit history here, because the MSR exit is
@@ -1809,19 +1811,19 @@ static VBOXSTRICTRC nemHCLnxHandleExitRdMsr(PVMCPUCC pVCpu, struct kvm_run *pRun
      * Do the requested job.
      */
     uint64_t uValue = 0;
-    VBOXSTRICTRC rcStrict = CPUMQueryGuestMsr(pVCpu, pRun->msr.index, &uValue);
-    pRun->msr.data = uValue;
+    VBOXSTRICTRC rcStrict = CPUMQueryGuestMsr(pVCpu, pMsr->index, &uValue);
+    pMsr->data = uValue;
     if (rcStrict != VERR_CPUM_RAISE_GP_0)
     {
         Log3(("MsrRead/%u: %04x:%08RX64: msr=%#010x (reason=%#x) -> %#RX64 rcStrict=%Rrc\n", pVCpu->idCpu,
-              pRun->s.regs.sregs.cs.selector, pRun->s.regs.regs.rip, pRun->msr.index, pRun->msr.reason, uValue, VBOXSTRICTRC_VAL(rcStrict) ));
-        pRun->msr.error = 0;
+              pRun->s.regs.sregs.cs.selector, pRun->s.regs.regs.rip, pMsr->index, pMsr->reason, uValue, VBOXSTRICTRC_VAL(rcStrict) ));
+        pMsr->error = 0;
     }
     else
     {
         Log3(("MsrRead/%u: %04x:%08RX64: msr=%#010x (reason%#x)-> %#RX64 rcStrict=#GP!\n", pVCpu->idCpu,
-              pRun->s.regs.sregs.cs.selector, pRun->s.regs.regs.rip, pRun->msr.index, pRun->msr.reason, uValue));
-        pRun->msr.error = 1;
+              pRun->s.regs.sregs.cs.selector, pRun->s.regs.regs.rip, pMsr->index, pMsr->reason, uValue));
+        pMsr->error = 1;
         rcStrict = VINF_SUCCESS;
     }
     return rcStrict;
@@ -1833,12 +1835,14 @@ static VBOXSTRICTRC nemHCLnxHandleExitRdMsr(PVMCPUCC pVCpu, struct kvm_run *pRun
  */
 static VBOXSTRICTRC nemHCLnxHandleExitWrMsr(PVMCPUCC pVCpu, struct kvm_run *pRun)
 {
+    kvm_run_exit_msr *pMsr = (kvm_run_exit_msr *)&pRun->padding[0];
+
     /*
      * Input validation.
      */
-    Assert(   pRun->msr.reason == KVM_MSR_EXIT_REASON_INVAL
-           || pRun->msr.reason == KVM_MSR_EXIT_REASON_UNKNOWN
-           || pRun->msr.reason == KVM_MSR_EXIT_REASON_FILTER);
+    Assert(   pMsr->reason == KVM_MSR_EXIT_REASON_INVAL
+           || pMsr->reason == KVM_MSR_EXIT_REASON_UNKNOWN
+           || pMsr->reason == KVM_MSR_EXIT_REASON_FILTER);
 
     /*
      * We cannot easily act on the exit history here, because the MSR exit is
@@ -1851,18 +1855,18 @@ static VBOXSTRICTRC nemHCLnxHandleExitWrMsr(PVMCPUCC pVCpu, struct kvm_run *pRun
     /*
      * Do the requested job.
      */
-    VBOXSTRICTRC rcStrict = CPUMSetGuestMsr(pVCpu, pRun->msr.index, pRun->msr.data);
+    VBOXSTRICTRC rcStrict = CPUMSetGuestMsr(pVCpu, pMsr->index, pMsr->data);
     if (rcStrict != VERR_CPUM_RAISE_GP_0)
     {
         Log3(("MsrWrite/%u: %04x:%08RX64: msr=%#010x := %#RX64 (reason=%#x) -> rcStrict=%Rrc\n", pVCpu->idCpu,
-              pRun->s.regs.sregs.cs.selector, pRun->s.regs.regs.rip, pRun->msr.index, pRun->msr.data, pRun->msr.reason, VBOXSTRICTRC_VAL(rcStrict) ));
-        pRun->msr.error = 0;
+              pRun->s.regs.sregs.cs.selector, pRun->s.regs.regs.rip, pMsr->index, pMsr->data, pMsr->reason, VBOXSTRICTRC_VAL(rcStrict) ));
+        pMsr->error = 0;
     }
     else
     {
         Log3(("MsrWrite/%u: %04x:%08RX64: msr=%#010x := %#RX64 (reason%#x)-> rcStrict=#GP!\n", pVCpu->idCpu,
-              pRun->s.regs.sregs.cs.selector, pRun->s.regs.regs.rip, pRun->msr.index, pRun->msr.data, pRun->msr.reason));
-        pRun->msr.error = 1;
+              pRun->s.regs.sregs.cs.selector, pRun->s.regs.regs.rip, pMsr->index, pMsr->data, pMsr->reason));
+        pMsr->error = 1;
         rcStrict = VINF_SUCCESS;
     }
     return rcStrict;
