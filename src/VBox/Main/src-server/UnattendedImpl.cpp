@@ -1,4 +1,4 @@
-/* $Id: UnattendedImpl.cpp 112611 2026-01-15 13:52:52Z serkan.bayraktar@oracle.com $ */
+/* $Id: UnattendedImpl.cpp 112812 2026-02-03 18:06:17Z serkan.bayraktar@oracle.com $ */
 /** @file
  * Unattended class implementation
  */
@@ -200,6 +200,89 @@ typedef struct OS2SYSLEVELENTRY
 #pragma pack()
 AssertCompileSize(OS2SYSLEVELENTRY, 0x80);
 
+/**
+ * Used by hlpMapOsVersionToSpecificType to map base OS types and major versions to specific OS types.
+ */
+typedef struct {
+    VBOXOSTYPE enmBaseType; //e.g. VBOXOSTYPE_Ubuntu
+    unsigned majorVersion;
+    VBOXOSTYPE enmSpecificType; //e.g. VBOXOSTYPE_Ubuntu24_x64
+} OsVersionMapEntry;
+
+static const OsVersionMapEntry os_version_map[] = {
+    { VBOXOSTYPE_Oracle_x64, 8, VBOXOSTYPE_Oracle8_x64 },
+    { VBOXOSTYPE_Oracle_x64, 9, VBOXOSTYPE_Oracle9_x64 },
+    { VBOXOSTYPE_Oracle_x64, 10, VBOXOSTYPE_Oracle10_x64 },
+    { VBOXOSTYPE_Ubuntu_x64, 22, VBOXOSTYPE_Ubuntu22_x64 },
+    { VBOXOSTYPE_Ubuntu_x64, 24, VBOXOSTYPE_Ubuntu24_x64 },
+    { VBOXOSTYPE_Debian_x64, 11, VBOXOSTYPE_Debian11_x64 },
+    { VBOXOSTYPE_Debian_x64, 12, VBOXOSTYPE_Debian12_x64 },
+};
+
+/**
+ * Linearly searches through os_version_map to find a specific VBOXOSTYPE
+ * matching to @a enmOsType and @a strDetectedVersion. If it fails
+ * to find an exact match then an older version is returned, if found.
+ *
+ * @returns found VBOXOSTYPE or VBOXOSTYPE_Unknown
+ * @param   enmOsType           A base OS type id, e.g. VBOXOSTYPE_Ubuntu
+ * @param   strDetectedVersion  Detected OS version, may contain non numerical
+ *                              characters and major minor version numbers.
+ */
+static VBOXOSTYPE hlpMapOsVersionToSpecificType(VBOXOSTYPE enmOsType, const Utf8Str &strDetectedVersion)
+{
+    if (strDetectedVersion.isEmpty())
+        return VBOXOSTYPE_Unknown;
+    const size_t k = strDetectedVersion.length();
+    size_t i = 0;
+    /* Skip non-numerical prefix of strDetectedVersion */
+    for (; i < k; i++)
+    {
+        if (RT_C_IS_DIGIT( (unsigned char)strDetectedVersion.c_str()[i]) )
+            break;
+    }
+    if (i == k)
+        return VBOXOSTYPE_Unknown;
+    size_t j = i;
+    /* Skip part after the first non-numerical, possibly point, character */
+    for (; j < k; j++)
+    {
+        if (!RT_C_IS_DIGIT((unsigned char)strDetectedVersion.c_str()[j]))
+            break;
+    }
+    if (j == i)
+        return VBOXOSTYPE_Unknown;
+    unsigned majorVersion = 0;
+    for (size_t idx = i; idx < j; idx++)
+    {
+        majorVersion = majorVersion * 10 + (strDetectedVersion.c_str()[idx] - '0');
+    }
+    int bestDiff = INT32_MAX;
+    size_t bestIdx = ~0U;
+    for (size_t t = 0; t < RT_ELEMENTS(os_version_map); ++t)
+    {
+        if (os_version_map[t].enmBaseType != enmOsType)
+            continue;
+        /* Return in case of exact match */
+        if (os_version_map[t].majorVersion == majorVersion)
+            return os_version_map[t].enmSpecificType;
+
+        int diff = static_cast<int>(majorVersion) - static_cast<int>(os_version_map[t].majorVersion);
+        /* considering only older versions */
+        if (diff > 0)
+        {
+            if (diff < bestDiff)
+            {
+                bestDiff = diff;
+                bestIdx  = t;
+            }
+        }
+    }
+    if (bestIdx != ~0U)
+        return os_version_map[bestIdx].enmSpecificType;
+
+    return VBOXOSTYPE_Unknown;
+}
 
 /**
  * Used by hlpVfsRecursiveFileSearch & hlpVfsRecursiveFileSearchInt to
@@ -665,6 +748,10 @@ HRESULT Unattended::i_innerDetectIsoOS(RTVFS hVfsIso)
         hrc = i_innerDetectIsoOSOs2(hVfsIso, &uBuf);
     if (hrc == S_FALSE && mEnmOsType == VBOXOSTYPE_Unknown)
         hrc = i_innerDetectIsoOSFreeBsd(hVfsIso, &uBuf);
+
+    VBOXOSTYPE specificOSTypeId =  hlpMapOsVersionToSpecificType(mEnmOsType, mStrDetectedOSVersion);
+    if (specificOSTypeId != VBOXOSTYPE_Unknown)
+        mEnmOsType = specificOSTypeId;
     if (mEnmOsType != VBOXOSTYPE_Unknown)
     {
         try {  mStrDetectedOSTypeId = Global::OSTypeId(mEnmOsType); }
