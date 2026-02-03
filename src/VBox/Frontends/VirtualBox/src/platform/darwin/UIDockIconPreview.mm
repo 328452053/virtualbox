@@ -1,4 +1,4 @@
-/* $Id: UIDockIconPreview.mm 112767 2026-01-30 13:33:32Z sergey.dubov@oracle.com $ */
+/* $Id: UIDockIconPreview.mm 112808 2026-02-03 14:21:20Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDockIconPreview class implementation.
  */
@@ -27,7 +27,6 @@
 
 /* VBox includes */
 #include "UIDockIconPreview.h"
-#include "VBoxCocoaHelper.h"
 
 /* System includes */
 #import <Cocoa/Cocoa.h>

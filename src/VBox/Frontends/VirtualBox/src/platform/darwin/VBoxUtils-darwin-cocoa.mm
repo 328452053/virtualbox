@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils-darwin-cocoa.mm 112804 2026-02-03 11:46:00Z sergey.dubov@oracle.com $ */
+/* $Id: VBoxUtils-darwin-cocoa.mm 112808 2026-02-03 14:21:20Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI -  Declarations of utility classes and functions for handling Darwin Cocoa specific tasks.
  */
@@ -29,13 +29,13 @@
 #include <QImage>
 
 /* GUI includes: */
-#include "VBoxCocoaHelper.h"
 #include "VBoxUtils-darwin.h"
 
 /* Carbon includes: */
 #include <Carbon/Carbon.h>
 
 /* Cocoa imports: */
+#import <AppKit/NSImage.h>
 #import <AppKit/NSScreen.h>
 #import <AppKit/NSScroller.h>
 #import <AppKit/NSImageView.h>
