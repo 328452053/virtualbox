@@ -1,4 +1,4 @@
-/* $Id: UISpecialControls.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UISpecialControls.cpp 112807 2026-02-03 13:54:18Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UISpecialControls implementation.
  */
@@ -26,59 +26,14 @@
  */
 
 /* Qt includes: */
-#include <QHBoxLayout>
-#ifndef VBOX_DARWIN_USE_NATIVE_CONTROLS
-# include <QBitmap>
-# include <QMouseEvent>
-# include <QPainter>
-# include <QSignalMapper>
-#endif
+#include <QMouseEvent>
+#include <QPainter>
 
 /* GUI includes: */
 #include "UIIconPool.h"
 #include "UIShortcutPool.h"
 #include "UISpecialControls.h"
 #include "UITranslationEventListener.h"
-
-#ifdef VBOX_DARWIN_USE_NATIVE_CONTROLS
-
-
-/*********************************************************************************************************************************
-*   Class UIMiniCancelButton implementation.                                                                                     *
-*********************************************************************************************************************************/
-
-UIMiniCancelButton::UIMiniCancelButton(QWidget *pParent /* = 0 */)
-    : QAbstractButton(pParent)
-{
-    setShortcut(QKeySequence(Qt::Key_Escape));
-    m_pButton = new UICocoaButton(this, UICocoaButton::CancelButton);
-    connect(m_pButton, SIGNAL(clicked()), this, SIGNAL(clicked()));
-    setFixedSize(m_pButton->size());
-    connect(&translationEventListener(), &UITranslationEventListener::sigRetranslateUI,
-        this, &UIMiniCancelButton::sltRetranslateUI);
-}
-
-void UIMiniCancelButton::resizeEvent(QResizeEvent *)
-{
-    m_pButton->resize(size());
-}
-
-
-/*********************************************************************************************************************************
-*   Class UIHelpButton implementation.                                                                                           *
-*********************************************************************************************************************************/
-
-UIHelpButton::UIHelpButton(QWidget *pParent /* = 0 */)
-    : QPushButton(pParent)
-{
-    setShortcut(UIShortcutPool::standardSequence(QKeySequence::HelpContents));
-    m_pButton = new UICocoaButton(this, UICocoaButton::HelpButton);
-    connect(m_pButton, SIGNAL(clicked()), this, SIGNAL(clicked()));
-    setFixedSize(m_pButton->size());
-}
-
-
-#else /* !VBOX_DARWIN_USE_NATIVE_CONTROLS */
 
 
 /*********************************************************************************************************************************
@@ -99,18 +54,24 @@ UIMiniCancelButton::UIMiniCancelButton(QWidget *pParent /* = 0 */)
 *   Class UIHelpButton implementation.                                                                                           *
 *********************************************************************************************************************************/
 
-# ifdef VBOX_WS_MAC
+#ifdef VBOX_WS_MAC
 /* From: src/gui/styles/qmacstyle_mac.cpp */
 static const int PushButtonLeftOffset = 6;
 static const int PushButtonTopOffset = 4;
 static const int PushButtonRightOffset = 12;
 static const int PushButtonBottomOffset = 4;
-# endif
+#endif /* VBOX_WS_MAC */
 
 UIHelpButton::UIHelpButton(QWidget *pParent /* = 0 */)
     : QPushButton(pParent)
+#ifdef VBOX_WS_MAC
+    , m_pButtonPressed(false)
+    , m_pNormalPixmap(0)
+    , m_pPressedPixmap(0)
+    , m_pMask(0)
+#endif /* VBOX_WS_MAC */
 {
-# ifdef VBOX_WS_MAC
+#ifdef VBOX_WS_MAC
     m_pButtonPressed = false;
     m_pNormalPixmap = new QPixmap(":/help_button_normal_mac_24px.png");
     m_pPressedPixmap = new QPixmap(":/help_button_pressed_mac_24px.png");
@@ -120,13 +81,28 @@ UIHelpButton::UIHelpButton(QWidget *pParent /* = 0 */)
                     PushButtonTopOffset,
                     m_size.width(),
                     m_size.height());
-# endif /* VBOX_WS_MAC */
+#endif /* VBOX_WS_MAC */
 
     /* Apply language settings: */
     sltRetranslateUI();
     connect(&translationEventListener(), &UITranslationEventListener::sigRetranslateUI,
         this, &UIHelpButton::sltRetranslateUI);
 }
+
+#ifdef VBOX_WS_MAC
+UIHelpButton::~UIHelpButton()
+{
+    delete m_pNormalPixmap;
+    delete m_pPressedPixmap;
+    delete m_pMask;
+}
+
+QSize UIHelpButton::sizeHint() const
+{
+    return QSize(m_size.width() + PushButtonLeftOffset + PushButtonRightOffset,
+                 m_size.height() + PushButtonTopOffset + PushButtonBottomOffset);
+}
+#endif /* VBOX_WS_MAC */
 
 void UIHelpButton::initFrom(QPushButton *pOther)
 {
@@ -142,28 +118,8 @@ void UIHelpButton::initFrom(QPushButton *pOther)
     sltRetranslateUI();
 }
 
-void UIHelpButton::sltRetranslateUI()
-{
-    QPushButton::setText(tr("&Help"));
-    if (QPushButton::shortcut().isEmpty())
-        QPushButton::setShortcut(UIShortcutPool::standardSequence(QKeySequence::HelpContents));
-}
-
-# ifdef VBOX_WS_MAC
-UIHelpButton::~UIHelpButton()
-{
-    delete m_pNormalPixmap;
-    delete m_pPressedPixmap;
-    delete m_pMask;
-}
-
-QSize UIHelpButton::sizeHint() const
-{
-    return QSize(m_size.width() + PushButtonLeftOffset + PushButtonRightOffset,
-                 m_size.height() + PushButtonTopOffset + PushButtonBottomOffset);
-}
-
-void UIHelpButton::paintEvent(QPaintEvent *)
+#ifdef VBOX_WS_MAC
+void UIHelpButton::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
     painter.drawPixmap(PushButtonLeftOffset, PushButtonTopOffset, m_pButtonPressed ? *m_pPressedPixmap: *m_pNormalPixmap);
@@ -199,7 +155,11 @@ void UIHelpButton::leaveEvent(QEvent *pEvent)
     m_pButtonPressed = false;
     update();
 }
-# endif /* VBOX_WS_MAC */
+#endif /* VBOX_WS_MAC */
 
-
-#endif /* !VBOX_DARWIN_USE_NATIVE_CONTROLS */
+void UIHelpButton::sltRetranslateUI()
+{
+    setText(tr("&Help"));
+    if (shortcut().isEmpty())
+        setShortcut(UIShortcutPool::standardSequence(QKeySequence::HelpContents));
+}

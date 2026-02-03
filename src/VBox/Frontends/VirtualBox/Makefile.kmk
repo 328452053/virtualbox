@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112767 2026-01-30 13:33:32Z sergey.dubov@oracle.com $
+# $Id: Makefile.kmk 112807 2026-02-03 13:54:18Z sergey.dubov@oracle.com $
 ## @file
 # Makefile for the VirtualBox Qt GUI.
 #
@@ -121,8 +121,6 @@ VirtualBox_DEFS.win       += VBOX_WITH_MASKED_SEAMLESS # VBOX_WITH_TRANSLUCENT_S
 ifdef VBOX_WITH_VMNET
  VirtualBox_DEFS.darwin += VBOX_WITH_VMNET
 endif
-# qt6: The UICocoaSpecialControls needs restructuring because QMacCocoaViewContainer is gone. Too lazy for now.
-# VirtualBox_DEFS.darwin   += VBOX_DARWIN_USE_NATIVE_CONTROLS
 VirtualBox_DEFS.win       += UNICODE QT_DLL
 # Sort alphabetically!
 VirtualBox_DEFS           += \
@@ -189,8 +187,6 @@ VirtualBoxVM_DEFS.win       += VBOX_WITH_MASKED_SEAMLESS # VBOX_WITH_TRANSLUCENT
 ifdef VBOX_WITH_VMNET
  VirtualBoxVM_DEFS.darwin   += VBOX_WITH_VMNET
 endif
-# qt6: The UICocoaSpecialControls needs restructuring because QMacCocoaViewContainer is gone. Too lazy for now.
-# VirtualBoxVM_DEFS.darwin   += VBOX_DARWIN_USE_NATIVE_CONTROLS
 VirtualBoxVM_DEFS.win       += UNICODE QT_DLL
 # Sort alphabetically!
 VirtualBoxVM_DEFS           += \
@@ -246,8 +242,6 @@ UICommon_DEFS.debug   = VBOX_CHECK_STATE # QT_FATAL_ASSERT
 ifdef VBOX_WITH_VMNET
  UICommon_DEFS.darwin += VBOX_WITH_VMNET
 endif
-# qt6: The UICocoaSpecialControls needs restructuring because QMacCocoaViewContainer is gone. Too lazy for now.
-# UICommon_DEFS.darwin += VBOX_DARWIN_USE_NATIVE_CONTROLS
 #UICommon_DEFS.win     += UNICODE QT_DLL
 # Sort alphabetically!
 UICommon_DEFS         += \
@@ -975,7 +969,6 @@ ifdef VBOX_GUI_WITH_NETWORK_MANAGER
 endif
 
 UICommon_QT_MOCHDRS.darwin += \
-	src/platform/darwin/UICocoaSpecialControls.h \
 	src/platform/darwin/UIWindowMenuManager.h
 
 
@@ -1583,7 +1576,6 @@ UICommon_SOURCES.darwin += \
 	src/platform/darwin/CocoaEventHelper.mm \
 	src/platform/darwin/DarwinKeyboard.cpp \
 	src/platform/darwin/UICocoaApplication.mm \
-	src/platform/darwin/UICocoaSpecialControls.mm \
 	src/platform/darwin/UIWindowMenuManager.cpp \
 	src/platform/darwin/VBoxUtils-darwin-cocoa.mm \
 	src/platform/darwin/VBoxUtils-darwin.cpp

@@ -1,4 +1,4 @@
-/* $Id: UISpecialControls.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UISpecialControls.h 112807 2026-02-03 13:54:18Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UISpecialControls declarations.
  */
@@ -33,28 +33,16 @@
 
 /* Qt includes: */
 #include <QPushButton>
-#ifndef VBOX_DARWIN_USE_NATIVE_CONTROLS
-# include <QLineEdit>
-#endif
 
 /* GUI includes: */
-#include "UILibraryDefs.h"
-#ifdef VBOX_DARWIN_USE_NATIVE_CONTROLS
-# include "UICocoaSpecialControls.h"
-#else
-# include "QIToolButton.h"
-#endif
+#include "QIToolButton.h"
 
 /* Forward declarations: */
-#ifdef VBOX_DARWIN_USE_NATIVE_CONTROLS
-class UICocoaButton;
-#endif
+class QImage;
+class QPixmap;
 
-
-#ifdef VBOX_DARWIN_USE_NATIVE_CONTROLS
-
-/** QAbstractButton subclass, used as mini cancel button. */
-class SHARED_LIBRARY_STUFF UIMiniCancelButton : public QAbstractButton
+/** QIToolButton subclass, used as mini cancel button. */
+class UIMiniCancelButton : public QIToolButton
 {
     Q_OBJECT;
 
@@ -62,76 +50,10 @@ public:
 
     /** Constructs mini cancel-button passing @a pParent to the base-class. */
     UIMiniCancelButton(QWidget *pParent = 0);
-
-    /** Defines button @a strText. */
-    void setText(const QString &strText) { m_pButton->setText(strText); }
-    /** Defines button @a strToolTip. */
-    void setToolTip(const QString &strToolTip) { m_pButton->setToolTip(strToolTip); }
-    /** Removes button border. */
-    void removeBorder() {}
-
-protected:
-
-    /** Handles paint @a pEvent. */
-    virtual void paintEvent(QPaintEvent *pEvent) RT_OVERRIDE { Q_UNUSED(pEvent); }
-    /** Handles resize @a pEvent. */
-    virtual void resizeEvent(QResizeEvent *pEvent) RT_OVERRIDE;
-
-private:
-
-    /** Holds the wrapped cocoa button instance. */
-    UICocoaButton *m_pButton;
 };
 
-
-/** QAbstractButton subclass, used as mini cancel button. */
-class SHARED_LIBRARY_STUFF UIHelpButton : public QPushButton
-{
-    Q_OBJECT;
-
-public:
-
-    /** Constructs help-button passing @a pParent to the base-class. */
-    UIHelpButton(QWidget *pParent = 0);
-
-    /** Defines button @a strToolTip. */
-    void setToolTip(const QString &strToolTip) { m_pButton->setToolTip(strToolTip); }
-
-    /** Inits this button from pOther. */
-    void initFrom(QPushButton *pOther) { Q_UNUSED(pOther); }
-
-protected:
-
-    /** Handles paint @a pEvent. */
-    virtual void paintEvent(QPaintEvent *pEvent) RT_OVERRIDE { Q_UNUSED(pEvent); }
-
-private:
-
-    /** Holds the wrapped cocoa button instance. */
-    UICocoaButton *m_pButton;
-};
-
-#else /* !VBOX_DARWIN_USE_NATIVE_CONTROLS */
-
-/** QAbstractButton subclass, used as mini cancel button. */
-class SHARED_LIBRARY_STUFF UIMiniCancelButton : public QIToolButton
-{
-    Q_OBJECT;
-
-public:
-
-    /** Constructs mini cancel-button passing @a pParent to the base-class. */
-    UIMiniCancelButton(QWidget *pParent = 0);
-
-private slots:
-
-    /** Handles translation event. */
-    void sltRetranslateUI() {};
-};
-
-
-/** QAbstractButton subclass, used as mini cancel button. */
-class SHARED_LIBRARY_STUFF UIHelpButton : public QPushButton
+/** QPushButton subclass, used as help button. */
+class UIHelpButton : public QPushButton
 {
     Q_OBJECT;
 
@@ -142,38 +64,44 @@ public:
 
 # ifdef VBOX_WS_MAC
     /** Destructs help-button. */
-    ~UIHelpButton();
+    virtual ~UIHelpButton() RT_OVERRIDE;
 
     /** Returns size-hint. */
-    QSize sizeHint() const RT_OVERRIDE;
+    virtual QSize sizeHint() const RT_OVERRIDE;
 # endif /* VBOX_WS_MAC */
 
     /** Inits this button from pOther. */
     void initFrom(QPushButton *pOther);
 
-protected:
-
 # ifdef VBOX_WS_MAC
-    /** Handles button hit as certain @a position. */
-    bool hitButton(const QPoint &position) const RT_OVERRIDE;
+protected:
 
     /** Handles paint @a pEvent. */
     virtual void paintEvent(QPaintEvent *pEvent) RT_OVERRIDE;
 
+    /** Handles button hit as certain @a position. */
+    virtual bool hitButton(const QPoint &position) const RT_OVERRIDE;
     /** Handles mouse-press @a pEvent. */
     virtual void mousePressEvent(QMouseEvent *pEvent) RT_OVERRIDE;
     /** Handles mouse-release @a pEvent. */
     virtual void mouseReleaseEvent(QMouseEvent *pEvent) RT_OVERRIDE;
     /** Handles mouse-leave @a pEvent. */
     virtual void leaveEvent(QEvent *pEvent) RT_OVERRIDE;
+# endif /* VBOX_WS_MAC */
 
+private slots:
+
+    /** Handles translation event. */
+    void sltRetranslateUI();
+
+# ifdef VBOX_WS_MAC
 private:
 
     /** Holds the pressed button instance. */
-    bool m_pButtonPressed;
+    bool  m_pButtonPressed;
 
     /** Holds the button size. */
-    QSize m_size;
+    QSize  m_size;
 
     /** Holds the normal pixmap instance. */
     QPixmap *m_pNormalPixmap;
@@ -184,16 +112,8 @@ private:
     QImage *m_pMask;
 
     /** Holds the button rect. */
-    QRect m_BRect;
+    QRect  m_BRect;
 # endif /* VBOX_WS_MAC */
-
-private slots:
-
-    /** Handles translation event. */
-    void sltRetranslateUI();
 };
-
-#endif /* !VBOX_DARWIN_USE_NATIVE_CONTROLS */
-
 
 #endif /* !FEQT_INCLUDED_SRC_widgets_UISpecialControls_h */
