@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112816 2026-02-04 12:57:14Z sergey.dubov@oracle.com $
+# $Id: Makefile.kmk 112821 2026-02-04 14:46:50Z sergey.dubov@oracle.com $
 ## @file
 # Makefile for the VirtualBox Qt GUI.
 #
@@ -1206,8 +1206,7 @@ VirtualBox_SOURCES = \
 	src/wizards/importappliance/UIWizardImportAppPageSource.cpp
 
 VirtualBox_SOURCES.darwin += \
-	src/platform/darwin/UIDesktopServices_darwin.cpp \
-	src/platform/darwin/UIDesktopServices_darwin_cocoa.mm
+	src/platform/darwin/UIDesktopServices_darwin.cpp
 
 if1of ($(KBUILD_TARGET), freebsd linux netbsd openbsd solaris) # U*nix
  VirtualBox_SOURCES += \

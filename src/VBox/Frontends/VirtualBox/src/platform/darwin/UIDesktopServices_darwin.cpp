@@ -1,6 +1,6 @@
-/* $Id: UIDesktopServices_darwin.cpp 112785 2026-02-02 16:38:44Z sergey.dubov@oracle.com $ */
+/* $Id: UIDesktopServices_darwin.cpp 112821 2026-02-04 14:46:50Z sergey.dubov@oracle.com $ */
 /** @file
- * VBox Qt GUI - Qt GUI - Utility Classes and Functions specific to darwin..
+ * VBox Qt GUI - Desktop Services specific to darwin..
  */
 
 /*
@@ -25,13 +25,12 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-/* VBox includes */
-#include "UIDesktopServices.h"
-#include "UIDesktopServices_darwin_p.h"
-#include "VBoxUtils-darwin.h"
-
-/* Qt includes */
+/* Qt includes: */
 #include <QString>
+
+/* GUI includes: */
+#include "UIDesktopServices.h"
+#include "VBoxUtils-darwin.h"
 
 
 bool UIDesktopServices::createMachineShortcut(const QString &strSrcFile, const QString &strDstPath, const QString &strName, const QUuid &uUuid)
@@ -46,4 +45,3 @@ bool UIDesktopServices::openInFileManager(const QString &strFile)
 {
     return ::darwinOpenInFileManager(::darwinToNativeString(strFile.toUtf8().constData()));
 }
-

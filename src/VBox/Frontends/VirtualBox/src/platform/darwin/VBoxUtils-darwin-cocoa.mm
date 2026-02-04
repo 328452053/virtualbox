@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils-darwin-cocoa.mm 112815 2026-02-04 12:17:52Z sergey.dubov@oracle.com $ */
+/* $Id: VBoxUtils-darwin-cocoa.mm 112821 2026-02-04 14:46:50Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI -  Declarations of utility classes and functions for handling Darwin Cocoa specific tasks.
  */
@@ -36,10 +36,50 @@
 
 /* Cocoa imports: */
 #import <AppKit/NSImage.h>
+#import <AppKit/NSImageView.h>
 #import <AppKit/NSScreen.h>
 #import <AppKit/NSScroller.h>
-#import <AppKit/NSImageView.h>
+#import <AppKit/NSWorkspace.h>
 
+
+bool darwinCreateMachineShortcut(NativeNSStringRef pstrSrcFile, NativeNSStringRef pstrDstPath, NativeNSStringRef pstrName, NativeNSStringRef /* pstrUuid */)
+{
+    RT_NOREF(pstrName);
+    if (!pstrSrcFile || !pstrDstPath)
+        return false;
+
+    NSError  *pErr        = nil;
+    NSURL    *pSrcUrl     = [NSURL fileURLWithPath:pstrSrcFile];
+
+    NSString *pVmFileName = [pSrcUrl lastPathComponent];
+    NSString *pSrcPath    = [NSString stringWithFormat:@"%@/%@", pstrDstPath, [pVmFileName stringByDeletingPathExtension]];
+    NSURL    *pDstUrl     = [NSURL fileURLWithPath:pSrcPath];
+
+    bool rc = false;
+
+    if (!pSrcUrl || !pDstUrl)
+        return false;
+
+    NSData *pBookmark = [pSrcUrl bookmarkDataWithOptions:NSURLBookmarkCreationSuitableForBookmarkFile
+                                 includingResourceValuesForKeys:nil
+                                 relativeToURL:nil
+                                 error:&pErr];
+
+    if (pBookmark)
+    {
+        rc = [NSURL writeBookmarkData:pBookmark
+                    toURL:pDstUrl
+                    options:0
+                    error:&pErr];
+    }
+
+    return rc;
+}
+
+bool darwinOpenInFileManager(NativeNSStringRef pstrFile)
+{
+    return [[NSWorkspace sharedWorkspace] selectFile:pstrFile inFileViewerRootedAtPath:@""];
+}
 
 NativeNSWindowRef darwinToNativeWindowImpl(NativeNSViewRef pView)
 {

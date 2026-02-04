@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils-darwin.h 112815 2026-02-04 12:17:52Z sergey.dubov@oracle.com $ */
+/* $Id: VBoxUtils-darwin.h 112821 2026-02-04 14:46:50Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Declarations of utility classes and functions for handling Darwin specific tasks.
  */
@@ -124,6 +124,15 @@ private:
 
 RT_C_DECLS_BEGIN
 // Here we'll add only impl .h/.mm functions which have public .h/.cpp API
+
+/********************************************************************************
+ * General functionality (OS System native)
+ ********************************************************************************/
+SHARED_LIBRARY_STUFF bool darwinCreateMachineShortcut(NativeNSStringRef pstrSrcFile,
+                                                      NativeNSStringRef pstrDstPath,
+                                                      NativeNSStringRef pstrName,
+                                                      NativeNSStringRef pstrUuid);
+SHARED_LIBRARY_STUFF bool darwinOpenInFileManager(NativeNSStringRef pstrFile);
 
 /********************************************************************************
  * Window/View management (OS System native)
