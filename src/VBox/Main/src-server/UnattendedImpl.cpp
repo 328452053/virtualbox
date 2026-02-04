@@ -1,4 +1,4 @@
-/* $Id: UnattendedImpl.cpp 112814 2026-02-04 10:25:26Z serkan.bayraktar@oracle.com $ */
+/* $Id: UnattendedImpl.cpp 112828 2026-02-04 19:07:18Z sergey.dubov@oracle.com $ */
 /** @file
  * Unattended class implementation
  */
@@ -267,7 +267,7 @@ static VBOXOSTYPE hlpMapOsVersionToSpecificType(VBOXOSTYPE enmOsType, const Utf8
     unsigned majorVersion = 0;
     for (size_t idx = i; idx < j; idx++)
     {
-        majorVersion = majorVersion * 10 + (strDetectedVersion.c_str()[idx] - '0');
+        majorVersion = majorVersion * 10 + (unsigned)(strDetectedVersion.c_str()[idx] - '0');
     }
     int bestDiff = INT32_MAX;
     size_t bestIdx = ~0U;
