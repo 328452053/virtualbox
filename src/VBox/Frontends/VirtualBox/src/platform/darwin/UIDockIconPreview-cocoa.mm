@@ -1,4 +1,4 @@
-/* $Id: UIDockIconPreview-cocoa.mm 112816 2026-02-04 12:57:14Z sergey.dubov@oracle.com $ */
+/* $Id: UIDockIconPreview-cocoa.mm 112817 2026-02-04 13:07:18Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDockIconPreview class implementation.
  */
@@ -25,10 +25,11 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-/* VBox includes */
+/* GUI includes: */
 #include "UIDockIconPreview.h"
+#include "VBoxUtils-darwin.h"
 
-/* System includes */
+/* Cocoa imports: */
 #import <Cocoa/Cocoa.h>
 
 @interface UIDockTileMonitor: NSView

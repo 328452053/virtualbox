@@ -1,4 +1,4 @@
-/* $Id: UIDockIconPreview.h 112816 2026-02-04 12:57:14Z sergey.dubov@oracle.com $ */
+/* $Id: UIDockIconPreview.h 112817 2026-02-04 13:07:18Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDockIconPreview class declaration.
  */
@@ -31,8 +31,11 @@
 # pragma once
 #endif
 
-/* GUI includes: */
-#include "VBoxUtils-darwin.h"
+/* Other VBox includes: */
+#include <VBox/VBoxCocoa.h>
+
+/* External includes: */
+#include <ApplicationServices/ApplicationServices.h>
 
 /* Forward declarations: */
 class QPixmap;
@@ -69,9 +72,9 @@ public:
     void* currentPreviewWindowId() const;
 
     /* Flipping is necessary cause the drawing context in Mac OS X is flipped by 180 degree */
-    inline CGRect flipRect(CGRect rect) const { return ::darwinFlipCGRect(rect, m_dockIconRect); }
-    inline CGRect centerRect(CGRect rect) const { return ::darwinCenterRectTo(rect, m_dockIconRect); }
-    inline CGRect centerRectTo(CGRect rect, const CGRect& toRect) const { return ::darwinCenterRectTo(rect, toRect); }
+    CGRect flipRect(CGRect rect) const;
+    CGRect centerRect(CGRect rect) const;
+    CGRect centerRectTo(CGRect rect, const CGRect& toRect) const;
 
     /* Private member vars */
     UIMachine *m_pMachine;

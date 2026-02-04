@@ -1,4 +1,4 @@
-/* $Id: UIDockIconPreview.cpp 112816 2026-02-04 12:57:14Z sergey.dubov@oracle.com $ */
+/* $Id: UIDockIconPreview.cpp 112817 2026-02-04 13:07:18Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Realtime Dock Icon Preview
  */
@@ -25,9 +25,6 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-/* Qt includes: */
-#include <QStyle>
-
 /* GUI includes: */
 #include "UICommon.h"
 #include "UIDockIconPreview.h"
@@ -36,6 +33,7 @@
 #include "UIMachine.h"
 #include "UIMachineLogic.h"
 #include "UIMachineView.h"
+#include "VBoxUtils-darwin.h"
 
 
 void UIDockIconPreview::updateDockPreview(UIFrameBuffer *pFrameBuffer)
@@ -80,6 +78,21 @@ void* UIDockIconPreviewHelper::currentPreviewWindowId() const
     if (pView)
         return (void*)pView->viewport()->winId();
     return 0;
+}
+
+CGRect UIDockIconPreviewHelper::flipRect(CGRect rect) const
+{
+    return darwinFlipCGRect(rect, m_dockIconRect);
+}
+
+CGRect UIDockIconPreviewHelper::centerRect(CGRect rect) const
+{
+    return darwinCenterRectTo(rect, m_dockIconRect);
+}
+
+CGRect UIDockIconPreviewHelper::centerRectTo(CGRect rect, const CGRect& toRect) const
+{
+    return darwinCenterRectTo(rect, toRect);
 }
 
 UIDockIconPreviewHelper::~UIDockIconPreviewHelper()
