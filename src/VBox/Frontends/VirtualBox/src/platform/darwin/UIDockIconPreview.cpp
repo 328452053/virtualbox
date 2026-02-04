@@ -1,6 +1,6 @@
-/* $Id: UIDockIconPreview.cpp 112817 2026-02-04 13:07:18Z sergey.dubov@oracle.com $ */
+/* $Id: UIDockIconPreview.cpp 112818 2026-02-04 13:57:23Z sergey.dubov@oracle.com $ */
 /** @file
- * VBox Qt GUI - Realtime Dock Icon Preview
+ * VBox Qt GUI - UIDockIconPreview class implementation.
  */
 
 /*
@@ -36,6 +36,10 @@
 #include "VBoxUtils-darwin.h"
 
 
+/*********************************************************************************************************************************
+*   Class UIDockIconPreview implementation.                                                                                      *
+*********************************************************************************************************************************/
+
 void UIDockIconPreview::updateDockPreview(UIFrameBuffer *pFrameBuffer)
 {
     CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
@@ -58,6 +62,10 @@ void UIDockIconPreview::updateDockPreview(UIFrameBuffer *pFrameBuffer)
 }
 
 
+/*********************************************************************************************************************************
+*   Class UIDockIconPreviewHelper implementation.                                                                                *
+*********************************************************************************************************************************/
+
 UIDockIconPreviewHelper::UIDockIconPreviewHelper(UIMachine *pMachine, const QPixmap& overlayImage)
     : m_pMachine(pMachine)
     , m_dockIconRect(CGRectMake(0, 0, 128, 128))
@@ -70,7 +78,16 @@ UIDockIconPreviewHelper::UIDockIconPreviewHelper(UIMachine *pMachine, const QPix
     Assert(m_overlayImage);
 }
 
-void* UIDockIconPreviewHelper::currentPreviewWindowId() const
+UIDockIconPreviewHelper::~UIDockIconPreviewHelper()
+{
+    CGImageRelease(m_overlayImage);
+    if (m_dockMonitor)
+        CGImageRelease(m_dockMonitor);
+    if (m_dockMonitorGlossy)
+        CGImageRelease(m_dockMonitorGlossy);
+}
+
+void *UIDockIconPreviewHelper::currentPreviewWindowId() const
 {
     /* Get the MachineView which is currently previewed and return the win id
        of the viewport. */
@@ -93,15 +110,6 @@ CGRect UIDockIconPreviewHelper::centerRect(CGRect rect) const
 CGRect UIDockIconPreviewHelper::centerRectTo(CGRect rect, const CGRect& toRect) const
 {
     return darwinCenterRectTo(rect, toRect);
-}
-
-UIDockIconPreviewHelper::~UIDockIconPreviewHelper()
-{
-    CGImageRelease(m_overlayImage);
-    if (m_dockMonitor)
-        CGImageRelease(m_dockMonitor);
-    if (m_dockMonitorGlossy)
-        CGImageRelease(m_dockMonitorGlossy);
 }
 
 void UIDockIconPreviewHelper::initPreviewImages()
@@ -147,4 +155,3 @@ void UIDockIconPreviewHelper::drawOverlayIcons(CGContextRef context)
         }
     }
 }
-

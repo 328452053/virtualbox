@@ -1,4 +1,4 @@
-/* $Id: UIDockIconPreview.h 112817 2026-02-04 13:07:18Z sergey.dubov@oracle.com $ */
+/* $Id: UIDockIconPreview.h 112818 2026-02-04 13:57:23Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDockIconPreview class declaration.
  */
@@ -43,49 +43,79 @@ class UIDockIconPreviewPrivate;
 class UIFrameBuffer;
 class UIMachine;
 
+/** Class wrapping Cocoa dock icon preview interface. */
 class UIDockIconPreview
 {
 public:
 
-    UIDockIconPreview(UIMachine *pMachine, const QPixmap& overlayImage);
-    ~UIDockIconPreview();
+    /** Constructs Cocoa dock icon preview.
+      * @param  pMachine      Brings the machine this preview being created for.
+      * @param  overlayImage  Brings the overlayImage to use for a case when no preview available atm. */
+    UIDockIconPreview(UIMachine *pMachine, const QPixmap &overlayImage);
+    /** Destructs Cocoa dock icon preview. */
+    virtual ~UIDockIconPreview();
 
+    /** Updates dock overlay. */
     void updateDockOverlay();
-    void updateDockPreview(CGImageRef VMImage);
+    /** Updates dock preview with passed @a vmImage. */
+    void updateDockPreview(CGImageRef vmImage);
+    /** Updates dock preview with contents of passed @a pFrameBuffer. */
     void updateDockPreview(UIFrameBuffer *pFrameBuffer);
 
-    void setOriginalSize(int aWidth, int aHeight);
+    /** Resize dock overlay to passed @a iWidth x @a iHeight size. */
+    void setOriginalSize(int iWidth, int iHeight);
 
 private:
 
+    /** Holds the private data instance. */
     UIDockIconPreviewPrivate *d;
 };
 
+/** A class holding private data for Cocoa dock icon preview. */
 class UIDockIconPreviewHelper
 {
 public:
-    UIDockIconPreviewHelper(UIMachine *pMachine, const QPixmap& overlayImage);
+
+    /** Constructs private data for Cocoa dock icon preview.
+      * @param  pMachine      Brings the machine this preview being created for.
+      * @param  overlayImage  Brings the overlayImage to use for a case when no preview available atm. */
+    UIDockIconPreviewHelper(UIMachine *pMachine, const QPixmap &overlayImage);
+    /** Destructs private data for Cocoa dock icon preview. */
     virtual ~UIDockIconPreviewHelper();
-    void initPreviewImages();
-    void drawOverlayIcons(CGContextRef context);
 
-    void* currentPreviewWindowId() const;
+    /** Returns windows ID for current preview. */
+    void *currentPreviewWindowId() const;
 
-    /* Flipping is necessary cause the drawing context in Mac OS X is flipped by 180 degree */
+    /** Flips passed @a rect.
+      * @note Flipping is necessary cause the drawing context in Mac OS X is flipped by 180 degree. */
     CGRect flipRect(CGRect rect) const;
+    /** Centers passed @a rect according to @a m_dockIconRect. */
     CGRect centerRect(CGRect rect) const;
+    /** Centers passed @a rect according to @a toRect. */
     CGRect centerRectTo(CGRect rect, const CGRect& toRect) const;
 
-    /* Private member vars */
+    /** Performs preview image initialization. */
+    void initPreviewImages();
+    /** Draws overlay icons within passed @a context. */
+    void drawOverlayIcons(CGContextRef context);
+
+    /** Holds the machine reference this preview being created for. */
     UIMachine *m_pMachine;
-    const CGRect m_dockIconRect;
 
-    CGImageRef m_overlayImage;
-    CGImageRef m_dockMonitor;
-    CGImageRef m_dockMonitorGlossy;
+    /** Holds the default dock icon rectangle. */
+    const CGRect  m_dockIconRect;
 
-    CGRect m_updateRect;
-    CGRect m_monitorRect;
+    /** Holds the overlay image instance. */
+    CGImageRef  m_overlayImage;
+    /** Holds the dock monitor instance. */
+    CGImageRef  m_dockMonitor;
+    /** Holds the glossy dock monitor instance. */
+    CGImageRef  m_dockMonitorGlossy;
+
+    /** Holds the update rectangle. */
+    CGRect  m_updateRect;
+    /** Holds the monitor rectangle. */
+    CGRect  m_monitorRect;
 };
 
 #endif /* !FEQT_INCLUDED_SRC_platform_darwin_UIDockIconPreview_h */

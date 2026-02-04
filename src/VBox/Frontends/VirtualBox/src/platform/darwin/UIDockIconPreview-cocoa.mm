@@ -1,4 +1,4 @@
-/* $Id: UIDockIconPreview-cocoa.mm 112817 2026-02-04 13:07:18Z sergey.dubov@oracle.com $ */
+/* $Id: UIDockIconPreview-cocoa.mm 112818 2026-02-04 13:57:23Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDockIconPreview class implementation.
  */
@@ -32,6 +32,7 @@
 /* Cocoa imports: */
 #import <Cocoa/Cocoa.h>
 
+
 @interface UIDockTileMonitor: NSView
 {
     UIDockIconPreviewPrivate *p;
@@ -44,12 +45,14 @@
 - (void)resize:(NSSize)size;
 @end
 
+
 @interface UIDockTileOverlay: NSView
 {
     UIDockIconPreviewPrivate *p;
 }
 - (id)initWithFrame:(NSRect)frame parent:(UIDockIconPreviewPrivate*)parent;
 @end
+
 
 @interface UIDockTile: NSView
 {
@@ -71,31 +74,38 @@
 - (void)resizeMonitor:(NSSize)size;
 @end
 
+
 /*
- * Helper class which allow us to access all members/methods of AbstractDockIconPreviewHelper
- * from any Cocoa class.
+ * Helper class which allow us to access all members/methods of DockIconPreviewHelper from Cocoa class.
  */
-class UIDockIconPreviewPrivate: public UIDockIconPreviewHelper
+class UIDockIconPreviewPrivate : public UIDockIconPreviewHelper
 {
 public:
-    inline UIDockIconPreviewPrivate(UIMachine *pMachine, const QPixmap& overlayImage)
+
+    /** Constructs private data for Cocoa dock icon preview.
+      * @param  pMachine      Brings the machine this preview being created for.
+      * @param  overlayImage  Brings the overlayImage to use for a case when no preview available atm. */
+    inline UIDockIconPreviewPrivate(UIMachine *pMachine, const QPixmap &overlayImage)
         : UIDockIconPreviewHelper(pMachine, overlayImage)
     {
-        mUIDockTile = [[UIDockTile alloc] initWithParent:this];
+        m_pUIDockTile = [[UIDockTile alloc] initWithParent:this];
     }
 
+    /** Destructs private data for Cocoa dock icon preview. */
     inline ~UIDockIconPreviewPrivate()
     {
 
-        [mUIDockTile destroy];
-        [mUIDockTile release];
+        [m_pUIDockTile destroy];
+        [m_pUIDockTile release];
     }
 
-    UIDockTile *mUIDockTile;
+    /** Holds the dock tile object reference. */
+    UIDockTile *m_pUIDockTile;
 };
 
+
 /*
- * Cocoa wrapper for the abstract dock icon preview class
+ * Class wrapping Cocoa dock icon preview interface.
  */
 UIDockIconPreview::UIDockIconPreview(UIMachine *pMachine, const QPixmap& overlayImage)
 {
@@ -115,22 +125,23 @@ void UIDockIconPreview::updateDockOverlay()
 {
     CocoaAutoreleasePool pool;
 
-    [d->mUIDockTile updateAppIcon];
+    [d->m_pUIDockTile updateAppIcon];
 }
 
-void UIDockIconPreview::updateDockPreview(CGImageRef VMImage)
+void UIDockIconPreview::updateDockPreview(CGImageRef vmImage)
 {
     CocoaAutoreleasePool pool;
 
-    [d->mUIDockTile updateMonitorWithImage:VMImage];
+    [d->m_pUIDockTile updateMonitorWithImage:vmImage];
 }
 
 void UIDockIconPreview::setOriginalSize(int width, int height)
 {
     CocoaAutoreleasePool pool;
 
-    [d->mUIDockTile resizeMonitor:NSMakeSize(width, height)];
+    [d->m_pUIDockTile resizeMonitor:NSMakeSize(width, height)];
 }
+
 
 /*
  * Class for arranging/updating the layers for the glossy monitor preview.
@@ -200,6 +211,7 @@ void UIDockIconPreview::setOriginalSize(int width, int height)
 }
 @end
 
+
 /*
  * Simple implementation for the overlay of the OS & the state icon. Is used both
  * in the application icon & preview mode.
@@ -223,6 +235,7 @@ void UIDockIconPreview::setOriginalSize(int width, int height)
     p->drawOverlayIcons (pCGContext);
 }
 @end
+
 
 /*
  * VirtualBox Dock Tile implementation. Manage the switching between the icon
@@ -331,4 +344,3 @@ void UIDockIconPreview::setOriginalSize(int width, int height)
     [mMonitor resize:size];
 }
 @end
-
