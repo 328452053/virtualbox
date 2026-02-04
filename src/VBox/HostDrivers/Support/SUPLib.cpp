@@ -1,4 +1,4 @@
-/* $Id: SUPLib.cpp 112714 2026-01-27 13:33:55Z knut.osmundsen@oracle.com $ */
+/* $Id: SUPLib.cpp 112824 2026-02-04 15:44:14Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox Support Library - Common code.
  */
@@ -241,6 +241,10 @@ SUPR3DECL(int) SUPR3InitEx(uint32_t fFlags, PSUPDRVSESSION *ppSession)
 #ifdef VBOX_WITH_DRIVERLESS_FORCED
     fFlags |= SUPR3INIT_F_DRIVERLESS;
     fFlags &= ~SUPR3INIT_F_UNRESTRICTED;
+#endif
+
+#ifdef VBOX_WITH_DRIVERLESS_NEM_FALLBACK
+    fFlags |= SUPR3INIT_F_DRIVERLESS_NEM_FALLBACK;
 #endif
 
     /*
