@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-win-x86.cpp 112742 2026-01-29 10:55:27Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: NEMR3Native-win-x86.cpp 112813 2026-02-04 09:34:28Z ramshankar.venkataraman@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Windows backend.
  *
@@ -4101,10 +4101,10 @@ static VBOXSTRICTRC nemR3WinHandleExitIoPort(PVMCC pVM, PVMCPUCC pVCpu, WHV_RUN_
      */
     PCEMEXITREC pExitRec = EMHistoryAddExit(pVCpu,
                                             !pExit->IoPortAccess.AccessInfo.StringOp
-                                            ? (  pExit->MemoryAccess.AccessInfo.AccessType == WHvMemoryAccessWrite
+                                            ? (  pExit->IoPortAccess.AccessInfo.IsWrite
                                                ? EMEXIT_MAKE_FT(EMEXIT_F_KIND_EM, EMEXITTYPE_X86_PIO_WRITE)
                                                : EMEXIT_MAKE_FT(EMEXIT_F_KIND_EM, EMEXITTYPE_X86_PIO_READ))
-                                            : (  pExit->MemoryAccess.AccessInfo.AccessType == WHvMemoryAccessWrite
+                                            : (  pExit->IoPortAccess.AccessInfo.IsWrite
                                                ? EMEXIT_MAKE_FT(EMEXIT_F_KIND_EM, EMEXITTYPE_X86_PIO_STR_WRITE)
                                                : EMEXIT_MAKE_FT(EMEXIT_F_KIND_EM, EMEXITTYPE_X86_PIO_STR_READ)),
                                             pExit->VpContext.Rip + pExit->VpContext.Cs.Base, ASMReadTSC());
