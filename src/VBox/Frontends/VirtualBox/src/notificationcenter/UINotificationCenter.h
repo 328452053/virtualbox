@@ -1,4 +1,4 @@
-/* $Id: UINotificationCenter.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UINotificationCenter.h 112843 2026-02-05 16:45:00Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationCenter class declaration.
  */
@@ -235,6 +235,8 @@ private:
 
 /** Singleton notification-center 'official' name. */
 #define gpNotificationCenter UINotificationCenter::instance()
+
+Q_DECLARE_METATYPE(QPointer<UINotificationCenter>);
 
 /** QObject subclass receiving notification value and storing is as a property. */
 class SHARED_LIBRARY_STUFF UINotificationReceiver : public QObject
