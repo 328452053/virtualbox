@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA.cpp 112846 2026-02-05 17:22:12Z vitali.pelenjow@oracle.com $ */
+/* $Id: DevVGA-SVGA.cpp 112847 2026-02-05 17:29:37Z vitali.pelenjow@oracle.com $ */
 /** @file
  * VMware SVGA device.
  *
@@ -4620,7 +4620,11 @@ static void vmsvgaR3CmdBufProcessBuffers(PPDMDEVINS pDevIns, PVGASTATE pThis, PV
         if (pCmdBuf->enmCBType == VMSVGACMDBUFTYPE_HOST)
         {
             if (pCmdBuf->idHostCommand == VMSVGACMDBUF_HOSTCOMMAND_CURSOR_MOBID)
+#ifdef VBOX_WITH_VMSVGA3D
                 vmsvgaR3CursorMobId(pThis, pThisCC);
+#else
+                ; /* Nothing. */
+#endif
             else
                 AssertFailed();
             vmsvgaR3CmdBufFree(pCmdBuf);
