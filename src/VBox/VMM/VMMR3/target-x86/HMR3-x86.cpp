@@ -1,4 +1,4 @@
-/* $Id: HMR3-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: HMR3-x86.cpp 112834 2026-02-05 10:34:01Z alexander.eichner@oracle.com $ */
 /** @file
  * HM - Intel/AMD VM Hardware Support Manager.
  */
@@ -638,6 +638,8 @@ VMMR3_INT_DECL(int) HMR3Init(PVM pVM)
                 case VERR_SVM_NO_SVM:               pszMsg = "AMD-V is not available";                                    break;
                 case VERR_SVM_DISABLED:             pszMsg = "AMD-V is disabled in the BIOS (or by the host OS)";         break;
                 case VERR_SUP_DRIVERLESS:           pszMsg = "Driverless mode";                                           break;
+                case VERR_SVM_IN_USE:               pszMsg = "AMD-V is in use by another hypervisor on the host";         break;
+                case VERR_VMX_IN_VMX_ROOT_MODE:     pszMsg = "VT-x is in use by another hypervisor on the host";          break;
                 default:
                     return VMSetError(pVM, rc, RT_SRC_POS, "SUPR3QueryVTCaps failed with %Rrc", rc);
             }
