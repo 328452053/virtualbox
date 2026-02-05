@@ -1,4 +1,4 @@
-/* $Id: UnattendedImpl.cpp 112836 2026-02-05 12:29:40Z serkan.bayraktar@oracle.com $ */
+/* $Id: UnattendedImpl.cpp 112840 2026-02-05 13:29:59Z serkan.bayraktar@oracle.com $ */
 /** @file
  * Unattended class implementation
  */
@@ -213,7 +213,9 @@ static const OsVersionMapEntry os_version_map[] = {
     { VBOXOSTYPE_Oracle_x64,   8,   VBOXOSTYPE_Oracle8_x64   },
     { VBOXOSTYPE_Oracle_x64,   9,   VBOXOSTYPE_Oracle9_x64   },
     { VBOXOSTYPE_Oracle_x64,   10,  VBOXOSTYPE_Oracle10_x64  },
+    { VBOXOSTYPE_Ubuntu,       16,  VBOXOSTYPE_Ubuntu16      },
     { VBOXOSTYPE_Ubuntu_x64,   16,  VBOXOSTYPE_Ubuntu16_x64  },
+    { VBOXOSTYPE_Ubuntu,       17,  VBOXOSTYPE_Ubuntu17      },
     { VBOXOSTYPE_Ubuntu_x64,   17,  VBOXOSTYPE_Ubuntu17_x64  },
     { VBOXOSTYPE_Ubuntu_x64,   18,  VBOXOSTYPE_Ubuntu18_x64  },
     { VBOXOSTYPE_Ubuntu_x64,   19,  VBOXOSTYPE_Ubuntu19_x64  },
@@ -231,10 +233,12 @@ static const OsVersionMapEntry os_version_map[] = {
     { VBOXOSTYPE_Debian_x64,   10,  VBOXOSTYPE_Debian10_x64  },
     { VBOXOSTYPE_Debian_x64,   11,  VBOXOSTYPE_Debian11_x64  },
     { VBOXOSTYPE_Debian_x64,   12,  VBOXOSTYPE_Debian12_x64  },
+    { VBOXOSTYPE_Debian_x64,   13,  VBOXOSTYPE_Debian12_x64  },
     { VBOXOSTYPE_Debian_arm64, 9,   VBOXOSTYPE_Debian9_arm64 },
     { VBOXOSTYPE_Debian_arm64, 10,  VBOXOSTYPE_Debian10_arm64},
     { VBOXOSTYPE_Debian_arm64, 11,  VBOXOSTYPE_Debian11_arm64},
     { VBOXOSTYPE_Debian_arm64, 12,  VBOXOSTYPE_Debian12_arm64},
+    { VBOXOSTYPE_Debian_arm64, 13,  VBOXOSTYPE_Debian12_arm64},
 };
 
 /**
