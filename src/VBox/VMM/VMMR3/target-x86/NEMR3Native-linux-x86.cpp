@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112830 2026-02-04 20:32:28Z klaus.espenlaub@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112832 2026-02-05 07:12:56Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -2021,8 +2021,6 @@ static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run
             }
             else if (pRun->debug.arch.exception == X86_XCPT_DB)
             {
-                /* Should be single stepping. */
-                Assert(pRun->debug.arch.dr6 & X86_DR6_BS);
                 int rc = DBGFTrap01Handler(pVM, pVCpu, &pVCpu->cpum.GstCtx, pRun->debug.arch.dr6, fSingleStepping);
                 if (rc == VINF_EM_RAW_GUEST_TRAP)
                     rc = nemR3LnxGstDbgUpdate(pVM, pVCpu, false /*fSingleStepping*/, true /*fInjectDb*/, false /*fInjectBp*/);
