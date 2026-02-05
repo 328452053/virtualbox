@@ -1,4 +1,4 @@
-/* $Id: UnattendedImpl.cpp 112828 2026-02-04 19:07:18Z sergey.dubov@oracle.com $ */
+/* $Id: UnattendedImpl.cpp 112836 2026-02-05 12:29:40Z serkan.bayraktar@oracle.com $ */
 /** @file
  * Unattended class implementation
  */
@@ -213,6 +213,12 @@ static const OsVersionMapEntry os_version_map[] = {
     { VBOXOSTYPE_Oracle_x64,   8,   VBOXOSTYPE_Oracle8_x64   },
     { VBOXOSTYPE_Oracle_x64,   9,   VBOXOSTYPE_Oracle9_x64   },
     { VBOXOSTYPE_Oracle_x64,   10,  VBOXOSTYPE_Oracle10_x64  },
+    { VBOXOSTYPE_Ubuntu_x64,   16,  VBOXOSTYPE_Ubuntu16_x64  },
+    { VBOXOSTYPE_Ubuntu_x64,   17,  VBOXOSTYPE_Ubuntu17_x64  },
+    { VBOXOSTYPE_Ubuntu_x64,   18,  VBOXOSTYPE_Ubuntu18_x64  },
+    { VBOXOSTYPE_Ubuntu_x64,   19,  VBOXOSTYPE_Ubuntu19_x64  },
+    { VBOXOSTYPE_Ubuntu_x64,   20,  VBOXOSTYPE_Ubuntu20_x64  },
+    { VBOXOSTYPE_Ubuntu_x64,   21,  VBOXOSTYPE_Ubuntu21_x64  },
     { VBOXOSTYPE_Ubuntu_x64,   22,  VBOXOSTYPE_Ubuntu22_x64  },
     { VBOXOSTYPE_Ubuntu_x64,   23,  VBOXOSTYPE_Ubuntu23_x64  },
     { VBOXOSTYPE_Ubuntu_x64,   24,  VBOXOSTYPE_Ubuntu24_x64  },
