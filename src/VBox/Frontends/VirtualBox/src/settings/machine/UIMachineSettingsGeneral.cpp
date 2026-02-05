@@ -1,4 +1,4 @@
-/* $Id: UIMachineSettingsGeneral.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineSettingsGeneral.cpp 112839 2026-02-05 13:15:54Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineSettingsGeneral class implementation.
  */
@@ -32,6 +32,7 @@
 /* GUI includes: */
 #include "QITabWidget.h"
 #include "UIAddDiskEncryptionPasswordDialog.h"
+#include "UIAdvancedSettingsDialog.h"
 #include "UIConverter.h"
 #include "UIDefs.h"
 #include "UIDescriptionEditor.h"
@@ -336,7 +337,8 @@ void UIMachineSettingsGeneral::putToCache()
                 QPointer<UIAddDiskEncryptionPasswordDialog> pDlg =
                      new UIAddDiskEncryptionPasswordDialog(pDlgParent,
                                                            newGeneralData.m_strName,
-                                                           newGeneralData.m_encryptedMedia);
+                                                           newGeneralData.m_encryptedMedia,
+                                                           parentDialog()->notificationCenter());
                 /* Execute it and acquire the result: */
                 if (pDlg->exec() == QDialog::Accepted)
                     newGeneralData.m_encryptionPasswords = pDlg->encryptionPasswords();

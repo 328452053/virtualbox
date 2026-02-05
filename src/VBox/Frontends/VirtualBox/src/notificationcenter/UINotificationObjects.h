@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.h 112748 2026-01-29 14:28:16Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.h 112839 2026-02-05 13:15:54Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects declarations.
  */
@@ -109,8 +109,10 @@ public:
         /** Reminds about BETA build. */
         static void remindAboutExperimentalBuild();
         /** Notifies about invalid encryption password.
-          * @param  strPasswordId  Brings password ID. */
-        static void warnAboutInvalidEncryptionPassword(const QString &strPasswordId);
+          * @param  strPasswordId  Brings password ID.
+          * @param  pParent        Brings the local notification-center reference. */
+        static void warnAboutInvalidEncryptionPassword(const QString &strPasswordId,
+                                                       UINotificationCenter *pParent);
         /** Notifies about a clipboard error. */
         static void warnAboutClipboardError(const QString &strMsg);
 

@@ -1,4 +1,4 @@
-/* $Id: UIAddDiskEncryptionPasswordDialog.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIAddDiskEncryptionPasswordDialog.h 112839 2026-02-05 13:15:54Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIAddDiskEncryptionPasswordDialog class declaration.
  */
@@ -43,6 +43,7 @@
 class QLabel;
 class QIDialogButtonBox;
 class UIEncryptionDataTable;
+class UINotificationCenter;
 
 /* Type definitions: */
 typedef QMultiMap<QString, QUuid> EncryptedMediumMap;
@@ -58,9 +59,13 @@ class SHARED_LIBRARY_STUFF UIAddDiskEncryptionPasswordDialog : public QDialog
 public:
 
     /** Constructs dialog passing @a pParent to the base-class.
-      * @param  strMachineName    Brings the name of the machine we show this dialog for.
-      * @param  encryptedMedia  Brings the lists of medium ids (values) encrypted with passwords with ids (keys). */
-    UIAddDiskEncryptionPasswordDialog(QWidget *pParent, const QString &strMachineName, const EncryptedMediumMap &encryptedMedia);
+      * @param  strMachineName  Brings the name of the machine we show this dialog for.
+      * @param  encryptedMedia  Brings the lists of medium ids (values) encrypted with passwords with ids (keys).
+      * @param  pCenter         Brings the notification-center to use. */
+    UIAddDiskEncryptionPasswordDialog(QWidget *pParent,
+                                      const QString &strMachineName,
+                                      const EncryptedMediumMap &encryptedMedia,
+                                      UINotificationCenter *pCenter = 0);
 
     /** Returns the shallow copy of the encryption password map
       * acquired from the UIEncryptionDataTable instance. */
@@ -92,6 +97,9 @@ private:
 
     /** Holds the encrypted medium map reference. */
     const EncryptedMediumMap &m_encryptedMedia;
+
+    /** Holds the notification-center to use. */
+    UINotificationCenter *m_pNotificationCenter;
 
     /** Holds the description label instance. */
     QLabel                *m_pLabelDescription;

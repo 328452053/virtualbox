@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.cpp 112748 2026-01-29 14:28:16Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.cpp 112839 2026-02-05 13:15:54Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects implementations.
  */
@@ -143,12 +143,14 @@ void UINotificationMessage::remindAboutExperimentalBuild()
 }
 
 /* static */
-void UINotificationMessage::warnAboutInvalidEncryptionPassword(const QString &strPasswordId)
+void UINotificationMessage::warnAboutInvalidEncryptionPassword(const QString &strPasswordId,
+                                                               UINotificationCenter *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Invalid Password ..."),
         QApplication::translate("UIMessageCenter", "Encryption password for <nobr>ID = '%1'</nobr> is invalid.")
-                                                   .arg(strPasswordId));
+                                                   .arg(strPasswordId),
+        QString(), QString(), pParent);
 }
 
 /* static */
