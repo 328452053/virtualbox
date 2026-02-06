@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# $Id: configure.py 112857 2026-02-06 19:37:10Z klaus.espenlaub@oracle.com $
+# $Id: configure.py 112858 2026-02-06 20:04:09Z klaus.espenlaub@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112857 $"
+__revision__ = "$Revision: 112858 $"
 
 import argparse
 import ctypes
@@ -3353,7 +3353,7 @@ g_aoTools = [
     ToolCheck("gsoap", asCmd = [ ], fnCallback = ToolCheck.checkCallback_GSOAP ),
     ToolCheck("gsoapsources", asCmd = [ ], fnCallback = ToolCheck.checkCallback_GSOAPSources ),
     ToolCheck("java", asCmd = [ ], fnCallback = ToolCheck.checkCallback_Java,
-              dictDefinesToSetIfFailed = { 'VBOX_WITH_JWS' : '', 'VBOX_WITH_JMSCOM': '', 'VBOX_WITH_JXPCOM' : '', 'VBOX_WITH_WEBSERVICES' : '' }),
+              dictDefinesToSetIfFailed = { 'VBOX_WITH_JWS' : '', 'VBOX_WITH_JMSCOM': '', 'VBOX_WITH_JXPCOM' : '' }),
     ToolCheck("makeself", asCmd = [ ], fnCallback = ToolCheck.checkCallback_makeself, aeTargets = [ BuildTarget.LINUX ]),
     # On Solaris nasm is not officially supported.
     ToolCheck("nasm", asCmd = [ "nasm" ], fnCallback = ToolCheck.checkCallback_NASM, aeTargetsExcluded = [ BuildTarget.SOLARIS ]),
@@ -3900,6 +3900,10 @@ def main():
         lambda env: { 'VBOX_WITH_GSOAP': '', \
                       'VBOX_WITH_WEBSERVICES': '' } if g_oEnv['config_tools_disable_gsoap'] \
                                                     or g_oEnv['config_libs_disable_libgsoapssl++'] else {},
+        # Disable building Java webservices if java is disabled.
+        lambda env: { 'VBOX_WITH_JWS' : '', \
+                      'VBOX_WITH_JMSCOM': '', \
+                      'VBOX_WITH_JXPCOM' : '' } if g_oEnv['config_tools_disable_java'] else {},
         # Disable components which require COM.
         lambda env: { 'VBOX_WITH_MAIN': '', \
                       'VBOX_WITH_QTGUI': '', \
