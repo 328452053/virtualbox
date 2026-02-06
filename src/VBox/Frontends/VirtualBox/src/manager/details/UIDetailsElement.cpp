@@ -1,4 +1,4 @@
-/* $Id: UIDetailsElement.cpp 112747 2026-01-29 14:24:15Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsElement.cpp 112853 2026-02-06 13:04:48Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsElement class implementation.
  */
@@ -676,7 +676,7 @@ void UIDetailsElement::sltHandleEditRequest()
 
             /* Apply form: */
             CForm comForm = pEditor->form();
-            applyCloudMachineSettingsForm(comCloudMachine, comForm, gpNotificationCenter);
+            applyCloudMachineSettingsForm(comCloudMachine, comForm);
         }
 
         /* Delete popup: */

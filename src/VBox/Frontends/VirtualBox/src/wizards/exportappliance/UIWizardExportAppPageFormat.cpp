@@ -1,4 +1,4 @@
-/* $Id: UIWizardExportAppPageFormat.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
+/* $Id: UIWizardExportAppPageFormat.cpp 112853 2026-02-06 13:04:48Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardExportAppPageFormat class implementation.
  */
@@ -346,7 +346,7 @@ void UIWizardExportAppFormat::refreshLocalStuff(CAppliance &comLocalAppliance,
     CVirtualBox comVBox = gpGlobalSession->virtualBox();
     CAppliance comAppliance = comVBox.CreateAppliance();
     if (!comVBox.isOk())
-        return UINotificationMessage::cannotCreateAppliance(comVBox, pWizard->notificationCenter());
+        return UINotificationMessage::cannotCreateAppliance(comVBox, pWizard);
 
     /* Remember appliance: */
     comLocalAppliance = comAppliance;
@@ -545,7 +545,7 @@ void UIWizardExportAppFormat::refreshCloudStuff(CAppliance &comCloudAppliance,
     /* Create appliance: */
     CAppliance comAppliance = comVBox.CreateAppliance();
     if (!comVBox.isOk())
-        return UINotificationMessage::cannotCreateAppliance(comVBox, pWizard->notificationCenter());
+        return UINotificationMessage::cannotCreateAppliance(comVBox, pWizard);
 
     /* Remember appliance: */
     comCloudAppliance = comAppliance;

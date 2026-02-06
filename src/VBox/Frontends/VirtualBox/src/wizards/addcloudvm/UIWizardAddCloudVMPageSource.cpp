@@ -1,4 +1,4 @@
-/* $Id: UIWizardAddCloudVMPageSource.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardAddCloudVMPageSource.cpp 112853 2026-02-06 13:04:48Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardAddCloudVMPageSource class implementation.
  */
@@ -56,7 +56,8 @@ using namespace UIWizardAddCloudVMSource;
 *   Namespace UIWizardAddCloudVMSource implementation.                                                                           *
 *********************************************************************************************************************************/
 
-void UIWizardAddCloudVMSource::populateProviders(QComboBox *pCombo, UINotificationCenter *pCenter)
+void UIWizardAddCloudVMSource::populateProviders(QComboBox *pCombo,
+                                                 UIWizardAddCloudVM *pWizard)
 {
     /* Sanity check: */
     AssertPtrReturnVoid(pCombo);
@@ -76,18 +77,18 @@ void UIWizardAddCloudVMSource::populateProviders(QComboBox *pCombo, UINotificati
     pCombo->clear();
 
     /* Iterate through existing providers: */
-    foreach (const CCloudProvider &comProvider, listCloudProviders(pCenter))
+    foreach (const CCloudProvider &comProvider, listCloudProviders(pWizard))
     {
         /* Skip if we have nothing to populate (file missing?): */
         if (comProvider.isNull())
             continue;
         /* Acquire provider name: */
         QString strProviderName;
-        if (!cloudProviderName(comProvider, strProviderName, pCenter))
+        if (!cloudProviderName(comProvider, strProviderName, pWizard))
             continue;
         /* Acquire provider short name: */
         QString strProviderShortName;
-        if (!cloudProviderShortName(comProvider, strProviderShortName, pCenter))
+        if (!cloudProviderShortName(comProvider, strProviderShortName, pWizard))
             continue;
 
         /* Compose empty item, fill the data: */
@@ -112,14 +113,14 @@ void UIWizardAddCloudVMSource::populateProviders(QComboBox *pCombo, UINotificati
 }
 
 void UIWizardAddCloudVMSource::populateProfiles(QComboBox *pCombo,
-                                                UINotificationCenter *pCenter,
+                                                UIWizardAddCloudVM *pWizard,
                                                 const QString &strProviderShortName,
                                                 const QString &strProfileName)
 {
     /* Sanity check: */
     AssertPtrReturnVoid(pCombo);
     /* Acquire provider: */
-    CCloudProvider comProvider = cloudProviderByShortName(strProviderShortName, pCenter);
+    CCloudProvider comProvider = cloudProviderByShortName(strProviderShortName, pWizard);
     AssertReturnVoid(comProvider.isNotNull());
 
     /* Remember current item data to be able to restore it: */
@@ -141,14 +142,14 @@ void UIWizardAddCloudVMSource::populateProfiles(QComboBox *pCombo,
     /* Iterate through existing profiles: */
     QStringList allowedProfileNames;
     QStringList restrictedProfileNames;
-    foreach (const CCloudProfile &comProfile, listCloudProfiles(comProvider, pCenter))
+    foreach (const CCloudProfile &comProfile, listCloudProfiles(comProvider, pWizard))
     {
         /* Skip if we have nothing to populate (wtf happened?): */
         if (comProfile.isNull())
             continue;
         /* Acquire current profile name: */
         QString strCurrentProfileName;
-        if (!cloudProfileName(comProfile, strCurrentProfileName, pCenter))
+        if (!cloudProfileName(comProfile, strCurrentProfileName, pWizard))
             continue;
 
         /* Compose full profile name: */
@@ -196,7 +197,9 @@ void UIWizardAddCloudVMSource::populateProfiles(QComboBox *pCombo,
     pCombo->blockSignals(false);
 }
 
-void UIWizardAddCloudVMSource::populateProfileInstances(QIListWidget *pList, UINotificationCenter *pCenter, const CCloudClient &comClient)
+void UIWizardAddCloudVMSource::populateProfileInstances(QIListWidget *pList,
+                                                        UIWizardAddCloudVM *pWizard,
+                                                        const CCloudClient &comClient)
 {
     /* Sanity check: */
     AssertPtrReturnVoid(pList);
@@ -211,7 +214,7 @@ void UIWizardAddCloudVMSource::populateProfileInstances(QIListWidget *pList, UIN
     /* Gather instance names and ids: */
     CStringArray comNames;
     CStringArray comIDs;
-    if (listCloudSourceInstances(comClient, comNames, comIDs, pCenter))
+    if (listCloudSourceInstances(comClient, comNames, comIDs, pWizard))
     {
         /* Push acquired names to list rows: */
         const QVector<QString> names = comNames.GetValues();
@@ -462,7 +465,7 @@ void UIWizardAddCloudVMPageSource::sltRetranslateUI()
 void UIWizardAddCloudVMPageSource::initializePage()
 {
     /* Populate providers: */
-    populateProviders(m_pProviderComboBox, wizard()->notificationCenter());
+    populateProviders(m_pProviderComboBox, wizard());
     /* Translate providers: */
     sltRetranslateUI();
     /* Fetch it, asynchronously: */
@@ -503,7 +506,7 @@ void UIWizardAddCloudVMPageSource::sltHandleProviderComboChange()
     wizard()->setProviderShortName(m_pProviderComboBox->currentData(ProviderData_ShortName).toString());
 
     /* Update profiles: */
-    populateProfiles(m_pProfileComboBox, wizard()->notificationCenter(), wizard()->providerShortName(), wizard()->profileName());
+    populateProfiles(m_pProfileComboBox, wizard(), wizard()->providerShortName(), wizard()->profileName());
     sltHandleProfileComboChange();
 
     /* Notify about changes: */
@@ -514,10 +517,10 @@ void UIWizardAddCloudVMPageSource::sltHandleProfileComboChange()
 {
     /* Update wizard fields: */
     wizard()->setProfileName(m_pProfileComboBox->currentData(ProfileData_Name).toString());
-    wizard()->setClient(cloudClientByName(wizard()->providerShortName(), wizard()->profileName(), wizard()->notificationCenter()));
+    wizard()->setClient(cloudClientByName(wizard()->providerShortName(), wizard()->profileName(), wizard()));
 
     /* Update profile instances: */
-    populateProfileInstances(m_pSourceInstanceList, wizard()->notificationCenter(), wizard()->client());
+    populateProfileInstances(m_pSourceInstanceList, wizard(), wizard()->client());
     sltHandleSourceInstanceChange();
 
     /* Notify about changes: */

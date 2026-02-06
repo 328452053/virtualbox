@@ -1,4 +1,4 @@
-/* $Id: UIWizardImportAppPageSource.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
+/* $Id: UIWizardImportAppPageSource.cpp 112853 2026-02-06 13:04:48Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardImportAppPageSource class implementation.
  */
@@ -363,7 +363,7 @@ void UIWizardImportAppSource::refreshCloudStuff(CAppliance &comCloudAppliance,
     CVirtualBox comVBox = gpGlobalSession->virtualBox();
     CAppliance comAppliance = comVBox.CreateAppliance();
     if (!comVBox.isOk())
-        return UINotificationMessage::cannotCreateAppliance(comVBox, pWizard->notificationCenter());
+        return UINotificationMessage::cannotCreateAppliance(comVBox, pWizard);
 
     /* Remember appliance: */
     comCloudAppliance = comAppliance;

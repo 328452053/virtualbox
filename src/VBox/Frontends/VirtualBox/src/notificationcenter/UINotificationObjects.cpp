@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.cpp 112852 2026-02-06 12:49:53Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.cpp 112853 2026-02-06 13:04:48Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects implementations.
  */
@@ -638,13 +638,13 @@ void UINotificationMessage::forgetAboutWrongColorDepth()
 
 /* static */
 void UINotificationMessage::cannotAcquireVirtualBoxParameter(const CVirtualBox &comVBox,
-                                                             UINotificationCenter *pParent /* = 0 */)
+                                                             QWidget *pParent /* = 0 */)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "VirtualBox failure ..."),
         QApplication::translate("UIMessageCenter", "Failed to acquire VirtualBox parameter.") +
         UIErrorString::formatErrorInfo(comVBox),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -986,46 +986,46 @@ void UINotificationMessage::cannotAcquireVirtualSystemDescriptionFormParameter(c
 
 /* static */
 void UINotificationMessage::cannotAcquireCloudProviderManagerParameter(const CCloudProviderManager &comCloudProviderManager,
-                                                                       UINotificationCenter *pParent /* = 0 */)
+                                                                       QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Cloud failure ..."),
         QApplication::translate("UIMessageCenter", "Failed to acquire cloud provider manager parameter.") +
         UIErrorString::formatErrorInfo(comCloudProviderManager),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
 void UINotificationMessage::cannotAcquireCloudProviderParameter(const CCloudProvider &comCloudProvider,
-                                                                UINotificationCenter *pParent /* = 0 */)
+                                                                QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Cloud failure ..."),
         QApplication::translate("UIMessageCenter", "Failed to acquire cloud provider parameter.") +
         UIErrorString::formatErrorInfo(comCloudProvider),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
 void UINotificationMessage::cannotAcquireCloudProfileParameter(const CCloudProfile &comCloudProfile,
-                                                               UINotificationCenter *pParent /* = 0 */)
+                                                               QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Cloud failure ..."),
         QApplication::translate("UIMessageCenter", "Failed to acquire cloud profile parameter.") +
         UIErrorString::formatErrorInfo(comCloudProfile),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
 void UINotificationMessage::cannotAcquireCloudMachineParameter(const CCloudMachine &comCloudMachine,
-                                                               UINotificationCenter *pParent /* = 0 */)
+                                                               QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Cloud failure ..."),
         QApplication::translate("UIMessageCenter", "Failed to acquire cloud machine parameter.") +
         UIErrorString::formatErrorInfo(comCloudMachine),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1253,13 +1253,13 @@ void UINotificationMessage::cannotResetMachine(const CConsole &comConsole)
 
 /* static */
 void UINotificationMessage::cannotCreateAppliance(const CVirtualBox &comVBox,
-                                                  UINotificationCenter *pParent /* = 0 */)
+                                                  QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't create appliance ..."),
         QApplication::translate("UIMessageCenter", "Failed to create appliance.") +
         UIErrorString::formatErrorInfo(comVBox),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1362,13 +1362,13 @@ void UINotificationMessage::cannotInterpretAppliance(const CAppliance &comApplia
 }
 
 /* static */
-void UINotificationMessage::cannotCreateVirtualSystemDescription(const CAppliance &comAppliance, UINotificationCenter *pParent /* = 0 */)
+void UINotificationMessage::cannotCreateVirtualSystemDescription(const CAppliance &comAppliance, QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't create VSD ..."),
         QApplication::translate("UIMessageCenter", "Failed to create VSD.") +
         UIErrorString::formatErrorInfo(comAppliance),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1563,13 +1563,13 @@ void UINotificationMessage::cannotRefreshCloudMachine(const CProgress &comProgre
 }
 
 /* static */
-void UINotificationMessage::cannotCreateCloudClient(const CCloudProfile &comProfile, UINotificationCenter *pParent /* = 0 */)
+void UINotificationMessage::cannotCreateCloudClient(const CCloudProfile &comProfile, QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't create cloud client ..."),
         QApplication::translate("UIMessageCenter", "Failed to create cloud client.") +
         UIErrorString::formatErrorInfo(comProfile),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */

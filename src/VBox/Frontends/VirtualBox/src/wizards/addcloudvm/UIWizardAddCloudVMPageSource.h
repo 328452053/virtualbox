@@ -1,4 +1,4 @@
-/* $Id: UIWizardAddCloudVMPageSource.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardAddCloudVMPageSource.h 112853 2026-02-06 13:04:48Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardAddCloudVMPageSource class declaration.
  */
@@ -44,7 +44,6 @@ class QLabel;
 class QIListWidget;
 class QIRichTextLabel;
 class QIToolButton;
-class UINotificationCenter;
 class UIWizardAddCloudVM;
 
 /** Provider combo data fields. */
@@ -64,16 +63,19 @@ enum
 namespace UIWizardAddCloudVMSource
 {
     /** Populates @a pCombo with known providers. */
-    void populateProviders(QComboBox *pCombo, UINotificationCenter *pCenter);
+    void populateProviders(QComboBox *pCombo,
+                           UIWizardAddCloudVM *pWizard);
     /** Populates @a pCombo with known profiles.
       * @param  strProviderShortName  Brings the short name of provider profiles related to.
       * @param  strProfileName        Brings the name of profile to be chosen by default. */
     void populateProfiles(QComboBox *pCombo,
-                          UINotificationCenter *pCenter,
+                          UIWizardAddCloudVM *pWizard,
                           const QString &strProviderShortName,
                           const QString &strProfileName);
     /** Populates @a pList with profile instances available in @a comClient. */
-    void populateProfileInstances(QIListWidget *pList, UINotificationCenter *pCenter, const CCloudClient &comClient);
+    void populateProfileInstances(QIListWidget *pList,
+                                  UIWizardAddCloudVM *pWizard,
+                                  const CCloudClient &comClient);
 
     /** Returns current user data for @a pList specified. */
     QStringList currentListWidgetData(QIListWidget *pList);

@@ -1,4 +1,4 @@
-/* $Id: UICloudMachineSettingsDialog.cpp 112851 2026-02-06 12:46:53Z sergey.dubov@oracle.com $ */
+/* $Id: UICloudMachineSettingsDialog.cpp 112853 2026-02-06 13:04:48Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UICloudMachineSettingsDialog class implementation.
  */
@@ -179,14 +179,14 @@ void UICloudMachineSettingsDialog::load()
     m_fClosable = false;
 
     /* Update name: */
-    if (!cloudMachineName(m_comCloudMachine, m_strName, notificationCenter()))
+    if (!cloudMachineName(m_comCloudMachine, m_strName, this))
         close();
 
     /* Retranslate title: */
     sltRetranslateUI();
 
     /* Update form: */
-    if (!cloudMachineSettingsForm(m_comCloudMachine, m_comForm, notificationCenter()))
+    if (!cloudMachineSettingsForm(m_comCloudMachine, m_comForm, this))
         close();
 
     /* Assign page with form: */
@@ -204,7 +204,7 @@ void UICloudMachineSettingsDialog::save()
 
     /* Apply form: */
     AssertReturnVoid(m_comForm.isNotNull());
-    if (!applyCloudMachineSettingsForm(m_comCloudMachine, m_comForm, notificationCenter()))
+    if (!applyCloudMachineSettingsForm(m_comCloudMachine, m_comForm, this))
         return;
 
     /* Just close for now: */

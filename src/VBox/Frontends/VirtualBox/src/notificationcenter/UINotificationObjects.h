@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.h 112850 2026-02-06 11:10:07Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.h 112853 2026-02-06 13:04:48Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects declarations.
  */
@@ -292,7 +292,7 @@ public:
         /** Notifies about inability to acquire IVirtualBox parameter.
           * @param  comVBox  Brings the object parameter get acquired from. */
         static void cannotAcquireVirtualBoxParameter(const CVirtualBox &comVBox,
-                                                     UINotificationCenter *pParent = 0);
+                                                     QWidget *pParent = 0);
         /** Notifies about inability to acquire IAppliance parameter.
           * @param  comVBox  Brings the object parameter get acquired from. */
         static void cannotAcquireApplianceParameter(const CAppliance &comAppliance,
@@ -407,19 +407,19 @@ public:
         /** Notifies about inability to acquire ICloudProviderManager parameter.
           * @param  comCloudProviderManager  Brings the object parameter get acquired from. */
         static void cannotAcquireCloudProviderManagerParameter(const CCloudProviderManager &comCloudProviderManager,
-                                                               UINotificationCenter *pParent = 0);
+                                                               QWidget *pParent);
         /** Notifies about inability to acquire ICloudProvider parameter.
           * @param  comCloudProvider  Brings the object parameter get acquired from. */
         static void cannotAcquireCloudProviderParameter(const CCloudProvider &comCloudProvider,
-                                                        UINotificationCenter *pParent = 0);
+                                                        QWidget *pParent);
         /** Notifies about inability to acquire ICloudProfile parameter.
           * @param  comCloudProfile  Brings the object parameter get acquired from. */
         static void cannotAcquireCloudProfileParameter(const CCloudProfile &comCloudProfile,
-                                                       UINotificationCenter *pParent = 0);
+                                                       QWidget *pParent);
         /** Notifies about inability to acquire ICloudMachine parameter.
           * @param  comCloudMachine  Brings the object parameter get acquired from. */
         static void cannotAcquireCloudMachineParameter(const CCloudMachine &comCloudMachine,
-                                                       UINotificationCenter *pParent = 0);
+                                                       QWidget *pParent);
 
         /** Notifies about inability to change IMedium parameter.
           * @param  comMedium  Brings the object parameter being changed for. */
@@ -498,7 +498,7 @@ public:
       * @{ */
         /** Notifies about inability to create appliance.
           * @param  comVBox  Brings common VBox object trying to create appliance. */
-        static void cannotCreateAppliance(const CVirtualBox &comVBox, UINotificationCenter *pParent = 0);
+        static void cannotCreateAppliance(const CVirtualBox &comVBox, QWidget *pParent);
         /** Notifies about inability to register machine.
           * @param  comVBox  Brings common VBox object trying to register machine.
           * @param  strName  Brings the name of VM being registered. */
@@ -537,7 +537,7 @@ public:
         static void cannotInterpretAppliance(const CAppliance &comAppliance, QWidget *pParent);
         /** Notifies about inability to create VSD.
           * @param  comAppliance  Brings appliance trying to create VSD. */
-        static void cannotCreateVirtualSystemDescription(const CAppliance &comAppliance, UINotificationCenter *pParent = 0);
+        static void cannotCreateVirtualSystemDescription(const CAppliance &comAppliance, QWidget *pParent);
 
         /** Notifies about inability to open extension pack.
           * @param  comExtPackManager  Brings extension pack manager trying to open extension pack.
@@ -614,7 +614,7 @@ public:
         static void cannotRefreshCloudMachine(const CProgress &comProgress);
         /** Notifies about inability to create cloud client.
           * @param  comProfile  Brings the profile client being created for. */
-        static void cannotCreateCloudClient(const CCloudProfile &comProfile, UINotificationCenter *pParent = 0);
+        static void cannotCreateCloudClient(const CCloudProfile &comProfile, QWidget *pParent);
 
         /** Notifies about inability to open machine.
           * @param  comMedium  Brings the medium being closed. */

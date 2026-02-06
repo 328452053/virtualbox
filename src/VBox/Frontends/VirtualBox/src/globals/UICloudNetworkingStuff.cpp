@@ -1,4 +1,4 @@
-/* $Id: UICloudNetworkingStuff.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UICloudNetworkingStuff.cpp 112853 2026-02-06 13:04:48Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UICloudNetworkingStuff namespace implementation.
  */
@@ -32,7 +32,7 @@
 #include "UICloudNetworkingStuff.h"
 #include "UIErrorString.h"
 #include "UIGlobalSession.h"
-#include "UIMessageCenter.h"
+#include "UINotificationCenter.h"
 
 /* COM includes: */
 #include "CAppliance.h"
@@ -43,7 +43,7 @@
 #include "CVirtualSystemDescription.h"
 
 
-CCloudProviderManager UICloudNetworkingStuff::cloudProviderManager(UINotificationCenter *pParent /* = 0 */)
+CCloudProviderManager UICloudNetworkingStuff::cloudProviderManager(QWidget *pParent /* = 0 */)
 {
     /* Acquire VBox: */
     const CVirtualBox comVBox = gpGlobalSession->virtualBox();
@@ -78,7 +78,7 @@ CCloudProviderManager UICloudNetworkingStuff::cloudProviderManager(QString &strE
 }
 
 CCloudProvider UICloudNetworkingStuff::cloudProviderByShortName(const QString &strProviderShortName,
-                                                                UINotificationCenter *pParent /* = 0 */)
+                                                                QWidget *pParent /* = 0 */)
 {
     /* Acquire cloud provider manager: */
     CCloudProviderManager comProviderManager = cloudProviderManager(pParent);
@@ -115,7 +115,7 @@ CCloudProvider UICloudNetworkingStuff::cloudProviderByShortName(const QString &s
 
 CCloudProfile UICloudNetworkingStuff::cloudProfileByName(const QString &strProviderShortName,
                                                          const QString &strProfileName,
-                                                         UINotificationCenter *pParent /* = 0 */)
+                                                         QWidget *pParent /* = 0 */)
 {
     /* Acquire cloud provider: */
     CCloudProvider comProvider = cloudProviderByShortName(strProviderShortName, pParent);
@@ -152,7 +152,7 @@ CCloudProfile UICloudNetworkingStuff::cloudProfileByName(const QString &strProvi
 }
 
 CCloudClient UICloudNetworkingStuff::cloudClient(CCloudProfile comProfile,
-                                                 UINotificationCenter *pParent /* = 0 */)
+                                                 QWidget *pParent /* = 0 */)
 {
     /* Create cloud client: */
     CCloudClient comClient = comProfile.CreateCloudClient();
@@ -179,7 +179,7 @@ CCloudClient UICloudNetworkingStuff::cloudClient(CCloudProfile comProfile,
 
 CCloudClient UICloudNetworkingStuff::cloudClientByName(const QString &strProviderShortName,
                                                        const QString &strProfileName,
-                                                       UINotificationCenter *pParent /* = 0 */)
+                                                       QWidget *pParent /* = 0 */)
 {
     /* Acquire cloud profile: */
     CCloudProfile comProfile = cloudProfileByName(strProviderShortName, strProfileName, pParent);
@@ -201,7 +201,7 @@ CCloudClient UICloudNetworkingStuff::cloudClientByName(const QString &strProvide
     return CCloudClient();
 }
 
-CVirtualSystemDescription UICloudNetworkingStuff::createVirtualSystemDescription(UINotificationCenter *pParent /* = 0 */)
+CVirtualSystemDescription UICloudNetworkingStuff::createVirtualSystemDescription(QWidget *pParent /* = 0 */)
 {
     /* Acquire VBox: */
     CVirtualBox comVBox = gpGlobalSession->virtualBox();
@@ -230,7 +230,7 @@ CVirtualSystemDescription UICloudNetworkingStuff::createVirtualSystemDescription
     return CVirtualSystemDescription();
 }
 
-QVector<CCloudProvider> UICloudNetworkingStuff::listCloudProviders(UINotificationCenter *pParent /* = 0 */)
+QVector<CCloudProvider> UICloudNetworkingStuff::listCloudProviders(QWidget *pParent /* = 0 */)
 {
     /* Acquire cloud provider manager: */
     CCloudProviderManager comProviderManager = cloudProviderManager(pParent);
@@ -249,7 +249,7 @@ QVector<CCloudProvider> UICloudNetworkingStuff::listCloudProviders(UINotificatio
 
 bool UICloudNetworkingStuff::cloudProviderId(const CCloudProvider &comCloudProvider,
                                              QUuid &uResult,
-                                             UINotificationCenter *pParent /* = 0 */)
+                                             QWidget *pParent /* = 0 */)
 {
     const QUuid uId = comCloudProvider.GetId();
     if (!comCloudProvider.isOk())
@@ -264,7 +264,7 @@ bool UICloudNetworkingStuff::cloudProviderId(const CCloudProvider &comCloudProvi
 
 bool UICloudNetworkingStuff::cloudProviderShortName(const CCloudProvider &comCloudProvider,
                                                     QString &strResult,
-                                                    UINotificationCenter *pParent /* = 0 */)
+                                                    QWidget *pParent /* = 0 */)
 {
     const QString strShortName = comCloudProvider.GetShortName();
     if (!comCloudProvider.isOk())
@@ -279,7 +279,7 @@ bool UICloudNetworkingStuff::cloudProviderShortName(const CCloudProvider &comClo
 
 bool UICloudNetworkingStuff::cloudProviderName(const CCloudProvider &comCloudProvider,
                                                QString &strResult,
-                                               UINotificationCenter *pParent /* = 0 */)
+                                               QWidget *pParent /* = 0 */)
 {
     const QString strName = comCloudProvider.GetName();
     if (!comCloudProvider.isOk())
@@ -293,7 +293,7 @@ bool UICloudNetworkingStuff::cloudProviderName(const CCloudProvider &comCloudPro
 }
 
 QVector<CCloudProfile> UICloudNetworkingStuff::listCloudProfiles(const CCloudProvider &comCloudProvider,
-                                                                 UINotificationCenter *pParent /* = 0 */)
+                                                                 QWidget *pParent /* = 0 */)
 {
     /* Check cloud provider: */
     if (comCloudProvider.isNotNull())
@@ -311,7 +311,7 @@ QVector<CCloudProfile> UICloudNetworkingStuff::listCloudProfiles(const CCloudPro
 
 bool UICloudNetworkingStuff::cloudProfileName(const CCloudProfile &comCloudProfile,
                                               QString &strResult,
-                                              UINotificationCenter *pParent /* = 0 */)
+                                              QWidget *pParent /* = 0 */)
 {
     const QString strName = comCloudProfile.GetName();
     if (!comCloudProfile.isOk())
@@ -327,7 +327,7 @@ bool UICloudNetworkingStuff::cloudProfileName(const CCloudProfile &comCloudProfi
 bool UICloudNetworkingStuff::cloudProfileProperties(const CCloudProfile &comCloudProfile,
                                                     QVector<QString> &keys,
                                                     QVector<QString> &values,
-                                                    UINotificationCenter *pParent /* = 0 */)
+                                                    QWidget *pParent /* = 0 */)
 {
     QVector<QString> aKeys;
     QVector<QString> aValues;
@@ -347,8 +347,12 @@ bool UICloudNetworkingStuff::cloudProfileProperties(const CCloudProfile &comClou
 bool UICloudNetworkingStuff::listCloudImages(const CCloudClient &comCloudClient,
                                              CStringArray &comNames,
                                              CStringArray &comIDs,
-                                             UINotificationCenter *pParent)
+                                             QWidget *pParent)
 {
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturn(pCenter, false);
+
     /* Currently we are interested in Available images only: */
     const QVector<KCloudImageState> cloudImageStates  = QVector<KCloudImageState>()
                                                      << KCloudImageState_Available;
@@ -362,7 +366,7 @@ bool UICloudNetworkingStuff::listCloudImages(const CCloudClient &comCloudClient,
                      &receiver1, &UINotificationReceiver::setReceiverProperty);
     QObject::connect(pNotification, &UINotificationProgressCloudImageList::sigImageIdsReceived,
                      &receiver2, &UINotificationReceiver::setReceiverProperty);
-    if (pParent->handleNow(pNotification))
+    if (pCenter->handleNow(pNotification))
     {
         comNames = receiver1.property("received_value").value<CStringArray>();
         comIDs = receiver2.property("received_value").value<CStringArray>();
@@ -376,8 +380,12 @@ bool UICloudNetworkingStuff::listCloudImages(const CCloudClient &comCloudClient,
 bool UICloudNetworkingStuff::listCloudSourceBootVolumes(const CCloudClient &comCloudClient,
                                                         CStringArray &comNames,
                                                         CStringArray &comIDs,
-                                                        UINotificationCenter *pParent)
+                                                        QWidget *pParent)
 {
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturn(pCenter, false);
+
     /* List cloud source boot volumes: */
     UINotificationProgressCloudSourceBootVolumeList *pNotification =
         new UINotificationProgressCloudSourceBootVolumeList(comCloudClient);
@@ -387,7 +395,7 @@ bool UICloudNetworkingStuff::listCloudSourceBootVolumes(const CCloudClient &comC
                      &receiver1, &UINotificationReceiver::setReceiverProperty);
     QObject::connect(pNotification, &UINotificationProgressCloudSourceBootVolumeList::sigImageIdsReceived,
                      &receiver2, &UINotificationReceiver::setReceiverProperty);
-    if (pParent->handleNow(pNotification))
+    if (pCenter->handleNow(pNotification))
     {
         comNames = receiver1.property("received_value").value<CStringArray>();
         comIDs = receiver2.property("received_value").value<CStringArray>();
@@ -401,8 +409,12 @@ bool UICloudNetworkingStuff::listCloudSourceBootVolumes(const CCloudClient &comC
 bool UICloudNetworkingStuff::listCloudInstances(const CCloudClient &comCloudClient,
                                                 CStringArray &comNames,
                                                 CStringArray &comIDs,
-                                                UINotificationCenter *pParent)
+                                                QWidget *pParent)
 {
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturn(pCenter, false);
+
     /* List cloud instances: */
     UINotificationProgressCloudInstanceList *pNotification =
         new UINotificationProgressCloudInstanceList(comCloudClient);
@@ -412,7 +424,7 @@ bool UICloudNetworkingStuff::listCloudInstances(const CCloudClient &comCloudClie
                      &receiver1, &UINotificationReceiver::setReceiverProperty);
     QObject::connect(pNotification, &UINotificationProgressCloudInstanceList::sigImageIdsReceived,
                      &receiver2, &UINotificationReceiver::setReceiverProperty);
-    if (pParent->handleNow(pNotification))
+    if (pCenter->handleNow(pNotification))
     {
         comNames = receiver1.property("received_value").value<CStringArray>();
         comIDs = receiver2.property("received_value").value<CStringArray>();
@@ -426,8 +438,12 @@ bool UICloudNetworkingStuff::listCloudInstances(const CCloudClient &comCloudClie
 bool UICloudNetworkingStuff::listCloudSourceInstances(const CCloudClient &comCloudClient,
                                                       CStringArray &comNames,
                                                       CStringArray &comIDs,
-                                                      UINotificationCenter *pParent)
+                                                      QWidget *pParent)
 {
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturn(pCenter, false);
+
     /* List cloud source instances: */
     UINotificationProgressCloudSourceInstanceList *pNotification =
         new UINotificationProgressCloudSourceInstanceList(comCloudClient);
@@ -437,7 +453,7 @@ bool UICloudNetworkingStuff::listCloudSourceInstances(const CCloudClient &comClo
                      &receiver1, &UINotificationReceiver::setReceiverProperty);
     QObject::connect(pNotification, &UINotificationProgressCloudSourceInstanceList::sigImageIdsReceived,
                      &receiver2, &UINotificationReceiver::setReceiverProperty);
-    if (pParent->handleNow(pNotification))
+    if (pCenter->handleNow(pNotification))
     {
         comNames = receiver1.property("received_value").value<CStringArray>();
         comIDs = receiver2.property("received_value").value<CStringArray>();
@@ -451,15 +467,19 @@ bool UICloudNetworkingStuff::listCloudSourceInstances(const CCloudClient &comClo
 bool UICloudNetworkingStuff::exportDescriptionForm(const CCloudClient &comCloudClient,
                                                    const CVirtualSystemDescription &comDescription,
                                                    CVirtualSystemDescriptionForm &comResult,
-                                                   UINotificationCenter *pParent)
+                                                   QWidget *pParent)
 {
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturn(pCenter, false);
+
     /* Prepare export VSD form: */
     UINotificationProgressExportVSDFormCreate *pNotification =
         new UINotificationProgressExportVSDFormCreate(comCloudClient, comDescription);
     UINotificationReceiver receiver;
     QObject::connect(pNotification, &UINotificationProgressExportVSDFormCreate::sigVSDFormCreated,
                      &receiver, &UINotificationReceiver::setReceiverProperty);
-    if (pParent->handleNow(pNotification))
+    if (pCenter->handleNow(pNotification))
     {
         comResult = receiver.property("received_value").value<CVirtualSystemDescriptionForm>();
         return true;
@@ -472,15 +492,19 @@ bool UICloudNetworkingStuff::exportDescriptionForm(const CCloudClient &comCloudC
 bool UICloudNetworkingStuff::importDescriptionForm(const CCloudClient &comCloudClient,
                                                    const CVirtualSystemDescription &comDescription,
                                                    CVirtualSystemDescriptionForm &comResult,
-                                                   UINotificationCenter *pParent)
+                                                   QWidget *pParent)
 {
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturn(pCenter, false);
+
     /* Prepare import VSD form: */
     UINotificationProgressImportVSDFormCreate *pNotification =
         new UINotificationProgressImportVSDFormCreate(comCloudClient, comDescription);
     UINotificationReceiver receiver;
     QObject::connect(pNotification, &UINotificationProgressImportVSDFormCreate::sigVSDFormCreated,
                      &receiver, &UINotificationReceiver::setReceiverProperty);
-    if (pParent->handleNow(pNotification))
+    if (pCenter->handleNow(pNotification))
     {
         comResult = receiver.property("received_value").value<CVirtualSystemDescriptionForm>();
         return true;
@@ -492,7 +516,7 @@ bool UICloudNetworkingStuff::importDescriptionForm(const CCloudClient &comCloudC
 
 bool UICloudNetworkingStuff::cloudMachineId(const CCloudMachine &comCloudMachine,
                                             QUuid &uResult,
-                                            UINotificationCenter *pParent /* = 0 */)
+                                            QWidget *pParent /* = 0 */)
 {
     const QUuid uId = comCloudMachine.GetId();
     if (!comCloudMachine.isOk())
@@ -507,7 +531,7 @@ bool UICloudNetworkingStuff::cloudMachineId(const CCloudMachine &comCloudMachine
 
 bool UICloudNetworkingStuff::cloudMachineName(const CCloudMachine &comCloudMachine,
                                               QString &strResult,
-                                              UINotificationCenter *pParent /* = 0 */)
+                                              QWidget *pParent /* = 0 */)
 {
     const QString strName = comCloudMachine.GetName();
     if (!comCloudMachine.isOk())
@@ -522,7 +546,7 @@ bool UICloudNetworkingStuff::cloudMachineName(const CCloudMachine &comCloudMachi
 
 bool UICloudNetworkingStuff::cloudMachineConsoleConnectionFingerprint(const CCloudMachine &comCloudMachine,
                                                                       QString &strResult,
-                                                                      UINotificationCenter *pParent /* = 0 */)
+                                                                      QWidget *pParent /* = 0 */)
 {
     const QString strConsoleConnectionFingerprint = comCloudMachine.GetConsoleConnectionFingerprint();
     if (!comCloudMachine.isOk())
@@ -537,8 +561,12 @@ bool UICloudNetworkingStuff::cloudMachineConsoleConnectionFingerprint(const CClo
 
 bool UICloudNetworkingStuff::cloudMachineSettingsForm(const CCloudMachine &comCloudMachine,
                                                       CForm &comResult,
-                                                      UINotificationCenter *pParent)
+                                                      QWidget *pParent)
 {
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturn(pCenter, false);
+
     /* Acquire machine name first: */
     QString strMachineName;
     if (!cloudMachineName(comCloudMachine, strMachineName))
@@ -550,7 +578,7 @@ bool UICloudNetworkingStuff::cloudMachineSettingsForm(const CCloudMachine &comCl
     UINotificationReceiver receiver;
     QObject::connect(pNotification, &UINotificationProgressCloudMachineSettingsFormCreate::sigSettingsFormCreated,
                      &receiver, &UINotificationReceiver::setReceiverProperty);
-    if (pParent->handleNow(pNotification))
+    if (pCenter->handleNow(pNotification))
     {
         comResult = receiver.property("received_value").value<CForm>();
         return true;
@@ -592,8 +620,12 @@ bool UICloudNetworkingStuff::cloudMachineSettingsForm(CCloudMachine comCloudMach
 
 bool UICloudNetworkingStuff::applyCloudMachineSettingsForm(const CCloudMachine &comCloudMachine,
                                                            const CForm &comForm,
-                                                           UINotificationCenter *pParent)
+                                                           QWidget *pParent /* = 0 */)
 {
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturn(pCenter, false);
+
     /* Acquire machine name first: */
     QString strMachineName;
     if (!cloudMachineName(comCloudMachine, strMachineName))
@@ -602,15 +634,19 @@ bool UICloudNetworkingStuff::applyCloudMachineSettingsForm(const CCloudMachine &
     /* Apply VM settings form: */
     UINotificationProgressCloudMachineSettingsFormApply *pNotification =
         new UINotificationProgressCloudMachineSettingsFormApply(comForm, strMachineName);
-    return pParent->handleNow(pNotification);
+    return pCenter->handleNow(pNotification);
 }
 
 void UICloudNetworkingStuff::createCloudMachineClone(const QString &strProviderShortName,
                                                      const QString &strProfileName,
                                                      const CCloudMachine &comCloudMachine,
                                                      const QString &strCloneName,
-                                                     UINotificationCenter *pParent)
+                                                     QWidget *pParent)
 {
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturnVoid(pCenter);
+
     /* Create cloud client: */
     CCloudClient comCloudClient = cloudClientByName(strProviderShortName,
                                                     strProfileName,
@@ -620,6 +656,6 @@ void UICloudNetworkingStuff::createCloudMachineClone(const QString &strProviderS
         /* Clone specified cloud machine asynchronously: */
         UINotificationProgressCloudMachineClone *pNotification =
             new UINotificationProgressCloudMachineClone(comCloudClient, comCloudMachine, strCloneName);
-        pParent->append(pNotification);
+        pCenter->append(pNotification);
     }
 }
